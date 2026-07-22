@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The educational-use disclaimer in full.
+/// The fine print, in plain language.
 struct DisclaimerView: View {
     var body: some View {
         ScrollView {
@@ -8,64 +8,54 @@ struct DisclaimerView: View {
                 Card {
                     HStack(spacing: Theme.Spacing.tight) {
                         Image(systemName: "exclamationmark.circle.fill")
-                            .foregroundStyle(Theme.riskColor(.medium))
+                            .foregroundStyle(Theme.statusColor(.tight))
                             .accessibilityHidden(true)
-                        Text("Educational use only")
+                        Text("A picture, not advice")
                             .font(.title3.weight(.bold))
                             .accessibilityAddTraits(.isHeader)
                     }
-                    Text("DebtShield AI is an educational and analytical tool. It is not financial advice, not legal advice, and not government-benefit advice.")
-                        .font(.subheadline)
+                    Text("DebtShield shows you your own numbers clearly. It isn't financial advice, legal advice, or benefits advice, and it can't see your full situation.")
+                        .font(Theme.Typography.subheadline)
                 }
 
                 DisclaimerPoint(
-                    title: "It is not advice",
-                    message: "Nothing in this app is a recommendation about your money, your housing, your debts, or your benefits. It is not a substitute for a qualified financial adviser, a lawyer, a housing counsellor, or a benefits caseworker."
+                    title: "It's a starting point",
+                    message: "What you see here is a clear look at your month — not a recommendation about your money, your housing, your debts, or your benefits. It's no substitute for a qualified adviser, a housing counsellor, or a benefits caseworker."
                 )
 
                 DisclaimerPoint(
-                    title: "It describes places, not people",
-                    message: "Every figure here is about a county as a whole. A county's score says nothing about any household inside it. Someone in a low-risk county can be in serious difficulty, and someone in a high-risk county can be perfectly secure."
+                    title: "The comparisons are rough markers",
+                    message: "\"Typical\" rent, energy, and food figures are broad public averages. Real costs vary enormously from home to home, so treat them as a gentle reference, never a target you have to hit."
                 )
 
                 DisclaimerPoint(
-                    title: "The programmes described are general",
-                    message: "Where the app mentions support such as rental assistance or energy help, it is describing types of programme that commonly exist in the United States. Eligibility, availability, and names differ by state and county, and programmes change. Always check with the relevant agency."
+                    title: "The safe line is a guideline",
+                    message: "Keeping essentials under about 55% of income, and debt payments under 20%, are common rules of thumb — not rules. Your right numbers depend on your life."
                 )
 
                 DisclaimerPoint(
-                    title: "The scores are a project's own construction",
-                    message: "The Financial Distress Index, its weights, and its risk thresholds were defined by this project. They are not an official measure and carry no standing with any government body or lender."
-                )
-
-                DisclaimerPoint(
-                    title: "The data has limits",
-                    message: "Figures come from Census survey estimates, which carry sampling error and lag behind current conditions. Three of the five risk drivers have no data source in this dataset. Two counties cannot be scored at all."
-                )
-
-                DisclaimerPoint(
-                    title: "It does not predict anything",
-                    message: "The index reflects conditions when the data was collected. The Scenario Simulator shows what the formula would produce under different figures — that is an estimate of the formula, not a forecast of events."
+                    title: "What-ifs are estimates",
+                    message: "When you try a change — \"what if rent dropped $200\" — the app just recalculates your numbers. That's an estimate of your budget, not a prediction of what will happen."
                 )
 
                 DisclaimerPoint(
                     title: "No warranty",
-                    message: "This is a research prototype provided as is, without any guarantee of accuracy, completeness, or fitness for a particular purpose. Do not rely on it for consequential decisions."
+                    message: "This app is provided as is, without any guarantee of accuracy or fitness for a particular purpose. Please don't rely on it alone for big decisions."
                 )
 
                 Card {
                     SectionHeader(title: "If you need real help")
-                    Text("In the United States, dialling **211** connects to local assistance with housing, utilities, food, and benefits. HUD-approved housing counselling agencies offer free guidance, and nonprofit credit counselling agencies offer free or low-cost debt reviews.")
-                        .font(.subheadline)
-                    Text("This app cannot refer you, check your eligibility, or contact anyone on your behalf.")
-                        .font(.footnote)
+                    Text("In the United States, dialling **211** connects you to local assistance with housing, utilities, food, and benefits. HUD-approved housing counsellors offer free guidance, and nonprofit credit counsellors offer free or low-cost debt reviews.")
+                        .font(Theme.Typography.subheadline)
+                    Text("This app can't refer you, check your eligibility, or contact anyone for you — but those services can.")
+                        .font(Theme.Typography.footnote)
                         .foregroundStyle(Theme.secondaryText)
                 }
             }
             .padding(Theme.Spacing.comfortable)
         }
         .background(Theme.screenGradient)
-        .navigationTitle("Disclaimer")
+        .navigationTitle("The fine print")
         .navigationBarTitleDisplayMode(.large)
     }
 }
@@ -80,7 +70,7 @@ struct DisclaimerPoint: View {
                 .font(.headline)
                 .accessibilityAddTraits(.isHeader)
             Text(message)
-                .font(.subheadline)
+                .font(Theme.Typography.subheadline)
                 .foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }

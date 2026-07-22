@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// The fifth and final tab: what the app is, and every explanatory screen.
+/// The About tab: what the app is, how it works, and the terms.
 struct AboutView: View {
-    let dataset: Dataset
     /// Lets the reader see the introduction again.
     var replayOnboarding: () -> Void
 
@@ -19,7 +18,7 @@ struct AboutView: View {
                 headerCard
                 referenceCard
                 legalCard
-                aboutProjectCard
+                aboutCard
                 versionFooter
             }
             .padding(Theme.Spacing.comfortable)
@@ -36,22 +35,17 @@ struct AboutView: View {
             HStack(spacing: Theme.Spacing.regular) {
                 BrandMark(size: 44)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("DebtShield AI")
+                    Text("DebtShield")
                         .font(.title3.weight(.bold))
-                    Text("Financial pressure across U.S. counties")
-                        .font(.subheadline)
+                    Text("See where your money stands each month")
+                        .font(Theme.Typography.subheadline)
                         .foregroundStyle(Theme.secondaryText)
                 }
             }
             .accessibilityElement(children: .combine)
 
-            // `sourceDescription` already carries a county count, so it is not
-            // repeated here — otherwise the line reads "3,144 counties · 51
-            // states · … · 3,144 counties".
-            Text("\(dataset.counties.count.formatted(.number)) counties · \(dataset.states.count) states")
-                .font(.footnote.weight(.medium))
-            Text("U.S. Census Bureau, American Community Survey 5-Year estimates")
-                .font(.footnote)
+            Text("Your numbers stay on your phone. No account, no tracking, nothing sent anywhere.")
+                .font(Theme.Typography.footnote)
                 .foregroundStyle(Theme.secondaryText)
         }
     }
@@ -63,25 +57,12 @@ struct AboutView: View {
             SectionHeader(title: "Understand the app")
 
             NavigationLink {
-                MethodologyView(dataset: dataset)
+                HowItWorksView()
             } label: {
                 DetailNavigationRow(
-                    title: "Methodology",
-                    subtitle: "How the Financial Distress Index is calculated, and what it cannot tell you",
-                    systemImage: "function"
-                )
-            }
-            .buttonStyle(.plain)
-
-            Divider()
-
-            NavigationLink {
-                GlossaryView()
-            } label: {
-                DetailNavigationRow(
-                    title: "Glossary",
-                    subtitle: "Plain-English definitions for every term used in the app",
-                    systemImage: "character.book.closed"
+                    title: "How it works",
+                    subtitle: "The safe line, and where the comparison numbers come from",
+                    systemImage: "chart.bar.doc.horizontal"
                 )
             }
             .buttonStyle(.plain)
@@ -92,8 +73,8 @@ struct AboutView: View {
                 replayOnboarding()
             } label: {
                 DetailNavigationRow(
-                    title: "Show the introduction again",
-                    subtitle: "The welcome screen shown when the app first opens",
+                    title: "Show the welcome screen again",
+                    subtitle: "The screen shown when the app first opens",
                     systemImage: "arrow.counterclockwise"
                 )
             }
@@ -109,8 +90,8 @@ struct AboutView: View {
                 DisclaimerView()
             } label: {
                 DetailNavigationRow(
-                    title: "Disclaimer",
-                    subtitle: "Educational use only — not financial, legal, or benefits advice",
+                    title: "The fine print",
+                    subtitle: "A clear picture of your month — not financial or legal advice",
                     systemImage: "exclamationmark.circle"
                 )
             }
@@ -123,7 +104,7 @@ struct AboutView: View {
             } label: {
                 DetailNavigationRow(
                     title: "Privacy",
-                    subtitle: "No account, no tracking, nothing sent off your device",
+                    subtitle: "Your numbers never leave this device",
                     systemImage: "lock.shield"
                 )
             }
@@ -131,28 +112,37 @@ struct AboutView: View {
         }
     }
 
-    private var aboutProjectCard: some View {
+    private var aboutCard: some View {
         Card {
-            SectionHeader(title: "About this project")
-            Text("DebtShield AI began as a research project analysing which U.S. counties face the most financial pressure and why. This app rebuilds that work natively, with the scoring reimplemented in Swift so every figure can be traced back to the public statistic it came from.")
-                .font(.subheadline)
+            SectionHeader(title: "About DebtShield")
+            Text("DebtShield is a calm, private way to see your money. You enter what comes in and what goes out, and it shows you where the month stands — in plain dollars, without a score or a lecture. The goal is simple: to help you stay out of debt, or find your footing if you're already in it.")
+                .font(Theme.Typography.subheadline)
                 .foregroundStyle(Theme.secondaryText)
-            Text("It is a research prototype. It is deliberately explicit about what it does not know: two counties cannot be scored, three risk drivers have no data source, and the machine-learning models from the original research are reported honestly rather than presented as powering the app.")
-                .font(.footnote)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("The comparison numbers come from public data — the U.S. Census Bureau, the EIA, and the BLS. Everything runs on your phone.")
+                .font(Theme.Typography.footnote)
                 .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var versionFooter: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(version)
-                .font(.footnote)
+                .font(Theme.Typography.footnote)
                 .foregroundStyle(Theme.secondaryText)
-            Text("Data: U.S. Census Bureau, American Community Survey 5-Year estimates. Public domain.")
-                .font(.caption)
+            Text("Comparison data: U.S. Census Bureau (rent), EIA (energy, 2024), BLS (food, 2024). Public domain.")
+                .font(Theme.Typography.caption)
                 .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
     }
 }
+
+#if DEBUG
+#Preview {
+    NavigationStack { AboutView(replayOnboarding: {}) }
+}
+#endif

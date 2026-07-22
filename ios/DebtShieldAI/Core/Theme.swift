@@ -184,6 +184,7 @@ enum Theme {
         static let headline = Font.headline
         static let body = Font.body
         static let subheadline = Font.subheadline
+        static let footnote = Font.footnote
         static let caption = Font.caption
     }
 }

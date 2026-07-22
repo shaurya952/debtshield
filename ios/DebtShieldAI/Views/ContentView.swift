@@ -56,36 +56,11 @@ struct ContentView: View {
             SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
                 .navigationTitle("Your month")
         case .about:
-            loaded(title: "About") { dataset, _ in
-                AboutView(dataset: dataset) {
-                    isShowingOnboarding = true
-                }
+            // About is static — it doesn't depend on the county data, so it
+            // never waits on or fails with that load.
+            AboutView {
+                isShowingOnboarding = true
             }
-        }
-    }
-
-    /// Shared routing for the county-data load state, used by the About tab.
-    /// The home tab does not use this.
-    @ViewBuilder
-    private func loaded<Content: View>(
-        title: String,
-        @ViewBuilder content: (Dataset, CountySearchIndex) -> Content
-    ) -> some View {
-        switch store.state {
-        case .idle, .loading:
-            DashboardSkeleton()
-                .background(Theme.screenBackground)
-                .navigationTitle(title)
-        case .loaded(let dataset):
-            if let searchIndex = store.searchIndex {
-                content(dataset, searchIndex)
-            } else {
-                ErrorStateView(error: .noUsableRows) { await store.retry() }
-                    .navigationTitle(title)
-            }
-        case .failed(let error):
-            ErrorStateView(error: error) { await store.retry() }
-                .navigationTitle(title)
         }
     }
 }

@@ -317,23 +317,3 @@ struct ErrorStateView: View {
         .background(Theme.screenBackground)
     }
 }
-
-// MARK: - Disclaimer
-
-/// The educational-use disclaimer. Appears at the foot of every data screen —
-/// it is a standing claim about what the app is, not a one-time notice.
-struct EducationalDisclaimer: View {
-    var body: some View {
-        HStack(alignment: .top, spacing: Theme.Spacing.tight) {
-            Image(systemName: "info.circle")
-                .foregroundStyle(Theme.secondaryText)
-                .accessibilityHidden(true)
-            Text("DebtShield AI is an educational and analytical tool. It does not provide legal, financial, or government-benefit advice.")
-                .font(.footnote)
-                .foregroundStyle(Theme.secondaryText)
-        }
-        .padding(Theme.Spacing.comfortable)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
-    }
-}

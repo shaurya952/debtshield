@@ -28,14 +28,14 @@ enum DataError: LocalizedError, Equatable {
     var message: String {
         switch self {
         case .fileMissing:
-            return "DebtShield AI could not find its built-in county dataset. The app needs it to calculate risk scores. Reinstalling the app usually fixes this."
+            return "DebtShield could not find its built-in comparison data. Reinstalling the app usually fixes this."
         case .unreadable:
             return "The built-in county dataset could not be opened. It may have been damaged. Reinstalling the app usually fixes this."
         case .emptyFile:
             return "The built-in county dataset contains no information."
         case .missingColumns(let columns):
             let list = ListFormatter.localizedString(byJoining: columns)
-            return "The dataset is missing the information DebtShield AI needs to score counties: \(list)."
+            return "The comparison data is missing some information: \(list)."
         case .noUsableRows:
             return "The dataset loaded, but none of its rows contained enough information to score a county."
         }
