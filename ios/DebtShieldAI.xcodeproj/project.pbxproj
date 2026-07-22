@@ -6,14 +6,32 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		AA0000000000000000000019 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AA000000000000000000000A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA0000000000000000000006;
+			remoteInfo = DebtShieldAI;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		AA0000000000000000000001 /* DebtShieldAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DebtShieldAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA0000000000000000000011 /* DebtShieldAIUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DebtShieldAIUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		AA0000000000000000000002 /* DebtShieldAI */ = {isa = PBXFileSystemSynchronizedRootGroup; path = DebtShieldAI; sourceTree = "<group>"; };
-		AA0000000000000000000012 /* DebtShieldAIUITests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = DebtShieldAIUITests; sourceTree = "<group>"; };
+		AA0000000000000000000002 /* DebtShieldAI */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DebtShieldAI;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000012 /* DebtShieldAIUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = DebtShieldAIUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -34,11 +52,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		780B61F1300E66FF00BFAEB4 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000000000000000000012 /* DebtShieldAIUITests */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		AA0000000000000000000004 = {
 			isa = PBXGroup;
 			children = (
 				AA0000000000000000000002 /* DebtShieldAI */,
 				AA0000000000000000000005 /* Products */,
+				780B61F1300E66FF00BFAEB4 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -96,24 +123,6 @@
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
-
-/* Begin PBXTargetDependency section */
-		AA0000000000000000000018 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AA0000000000000000000006 /* DebtShieldAI */;
-			targetProxy = AA0000000000000000000019 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
-/* Begin PBXContainerItemProxy section */
-		AA0000000000000000000019 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = AA000000000000000000000A /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AA0000000000000000000006;
-			remoteInfo = DebtShieldAI;
-		};
-/* End PBXContainerItemProxy section */
 
 /* Begin PBXProject section */
 		AA000000000000000000000A /* Project object */ = {
@@ -185,6 +194,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA0000000000000000000018 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA0000000000000000000006 /* DebtShieldAI */;
+			targetProxy = AA0000000000000000000019 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		AA000000000000000000000C /* Debug */ = {
@@ -328,20 +345,20 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AA000000000000000000000B /* Build configuration list for PBXProject "DebtShieldAI" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AA000000000000000000000C /* Debug */,
-				AA000000000000000000000D /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		AA0000000000000000000007 /* Build configuration list for PBXNativeTarget "DebtShieldAI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA000000000000000000000E /* Debug */,
 				AA000000000000000000000F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA000000000000000000000B /* Build configuration list for PBXProject "DebtShieldAI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000000000000000000000C /* Debug */,
+				AA000000000000000000000D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
