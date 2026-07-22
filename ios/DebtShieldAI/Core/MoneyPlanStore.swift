@@ -12,10 +12,18 @@ import Observation
 final class MoneyPlanStore {
 
     static let defaultsKey = "debtshield.moneyPlan"
+    static let homeCountyKey = "debtshield.homeCounty"
 
     /// The current plan. Reading is free; writing goes through `save` so it
     /// always hits disk.
     private(set) var plan: MoneyPlan
+
+    /// Where the person lives, if they've chosen it — used only to compare
+    /// their rent to the local typical. FIPS is the key into the county data;
+    /// the name is kept alongside so a label can show even before that data
+    /// finishes loading.
+    private(set) var homeCountyFIPS: String?
+    private(set) var homeCountyName: String?
 
     private let defaults: UserDefaults
 
@@ -27,6 +35,31 @@ final class MoneyPlanStore {
         } else {
             plan = .empty
         }
+        if let data = defaults.data(forKey: Self.homeCountyKey),
+           let home = try? JSONDecoder().decode(HomeCounty.self, from: data) {
+            homeCountyFIPS = home.fips
+            homeCountyName = home.name
+        }
+    }
+
+    /// Remember where the person lives, for the local rent comparison.
+    func setHomeCounty(fips: String, name: String) {
+        homeCountyFIPS = fips
+        homeCountyName = name
+        if let data = try? JSONEncoder().encode(HomeCounty(fips: fips, name: name)) {
+            defaults.set(data, forKey: Self.homeCountyKey)
+        }
+    }
+
+    func clearHomeCounty() {
+        homeCountyFIPS = nil
+        homeCountyName = nil
+        defaults.removeObject(forKey: Self.homeCountyKey)
+    }
+
+    private struct HomeCounty: Codable {
+        let fips: String
+        let name: String
     }
 
     /// Replace the plan and persist it. A failed encode leaves the in-memory
@@ -43,6 +76,7 @@ final class MoneyPlanStore {
     func clear() {
         plan = .empty
         defaults.removeObject(forKey: Self.defaultsKey)
+        clearHomeCounty()
     }
 }
 

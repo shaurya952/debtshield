@@ -13,7 +13,13 @@ import SwiftUI
 /// additive on top of this.
 struct SafeLineView: View {
     let store: MoneyPlanStore
+    /// The county data, for the local rent comparison only. Optional-by-nature:
+    /// the screen renders fully whether or not this has loaded, so a budget
+    /// never waits on it.
+    let dataStore: DataStore
+
     @State private var isEditing = false
+    @State private var isChoosingArea = false
 
     private var plan: MoneyPlan { store.plan }
 
@@ -24,6 +30,7 @@ struct SafeLineView: View {
                     resultCard
                     askLink
                     breakdownCard
+                    housingCard
                     editButton
                 } else {
                     emptyState
@@ -38,6 +45,114 @@ struct SafeLineView: View {
         .sheet(isPresented: $isEditing) {
             MyNumbersView(store: store)
         }
+        .sheet(isPresented: $isChoosingArea) {
+            if let searchIndex = dataStore.searchIndex {
+                AreaPickerView(searchIndex: searchIndex) { county in
+                    store.setHomeCounty(fips: county.record.fips, name: county.county)
+                }
+            }
+        }
+    }
+
+    // MARK: - Housing comparison
+
+    /// Shown only when there's a housing figure and the county data has loaded.
+    /// Purely additive — its absence never affects the rest of the screen.
+    @ViewBuilder
+    private var housingCard: some View {
+        if let housing = plan.housing, housing > 0, let dataset = dataStore.dataset {
+            if let fips = store.homeCountyFIPS,
+               let county = dataset.county(fips: fips),
+               let typical = county.record.medianGrossRent {
+                comparisonCard(
+                    HousingComparison(yours: housing, typical: typical, areaName: county.county)
+                )
+            } else {
+                chooseAreaCard
+            }
+        }
+    }
+
+    private func comparisonCard(_ comparison: HousingComparison) -> some View {
+        Card {
+            SectionHeader(
+                title: "How your housing compares",
+                subtitle: "Your payment vs. typical rent in \(comparison.areaName)"
+            )
+
+            let peak = max(comparison.yours, comparison.typical, 1)
+            compareRow(label: "You pay", value: comparison.yours, peak: peak,
+                       color: Theme.essentialColor(.housing))
+            compareRow(label: "Typical rent here", value: comparison.typical, peak: peak,
+                       color: Color(uiColor: .secondaryLabel))
+
+            Text(comparison.sentence)
+                .font(Theme.Typography.body)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("Rent varies a lot within any area, so this is a rough marker — not a target. It compares to rent, so if you own, read it loosely.")
+                .font(Theme.Typography.caption)
+                .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button("Change area") { isChoosingArea = true }
+                .font(Theme.Typography.subheadline.weight(.semibold))
+                .frame(minHeight: Theme.minimumTapTarget)
+        }
+    }
+
+    private func compareRow(label: String, value: Double, peak: Double, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label)
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(Theme.secondaryText)
+                Spacer()
+                Text(money(value))
+                    .font(Theme.Typography.money())
+            }
+            GeometryReader { geo in
+                Capsule()
+                    .fill(color)
+                    .frame(width: max(6, geo.size.width * value / peak))
+            }
+            .frame(height: 10)
+            .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var chooseAreaCard: some View {
+        Button {
+            isChoosingArea = true
+        } label: {
+            HStack(spacing: Theme.Spacing.regular) {
+                Image(systemName: "mappin.and.ellipse")
+                    .font(.title3)
+                    .foregroundStyle(Theme.brand)
+                    .frame(width: 38, height: 38)
+                    .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Compare your rent to your area")
+                        .font(Theme.Typography.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("See how your housing lines up with typical rent nearby")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryText)
+                    .accessibilityHidden(true)
+            }
+            .padding(Theme.Spacing.comfortable)
+            .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+            .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Result
@@ -209,14 +324,14 @@ struct SafeLineView: View {
 
 #if DEBUG
 #Preview("Filled — tight") {
-    NavigationStack { SafeLineView(store: .preview(.sampleTight)) }
+    NavigationStack { SafeLineView(store: .preview(.sampleTight), dataStore: DataStore()) }
 }
 
 #Preview("Filled — over") {
-    NavigationStack { SafeLineView(store: .preview(.sampleOver)) }
+    NavigationStack { SafeLineView(store: .preview(.sampleOver), dataStore: DataStore()) }
 }
 
 #Preview("Empty") {
-    NavigationStack { SafeLineView(store: .preview(.empty)) }
+    NavigationStack { SafeLineView(store: .preview(.empty), dataStore: DataStore()) }
 }
 #endif

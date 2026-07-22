@@ -290,6 +290,12 @@ struct Dataset: Sendable {
         Array(Set(counties.map(\.state))).sorted()
     }
 
+    /// Look up a single county by its FIPS code — used by the personal housing
+    /// comparison to find the typical rent where someone lives.
+    func county(fips: String) -> ScoredCounty? {
+        counties.first { $0.record.fips == fips }
+    }
+
     /// 1 = highest distress. Nil for a county with no score.
     func rank(of county: ScoredCounty) -> Int? {
         guard let index = county.index else { return nil }
