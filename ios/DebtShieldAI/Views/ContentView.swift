@@ -6,10 +6,11 @@ import SwiftUI
 /// `content(for:)` — the navigation shape never has to be rewritten.
 struct ContentView: View {
     @State private var store = DataStore()
+    @State private var moneyStore = MoneyPlanStore()
     @State private var selection = SelectionStore()
     @State private var favorites = FavoritesManager()
     @State private var comparison = ComparisonStore()
-    @State private var selectedTab: AppTab = .dashboard
+    @State private var selectedTab: AppTab = .safeLine
 
     /// Set once the introduction has been read. Persisted so it appears on
     /// first launch only.
@@ -49,6 +50,11 @@ struct ContentView: View {
     @ViewBuilder
     private func content(for tab: AppTab) -> some View {
         switch tab {
+        case .safeLine:
+            // Deliberately NOT routed through `loaded(...)`: the person's own
+            // numbers must never wait on, or fail with, the county dataset.
+            SafeLineView(store: moneyStore)
+                .navigationTitle("Your month")
         case .dashboard:
             loaded(title: "Dashboard") { dataset, _ in
                 DashboardView(dataset: dataset) { county in
@@ -145,6 +151,11 @@ struct ContentView: View {
 /// This is the complete set. Anything added later must be pushed from one of
 /// these five, never appended as a sixth tab.
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
+    // Home is the new heart of the app. The four county tabs that follow are
+    // being retired into a comparison layer in a later step; while both sets
+    // coexist iOS will collapse the overflow into a "More" list, which is
+    // expected and temporary.
+    case safeLine
     case dashboard
     case profile
     case compare
@@ -155,6 +166,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
+        case .safeLine: return "Home"
         case .dashboard: return "Dashboard"
         case .profile: return "County"
         case .compare: return "Compare"
@@ -165,6 +177,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
 
     var systemImage: String {
         switch self {
+        case .safeLine: return "house.fill"
         case .dashboard: return "square.grid.2x2"
         case .profile: return "person.text.rectangle"
         case .compare: return "chart.bar.xaxis"

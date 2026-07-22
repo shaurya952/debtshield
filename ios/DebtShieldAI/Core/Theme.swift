@@ -30,6 +30,41 @@ enum Theme {
         riskColor(level).opacity(0.12)
     }
 
+    // MARK: - Personal status colour
+    //
+    // The green / amber / red the app keeps, but for a *person's* situation
+    // rather than a county grade. These reuse the exact hexes as `riskColor`, so
+    // they inherit the same WCAG-AA contrast that was tuned for the county work —
+    // there is deliberately one set of green/amber/red in the whole app.
+
+    static func statusColor(_ status: MoneyStatus) -> Color {
+        switch status {
+        case .okay: return .adaptive(light: 0x14602F, dark: 0x6EE7A0)
+        case .tight: return .adaptive(light: 0x7A4E00, dark: 0xFCD34D)
+        case .over: return .adaptive(light: 0x991B1B, dark: 0xFCA5A5)
+        }
+    }
+
+    /// Faint fill behind a status pill, matching `riskFill`'s 0.12.
+    static func statusFill(_ status: MoneyStatus) -> Color {
+        statusColor(status).opacity(0.12)
+    }
+
+    /// Colour for one essential segment of the Safe Line bar.
+    ///
+    /// All four are cool tones (blue / teal / purple / indigo) chosen so none of
+    /// them collide with the green/amber/red status meaning — a segment is a
+    /// *category*, never a verdict. Every segment is also labelled, so the colour
+    /// is reinforcement rather than the only signal.
+    static func essentialColor(_ kind: EssentialKind) -> Color {
+        switch kind {
+        case .housing: return .adaptive(light: 0x1D4ED8, dark: 0x93C5FD) // blue
+        case .food:    return .adaptive(light: 0x0F766E, dark: 0x5EEAD4) // teal
+        case .energy:  return .adaptive(light: 0x7E22CE, dark: 0xD8B4FE) // purple
+        case .debt:    return .adaptive(light: 0x4338CA, dark: 0xA5B4FC) // indigo
+        }
+    }
+
     /// Accents for the Compare screen, so each county's bars are consistent
     /// from card to card. Purely decorative — every bar is labelled with its
     /// county name, so nothing is lost without the colour.
@@ -128,6 +163,29 @@ enum Theme {
     }
 
     static let cornerRadius: CGFloat = 16
+
+    // MARK: - Typography
+
+    /// One font scale for the whole app.
+    ///
+    /// Every token maps to a system Dynamic Type text style, so all of it scales
+    /// with the reader's settings and none of it is a fixed point size. Money
+    /// figures use the rounded design — friendlier, and it reads as "money" the
+    /// way tabular rounded numerals do on a bank card. Everything else is the
+    /// standard system face, for one consistent voice.
+    enum Typography {
+        /// The single big dollar figure on the Safe Line screen.
+        static let heroMoney = Font.system(.largeTitle, design: .rounded).weight(.bold)
+        /// A money figure inside a card or row.
+        static func money(_ style: Font.TextStyle = .body) -> Font {
+            .system(style, design: .rounded).weight(.semibold)
+        }
+        static let title = Font.title2.weight(.bold)
+        static let headline = Font.headline
+        static let body = Font.body
+        static let subheadline = Font.subheadline
+        static let caption = Font.caption
+    }
 }
 
 extension Color {

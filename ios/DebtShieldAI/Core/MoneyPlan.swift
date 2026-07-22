@@ -22,7 +22,7 @@ import Foundation
 /// uses the word "risk", "distress", or a grade out of 100. The output is a
 /// situation ("money's tight this month") and a dollar figure ("$312 left"),
 /// never a score.
-struct MoneyPlan: Equatable, Sendable {
+struct MoneyPlan: Equatable, Sendable, Codable {
 
     /// Take-home pay for the month. The one figure everything is measured
     /// against — with no income there is no picture, only inputs.
