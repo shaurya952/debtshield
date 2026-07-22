@@ -13,15 +13,23 @@ import SwiftUI
 /// additive on top of this.
 struct SafeLineView: View {
     let store: MoneyPlanStore
-    /// The county data, for the local rent comparison only. Optional-by-nature:
-    /// the screen renders fully whether or not this has loaded, so a budget
-    /// never waits on it.
+    /// The county data, for the local rent + energy comparison only.
+    /// Optional-by-nature: the screen renders fully whether or not this has
+    /// loaded, so a budget never waits on it.
     let dataStore: DataStore
+    /// Typical-cost reference data (energy by state, food by income band).
+    let benchmarks: Benchmarks
 
     @State private var isEditing = false
     @State private var isChoosingArea = false
 
     private var plan: MoneyPlan { store.plan }
+
+    /// The county the person said they live in, if chosen and loaded.
+    private var homeCounty: ScoredCounty? {
+        guard let fips = store.homeCountyFIPS, let dataset = dataStore.dataset else { return nil }
+        return dataset.county(fips: fips)
+    }
 
     var body: some View {
         ScrollView {
@@ -30,7 +38,7 @@ struct SafeLineView: View {
                     resultCard
                     askLink
                     breakdownCard
-                    housingCard
+                    comparisonSection
                     editButton
                 } else {
                     emptyState
@@ -54,105 +62,96 @@ struct SafeLineView: View {
         }
     }
 
-    // MARK: - Housing comparison
+    // MARK: - Cost comparisons
 
-    /// Shown only when there's a housing figure and the county data has loaded.
-    /// Purely additive — its absence never affects the rest of the screen.
+    /// One card comparing each entered cost to a typical figure or guideline.
+    /// Every row is optional and additive — food and debt appear as soon as
+    /// income is known; rent and energy appear once an area is chosen. The whole
+    /// section is absent until the county data has loaded or a comparison exists.
     @ViewBuilder
-    private var housingCard: some View {
-        if let housing = plan.housing, housing > 0, let dataset = dataStore.dataset {
-            if let fips = store.homeCountyFIPS,
-               let county = dataset.county(fips: fips),
-               let typical = county.record.medianGrossRent {
-                comparisonCard(
-                    HousingComparison(yours: housing, typical: typical, areaName: county.county)
+    private var comparisonSection: some View {
+        let comparisons = CostComparisons.all(plan: plan, county: homeCounty, benchmarks: benchmarks)
+        let canPickArea = dataStore.searchIndex != nil
+        if !comparisons.isEmpty || canPickArea {
+            Card {
+                SectionHeader(
+                    title: "How your costs compare",
+                    subtitle: "Rough markers from public data — guides, not targets"
                 )
-            } else {
-                chooseAreaCard
-            }
-        }
-    }
 
-    private func comparisonCard(_ comparison: HousingComparison) -> some View {
-        Card {
-            SectionHeader(
-                title: "How your housing compares",
-                subtitle: "Your payment vs. typical rent in \(comparison.areaName)"
-            )
+                ForEach(comparisons) { comparison in
+                    comparisonRow(comparison)
+                }
 
-            let peak = max(comparison.yours, comparison.typical, 1)
-            compareRow(label: "You pay", value: comparison.yours, peak: peak,
-                       color: Theme.essentialColor(.housing))
-            compareRow(label: "Typical rent here", value: comparison.typical, peak: peak,
-                       color: Color(uiColor: .secondaryLabel))
+                areaControl(canPickArea: canPickArea, hasComparisons: !comparisons.isEmpty)
 
-            Text(comparison.sentence)
-                .font(Theme.Typography.body)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Text("Rent varies a lot within any area, so this is a rough marker — not a target. It compares to rent, so if you own, read it loosely.")
-                .font(Theme.Typography.caption)
-                .foregroundStyle(Theme.secondaryText)
-                .fixedSize(horizontal: false, vertical: true)
-
-            Button("Change area") { isChoosingArea = true }
-                .font(Theme.Typography.subheadline.weight(.semibold))
-                .frame(minHeight: Theme.minimumTapTarget)
-        }
-    }
-
-    private func compareRow(label: String, value: Double, peak: Double, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(label)
-                    .font(Theme.Typography.subheadline)
+                Text("Sources: Census (rent), EIA (energy), BLS (food). Debt is compared to the common guideline of keeping payments under \(Int(CostComparisons.debtHealthyShare * 100))% of income.")
+                    .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.secondaryText)
-                Spacer()
-                Text(money(value))
-                    .font(Theme.Typography.money())
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            GeometryReader { geo in
-                Capsule()
-                    .fill(color)
-                    .frame(width: max(6, geo.size.width * value / peak))
-            }
-            .frame(height: 10)
-            .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
         }
+    }
+
+    private func comparisonRow(_ comparison: CostComparison) -> some View {
+        HStack(spacing: Theme.Spacing.regular) {
+            Circle()
+                .fill(Theme.essentialColor(comparison.kind))
+                .frame(width: 12, height: 12)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(comparison.kind.label)
+                    .font(Theme.Typography.body)
+                Text(comparison.detail)
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: Theme.Spacing.tight)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(money(comparison.yours))
+                    .font(Theme.Typography.money())
+                Text(comparison.headline)
+                    .font(Theme.Typography.caption.weight(.semibold))
+                    .foregroundStyle(standingColor(comparison.standing))
+            }
+        }
+        .frame(minHeight: Theme.minimumTapTarget)
         .accessibilityElement(children: .combine)
     }
 
-    private var chooseAreaCard: some View {
-        Button {
-            isChoosingArea = true
-        } label: {
-            HStack(spacing: Theme.Spacing.regular) {
-                Image(systemName: "mappin.and.ellipse")
-                    .font(.title3)
-                    .foregroundStyle(Theme.brand)
-                    .frame(width: 38, height: 38)
-                    .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Compare your rent to your area")
-                        .font(Theme.Typography.body.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text("See how your housing lines up with typical rent nearby")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Theme.secondaryText)
-                    .accessibilityHidden(true)
-            }
-            .padding(Theme.Spacing.comfortable)
-            .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
-            .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+    private func standingColor(_ standing: CostStanding) -> Color {
+        switch standing {
+        case .healthy: return Theme.statusColor(.okay)
+        case .watch: return Theme.statusColor(.tight)
+        case .high: return Theme.statusColor(.over)
+        case .above, .below, .about: return Theme.secondaryText
         }
-        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func areaControl(canPickArea: Bool, hasComparisons: Bool) -> some View {
+        if let name = store.homeCountyName {
+            Divider()
+            HStack {
+                Label("Rent & energy vs. \(name)", systemImage: "mappin.and.ellipse")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.secondaryText)
+                Spacer()
+                Button("Change") { isChoosingArea = true }
+                    .font(Theme.Typography.subheadline.weight(.semibold))
+            }
+            .frame(minHeight: Theme.minimumTapTarget)
+        } else if canPickArea {
+            if hasComparisons { Divider() }
+            Button {
+                isChoosingArea = true
+            } label: {
+                Label("Add where you live to compare rent & energy", systemImage: "mappin.and.ellipse")
+                    .font(Theme.Typography.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+            }
+        }
     }
 
     // MARK: - Result
@@ -324,14 +323,14 @@ struct SafeLineView: View {
 
 #if DEBUG
 #Preview("Filled — tight") {
-    NavigationStack { SafeLineView(store: .preview(.sampleTight), dataStore: DataStore()) }
+    NavigationStack { SafeLineView(store: .preview(.sampleTight), dataStore: DataStore(), benchmarks: .previewSample) }
 }
 
 #Preview("Filled — over") {
-    NavigationStack { SafeLineView(store: .preview(.sampleOver), dataStore: DataStore()) }
+    NavigationStack { SafeLineView(store: .preview(.sampleOver), dataStore: DataStore(), benchmarks: .previewSample) }
 }
 
 #Preview("Empty") {
-    NavigationStack { SafeLineView(store: .preview(.empty), dataStore: DataStore()) }
+    NavigationStack { SafeLineView(store: .preview(.empty), dataStore: DataStore(), benchmarks: .previewSample) }
 }
 #endif

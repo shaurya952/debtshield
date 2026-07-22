@@ -7,6 +7,7 @@ import SwiftUI
 struct ContentView: View {
     @State private var store = DataStore()
     @State private var moneyStore = MoneyPlanStore()
+    @State private var benchmarks = BenchmarksLoader.load()
     @State private var selection = SelectionStore()
     @State private var favorites = FavoritesManager()
     @State private var comparison = ComparisonStore()
@@ -53,7 +54,7 @@ struct ContentView: View {
         case .safeLine:
             // Deliberately NOT routed through `loaded(...)`: the person's own
             // numbers must never wait on, or fail with, the county dataset.
-            SafeLineView(store: moneyStore, dataStore: store)
+            SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
                 .navigationTitle("Your month")
         case .dashboard:
             loaded(title: "Dashboard") { dataset, _ in
