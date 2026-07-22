@@ -70,7 +70,7 @@ enum CostComparisons {
         return CostComparison(
             kind: .energy, yours: yours, benchmark: typical, standing: standing,
             headline: headline,
-            detail: "Typical electricity bill in \(county.state): \(money(typical)) · EIA"
+            detail: "Typical electricity bill in \(county.state): \(money(typical)) · EIA 2024"
         )
     }
 
@@ -83,7 +83,7 @@ enum CostComparisons {
         return CostComparison(
             kind: .food, yours: yours, benchmark: typical, standing: standing,
             headline: headline,
-            detail: "Typical for your income: \(money(typical))/mo · BLS"
+            detail: "Typical for your income: \(money(typical))/mo · BLS 2024"
         )
     }
 
