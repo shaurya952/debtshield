@@ -22,6 +22,7 @@ struct SafeLineView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
                 if plan.isComplete {
                     resultCard
+                    askLink
                     breakdownCard
                     editButton
                 } else {
@@ -69,6 +70,48 @@ struct SafeLineView: View {
     private func headlineAmount(_ left: Double) -> String {
         let magnitude = left.magnitude.formatted(.currency(code: "USD").precision(.fractionLength(0)))
         return left >= 0 ? magnitude : "−\(magnitude)"
+    }
+
+    // MARK: - Ask
+
+    private var askLink: some View {
+        NavigationLink {
+            PersonalChatView(store: store)
+        } label: {
+            HStack(spacing: Theme.Spacing.regular) {
+                Image(systemName: "bubble.left.and.text.bubble.right")
+                    .font(.title3)
+                    .foregroundStyle(Theme.brand)
+                    .frame(width: 38, height: 38)
+                    .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(askTitle)
+                        .font(Theme.Typography.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("A calm, plain explanation — no judgment")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryText)
+                    .accessibilityHidden(true)
+            }
+            .padding(Theme.Spacing.comfortable)
+            .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+            .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens Ask DebtShield about your month")
+    }
+
+    private var askTitle: String {
+        switch plan.status {
+        case .over, .tight: return "Ask why it's tight"
+        default: return "Ask about your month"
+        }
     }
 
     // MARK: - Breakdown
