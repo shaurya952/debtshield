@@ -20,7 +20,7 @@ import SwiftUI
 /// a single spoken accessibility summary.
 struct SafeLineBar: View {
     let plan: MoneyPlan
-    var barHeight: CGFloat = 60
+    var barHeight: CGFloat = 64
 
     private var income: Double { max(plan.monthlyIncome ?? 0, 0) }
     private var essentials: Double { plan.essentialsTotal }
@@ -62,7 +62,14 @@ struct SafeLineBar: View {
                     ForEach(placed, id: \.segment.id) { item in
                         let segWidth = max(0, item.segment.amount * scale)
                         Rectangle()
-                            .fill(Theme.essentialColor(item.segment.kind))
+                            .fill(LinearGradient(
+                                colors: [
+                                    Theme.essentialColor(item.segment.kind),
+                                    Theme.essentialColor(item.segment.kind).opacity(0.82)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ))
                             .frame(width: segWidth)
                             .overlay(alignment: .leading) {
                                 // Label inside only when it comfortably fits;
@@ -99,6 +106,7 @@ struct SafeLineBar: View {
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: barHeight / 2, style: .continuous))
+                .animation(.easeOut(duration: 0.4), value: plan)
             }
             .frame(height: barHeight)
 

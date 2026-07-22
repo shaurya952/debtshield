@@ -23,6 +23,10 @@ struct SafeLineView: View {
     @State private var isEditing = false
     @State private var isChoosingArea = false
 
+    /// The big money figure — larger than any Theme style, and scales with
+    /// Dynamic Type.
+    @ScaledMetric(relativeTo: .largeTitle) private var heroSize: CGFloat = 46
+
     private var plan: MoneyPlan { store.plan }
 
     /// The county the person said they live in, if chosen and loaded.
@@ -159,25 +163,38 @@ struct SafeLineView: View {
     @ViewBuilder
     private var resultCard: some View {
         let status = plan.status ?? .okay
-        Card {
-            // Eyebrow: the situation, in words and colour.
-            Text(status.headline)
-                .font(Theme.Typography.headline)
-                .foregroundStyle(Theme.statusColor(status))
+        VStack(alignment: .leading, spacing: Theme.Spacing.comfortable) {
+            // The situation, as a pill: icon + colour + words.
+            StatusPill(status: status)
 
-            // The one number that matters.
+            // The one number that matters — big, friendly, rounded.
             if let left = plan.moneyLeft {
-                Text(headlineAmount(left))
-                    .font(Theme.Typography.heroMoney)
-                    .foregroundStyle(.primary)
-                    .contentTransition(.numericText())
-                Text(left >= 0 ? "left this month" : "short this month")
-                    .font(Theme.Typography.subheadline)
-                    .foregroundStyle(Theme.secondaryText)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(headlineAmount(left))
+                        .font(.system(size: heroSize, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .contentTransition(.numericText())
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                    Text(left >= 0 ? "left this month" : "short this month")
+                        .font(Theme.Typography.subheadline)
+                        .foregroundStyle(Theme.secondaryText)
+                }
             }
 
             SafeLineBar(plan: plan)
                 .padding(.top, Theme.Spacing.tight)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Theme.Spacing.comfortable)
+        .background {
+            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                .fill(Theme.cardBackground)
+                .overlay {
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                        .fill(Theme.statusWash(status))
+                }
+                .shadow(color: Theme.heroShadow, radius: 14, x: 0, y: 8)
         }
     }
 
@@ -288,8 +305,10 @@ struct SafeLineView: View {
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.comfortable) {
             Image(systemName: "chart.bar.doc.horizontal")
-                .font(.system(size: 44))
+                .font(.system(size: 40))
                 .foregroundStyle(Theme.brand)
+                .frame(width: 96, height: 96)
+                .background(Circle().fill(Theme.iconWell(Theme.brand)))
                 .accessibilityHidden(true)
 
             Text("See where your money stands")

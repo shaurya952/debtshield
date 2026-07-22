@@ -21,6 +21,12 @@ struct OnboardingView: View {
                 Spacer(minLength: Theme.Spacing.section)
 
                 BrandMark(size: 84)
+                    .padding(30)
+                    .background {
+                        Circle()
+                            .fill(Theme.iconWell(Theme.brand))
+                            .overlay(Circle().strokeBorder(Theme.brand.opacity(0.10), lineWidth: 1))
+                    }
                     .accessibilityHidden(true)
 
                 VStack(spacing: Theme.Spacing.regular) {

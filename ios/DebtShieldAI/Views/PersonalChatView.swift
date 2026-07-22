@@ -204,13 +204,13 @@ struct ChatBubble: View {
                 if let provenance = message.provenance {
                     Label(provenance, systemImage: "doc.text.magnifyingglass")
                         .font(.caption)
-                        .foregroundStyle(isUser ? Color.white.opacity(0.8) : Color.secondary)
+                        .foregroundStyle(isUser ? Color.white.opacity(0.85) : Theme.secondaryText)
                 }
             }
             .padding(Theme.Spacing.regular)
             .background(
                 isUser ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(Theme.cardBackground),
-                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+                in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
             )
         }
         .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)

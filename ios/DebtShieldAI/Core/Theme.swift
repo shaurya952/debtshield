@@ -50,6 +50,21 @@ enum Theme {
         statusColor(status).opacity(0.12)
     }
 
+    /// A soft diagonal wash of the status colour, laid over the hero card so the
+    /// month's situation is felt the moment the screen opens — calm, never loud.
+    /// It fades to clear, so text contrast over it stays well within AA.
+    static func statusWash(_ status: MoneyStatus) -> LinearGradient {
+        LinearGradient(
+            colors: [statusColor(status).opacity(0.16), statusColor(status).opacity(0.0)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    /// A little more lift than `cardShadow`, for the one hero card that should
+    /// sit above the rest.
+    static let heroShadow = Color.black.opacity(0.10)
+
     /// Colour for one essential segment of the Safe Line bar.
     ///
     /// All four are cool tones (blue / teal / purple / indigo) chosen so none of

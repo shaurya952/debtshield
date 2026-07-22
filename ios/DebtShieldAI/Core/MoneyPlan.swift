@@ -113,6 +113,16 @@ enum MoneyStatus: String, CaseIterable, Identifiable, Sendable {
         case .over: return "Money's tight this month"
         }
     }
+
+    /// A distinct SF Symbol per status, so the situation is carried by shape as
+    /// well as colour — it survives greyscale, colour-blindness, and VoiceOver.
+    var symbolName: String {
+        switch self {
+        case .okay: return "checkmark.circle.fill"
+        case .tight: return "equal.circle.fill"
+        case .over: return "exclamationmark.triangle.fill"
+        }
+    }
 }
 
 // MARK: - Computed picture
