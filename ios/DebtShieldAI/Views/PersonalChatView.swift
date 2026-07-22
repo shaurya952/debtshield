@@ -173,6 +173,62 @@ struct PersonalChatView: View {
     }
 }
 
+// MARK: - Bubble
+
+/// One message.
+///
+/// Role is carried three ways — alignment, background, and a visible "You" /
+/// "DebtShield" label — so it never depends on colour or position alone.
+struct ChatBubble: View {
+    let message: ChatMessage
+
+    private var isUser: Bool { message.role == .user }
+
+    var body: some View {
+        VStack(alignment: isUser ? .trailing : .leading, spacing: 4) {
+            HStack(spacing: 5) {
+                if !isUser { BrandMark(size: 15) }
+                Text(isUser ? "You" : "DebtShield")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryText)
+            }
+
+            VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
+                Text(.init(message.text))
+                    .font(.body)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityHidden(true)
+                    .foregroundStyle(isUser ? Color.white : Color.primary)
+                    .textSelection(.enabled)
+
+                if let provenance = message.provenance {
+                    Label(provenance, systemImage: "doc.text.magnifyingglass")
+                        .font(.caption)
+                        .foregroundStyle(isUser ? Color.white.opacity(0.8) : Color.secondary)
+                }
+            }
+            .padding(Theme.Spacing.regular)
+            .background(
+                isUser ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(Theme.cardBackground),
+                in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(message.role.accessibilityPrefix): \(spokenText)")
+    }
+
+    /// Markdown emphasis markers would otherwise be read aloud literally.
+    private var spokenText: String {
+        var text = message.text.replacingOccurrences(of: "**", with: "")
+        text = text.replacingOccurrences(of: "· ", with: "")
+        if let provenance = message.provenance {
+            text += ". Source: \(provenance)"
+        }
+        return text
+    }
+}
+
 #if DEBUG
 #Preview("With numbers") {
     NavigationStack { PersonalChatView(store: .preview(.sampleOver)) }

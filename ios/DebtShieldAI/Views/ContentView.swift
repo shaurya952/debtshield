@@ -2,15 +2,14 @@ import SwiftUI
 
 /// Root shell.
 ///
-/// Phases 2–9 add a tab by adding a case to `AppTab` and one branch to
-/// `content(for:)` — the navigation shape never has to be rewritten.
+/// v2 is a personal tool: the home screen is the Safe Line, and the county data
+/// survives only as a comparison layer behind it. The tab set is deliberately
+/// small — Home and About — so the app reads as one focused thing rather than a
+/// dashboard.
 struct ContentView: View {
     @State private var store = DataStore()
     @State private var moneyStore = MoneyPlanStore()
     @State private var benchmarks = BenchmarksLoader.load()
-    @State private var selection = SelectionStore()
-    @State private var favorites = FavoritesManager()
-    @State private var comparison = ComparisonStore()
     @State private var selectedTab: AppTab = .safeLine
 
     /// Set once the introduction has been read. Persisted so it appears on
@@ -32,10 +31,10 @@ struct ContentView: View {
         }
         .tint(Theme.brand)
         .task {
+            // Loads the county data used by the comparison layer. The home
+            // screen never waits on this — it renders and works regardless.
             await store.load()
         }
-        // Covers the screen so the disclaimer is read before anything else.
-        // Not dismissible by swipe — the reader has to acknowledge it.
         .fullScreenCover(isPresented: $isShowingOnboarding) {
             OnboardingView {
                 hasSeenOnboarding = true
@@ -56,46 +55,6 @@ struct ContentView: View {
             // numbers must never wait on, or fail with, the county dataset.
             SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
                 .navigationTitle("Your month")
-        case .dashboard:
-            loaded(title: "Dashboard") { dataset, _ in
-                DashboardView(dataset: dataset) { county in
-                    // Tapping a county in a dashboard list opens its profile,
-                    // so the top-10 lists are a way in rather than a dead end.
-                    selection.select(county)
-                    selectedTab = .profile
-                }
-            }
-        case .profile:
-            loaded(title: "County Profile") { dataset, searchIndex in
-                CountyProfileView(
-                    dataset: dataset,
-                    searchIndex: searchIndex,
-                    selection: selection,
-                    favorites: favorites
-                )
-            }
-        case .compare:
-            loaded(title: "Compare") { dataset, searchIndex in
-                CompareCountiesView(
-                    dataset: dataset,
-                    searchIndex: searchIndex,
-                    comparison: comparison,
-                    favorites: favorites
-                )
-            }
-        case .insights:
-            loaded(title: "Insights") { dataset, searchIndex in
-                InsightsView(
-                    dataset: dataset,
-                    searchIndex: searchIndex,
-                    selection: selection
-                ) { county in
-                    // Same behaviour as the dashboard lists: picking a county
-                    // anywhere in the app opens it on the County tab.
-                    selection.select(county)
-                    selectedTab = .profile
-                }
-            }
         case .about:
             loaded(title: "About") { dataset, _ in
                 AboutView(dataset: dataset) {
@@ -105,8 +64,8 @@ struct ContentView: View {
         }
     }
 
-    /// Shared routing for the load state machine, so every tab gets the same
-    /// skeleton and the same friendly error screen for free.
+    /// Shared routing for the county-data load state, used by the About tab.
+    /// The home tab does not use this.
     @ViewBuilder
     private func loaded<Content: View>(
         title: String,
@@ -121,8 +80,6 @@ struct ContentView: View {
             if let searchIndex = store.searchIndex {
                 content(dataset, searchIndex)
             } else {
-                // Unreachable in practice: the index is built alongside the
-                // dataset. Handled rather than force-unwrapped.
                 ErrorStateView(error: .noUsableRows) { await store.retry() }
                     .navigationTitle(title)
             }
@@ -133,34 +90,12 @@ struct ContentView: View {
     }
 }
 
-/// The tab set.
+/// The tab set — just two, for a focused personal tool.
 ///
-/// Capped at five for the life of the app. iOS collapses any tab beyond the
-/// fifth into a system "More" list, which hides features behind an unlabelled
-/// row and reads as an unfinished app in review.
-///
-/// The shape everything else slots into:
-///
-/// - **Dashboard** — national picture
-/// - **County** — the selected county, and the hub for everything about it:
-///   Risk Drivers, Recommendations, and Scenario Simulator are pushed from here
-/// - **Compare** — several counties side by side
-/// - **Insights** — national-level screens: Risk Map and Model Performance,
-///   with Ask DebtShield joining in Phase 8
-/// - **About** — methodology, glossary, disclaimer, and privacy
-///
-/// This is the complete set. Anything added later must be pushed from one of
-/// these five, never appended as a sixth tab.
+/// - **Home** — the Safe Line: your month in plain dollars, plus comparisons
+/// - **About** — how it works, privacy, and the disclaimer
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
-    // Home is the new heart of the app. The four county tabs that follow are
-    // being retired into a comparison layer in a later step; while both sets
-    // coexist iOS will collapse the overflow into a "More" list, which is
-    // expected and temporary.
     case safeLine
-    case dashboard
-    case profile
-    case compare
-    case insights
     case about
 
     var id: String { rawValue }
@@ -168,10 +103,6 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var title: String {
         switch self {
         case .safeLine: return "Home"
-        case .dashboard: return "Dashboard"
-        case .profile: return "County"
-        case .compare: return "Compare"
-        case .insights: return "Insights"
         case .about: return "About"
         }
     }
@@ -179,10 +110,6 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var systemImage: String {
         switch self {
         case .safeLine: return "house.fill"
-        case .dashboard: return "square.grid.2x2"
-        case .profile: return "person.text.rectangle"
-        case .compare: return "chart.bar.xaxis"
-        case .insights: return "chart.dots.scatter"
         case .about: return "info.circle"
         }
     }
