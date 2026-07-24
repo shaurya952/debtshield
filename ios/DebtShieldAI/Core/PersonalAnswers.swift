@@ -30,13 +30,19 @@ enum PersonalChatEngine {
         to question: String,
         plan: MoneyPlan,
         county: ScoredCounty? = nil,
-        benchmarks: Benchmarks? = nil
+        benchmarks: Benchmarks? = nil,
+        months: [MonthRecord] = []
     ) -> ChatAnswer {
         let q = normalise(question)
         guard !q.isEmpty else { return opening(for: plan) }
 
         // Advice territory is turned away before anything else.
         if let redirect = adviceRedirect(q) { return redirect }
+
+        // "Where is this heading" — the early-warning, from the month history.
+        // Checked before "what if" so "will I be short next month" reads as a
+        // trajectory question, not a hypothetical.
+        if let heading = trajectoryAnswer(q, months: months) { return heading }
 
         // "What if …" works on the entered numbers.
         if let whatIf = whatIf(q, plan: plan) { return whatIf }
@@ -102,6 +108,34 @@ enum PersonalChatEngine {
         return ChatAnswer(
             text: "Once you add your numbers on the home screen, I can explain your month in plain dollars. I can still tell you how the safe line works in the meantime.",
             followUps: quickPrompts(for: plan)
+        )
+    }
+
+    // MARK: - Trajectory (the early-warning)
+
+    /// "Am I heading toward debt", "is this getting worse", "where's this going"
+    /// — answered from the month history via `TrajectoryEngine`.
+    private static func trajectoryAnswer(_ q: String, months: [MonthRecord]) -> ChatAnswer? {
+        let markers = ["heading", "headed", "trajectory", "getting worse", "getting better",
+                       "where am i going", "where is this going", "where this is going",
+                       "where is this heading", "am i heading", "toward debt", "towards debt",
+                       "into debt", "on track", "coming months", "am i improving",
+                       "am i getting", "will i be short", "will i run out", "my trend"]
+        guard has(q, markers) else { return nil }
+
+        let values = months.compactMap { $0.moneyLeft }
+        guard let key = months.last?.monthKey,
+              let t = TrajectoryEngine.read(moneyLeft: values, currentMonthKey: key) else {
+            return ChatAnswer(
+                text: "I need a few months of your numbers to see where things are heading — I'll be able to tell after a month or two of tracking. Everything's saved right here on your phone.",
+                followUps: ["Why is it tight?", "How does my rent compare?"],
+                isDecline: true
+            )
+        }
+        return ChatAnswer(
+            text: "\(t.headline)\n\n\(t.detail)",
+            provenance: "Your last \(values.count) months, on this device",
+            followUps: ["What's my fastest fix?", "How do all my costs compare?"]
         )
     }
 

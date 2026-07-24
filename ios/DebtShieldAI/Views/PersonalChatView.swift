@@ -24,13 +24,28 @@ struct PersonalChatView: View {
         guard let fips = store.homeCountyFIPS, let dataset = dataStore?.dataset else { return nil }
         return dataset.county(fips: fips)
     }
+
+    /// Past months plus this month, oldest first — for the "where is this
+    /// heading" early-warning.
+    private var months: [MonthRecord] {
+        var all = store.history.reversed().map { $0 }
+        if store.plan.isComplete, !store.month.isEmpty {
+            all.append(MonthRecord(monthKey: store.month, plan: store.plan))
+        }
+        return all
+    }
     private var conversationNotStarted: Bool { messages.count <= 1 }
 
     private var suggestions: [String] {
         if let last = messages.last, last.role == .assistant, !last.followUps.isEmpty {
             return last.followUps
         }
-        return PersonalChatEngine.quickPrompts(for: plan)
+        var prompts = PersonalChatEngine.quickPrompts(for: plan)
+        // Once there's a couple of months tracked, lead with the differentiator.
+        if store.history.count >= 2 {
+            prompts.insert("Am I heading toward debt?", at: 0)
+        }
+        return prompts
     }
 
     var body: some View {
@@ -167,7 +182,7 @@ struct PersonalChatView: View {
         draft = ""
         messages.append(ChatMessage(role: .user, text: question))
 
-        let answer = PersonalChatEngine.respond(to: question, plan: plan, county: homeCounty, benchmarks: benchmarks)
+        let answer = PersonalChatEngine.respond(to: question, plan: plan, county: homeCounty, benchmarks: benchmarks, months: months)
         messages.append(ChatMessage(
             role: .assistant,
             text: answer.text,

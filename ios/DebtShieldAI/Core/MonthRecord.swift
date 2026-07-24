@@ -28,6 +28,18 @@ struct MonthRecord: Codable, Equatable, Identifiable, Sendable {
         return String(format: "%04d-%02d", c.year ?? 0, c.month ?? 0)
     }
 
+    /// A "yyyy-MM" key `n` months after the given key.
+    static func addMonths(_ n: Int, to key: String, calendar: Calendar = .current) -> String {
+        let parts = key.split(separator: "-")
+        guard parts.count == 2, let year = Int(parts[0]), let month = Int(parts[1]) else { return key }
+        var comps = DateComponents()
+        comps.year = year
+        comps.month = month
+        guard let base = calendar.date(from: comps),
+              let future = calendar.date(byAdding: .month, value: n, to: base) else { return key }
+        return MonthRecord.key(for: future, calendar: calendar)
+    }
+
     /// Turns a "yyyy-MM" key into a readable month label.
     static func label(for key: String, includeYear: Bool = true) -> String {
         let parts = key.split(separator: "-")

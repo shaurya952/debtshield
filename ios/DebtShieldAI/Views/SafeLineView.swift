@@ -35,6 +35,7 @@ struct SafeLineView: View {
 
                 if plan.isComplete {
                     resultCard
+                    headingCard
                     nextStepCard
                     monthsCard
                     breakdownCard
@@ -159,15 +160,72 @@ struct SafeLineView: View {
         return ("\(amount) \(diff > 0 ? "more" : "less") than \(last.label)", diff > 0)
     }
 
-    // MARK: - Your months
+    // MARK: - Where this is heading (the early-warning)
 
-    /// Past months (oldest first) plus this month, capped to the last six.
-    private var recentMonths: [MonthRecord] {
+    private var allMonths: [MonthRecord] {
         var months = store.history.reversed().map { $0 }
         if plan.isComplete, !store.month.isEmpty {
             months.append(MonthRecord(monthKey: store.month, plan: plan))
         }
-        return Array(months.suffix(6))
+        return months
+    }
+
+    private var trajectory: Trajectory? {
+        let values = allMonths.compactMap { $0.moneyLeft }
+        guard let key = allMonths.last?.monthKey else { return nil }
+        return TrajectoryEngine.read(moneyLeft: values, currentMonthKey: key)
+    }
+
+    @ViewBuilder
+    private var headingCard: some View {
+        if let t = trajectory {
+            Card {
+                Label {
+                    Text(t.headline)
+                        .font(Theme.Typography.headline)
+                } icon: {
+                    Image(systemName: headingIcon(t.direction))
+                }
+                .foregroundStyle(headingColor(t.direction))
+                .accessibilityAddTraits(.isHeader)
+
+                Text(.init(t.detail))
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text("A rough heading from your last \(allMonths.count) months — not a certainty. It only lives on your phone.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    private func headingIcon(_ direction: Trajectory.Direction) -> String {
+        switch direction {
+        case .improving: return "chart.line.uptrend.xyaxis"
+        case .steady: return "arrow.right.circle.fill"
+        case .slipping: return "chart.line.downtrend.xyaxis"
+        case .underwater: return "exclamationmark.triangle.fill"
+        }
+    }
+
+    private func headingColor(_ direction: Trajectory.Direction) -> Color {
+        switch direction {
+        case .improving: return Theme.statusColor(.okay)
+        case .steady: return Theme.brand
+        case .slipping: return Theme.statusColor(.tight)
+        case .underwater: return Theme.statusColor(.over)
+        }
+    }
+
+    // MARK: - Your months
+
+    /// Past months (oldest first) plus this month, capped to the last six.
+    private var recentMonths: [MonthRecord] {
+        Array(allMonths.suffix(6))
     }
 
     @ViewBuilder
