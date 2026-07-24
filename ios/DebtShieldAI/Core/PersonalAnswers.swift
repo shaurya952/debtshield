@@ -26,7 +26,12 @@ enum PersonalChatEngine {
 
     // MARK: - Entry point
 
-    static func respond(to question: String, plan: MoneyPlan) -> ChatAnswer {
+    static func respond(
+        to question: String,
+        plan: MoneyPlan,
+        county: ScoredCounty? = nil,
+        benchmarks: Benchmarks? = nil
+    ) -> ChatAnswer {
         let q = normalise(question)
         guard !q.isEmpty else { return opening(for: plan) }
 
@@ -39,6 +44,12 @@ enum PersonalChatEngine {
         // The safe line can be explained even before numbers are entered.
         if has(q, ["safe line", "safeline", "the line", "55", "fifty five", "fifty-five"]) {
             return safeLineExplanation(plan)
+        }
+
+        // "How does my rent compare / is my energy high" — uses the county and
+        // national reference data, the same numbers the Compare tab shows.
+        if let comparison = comparisonAnswer(q, plan: plan, county: county, benchmarks: benchmarks) {
+            return comparison
         }
 
         // Everything else needs the numbers.
@@ -73,17 +84,18 @@ enum PersonalChatEngine {
         guard plan.isComplete else {
             return ["What's the safe line?", "What can this tell me?"]
         }
-        var prompts = ["Why is it tight?", "What's my biggest cost?", "What's my fastest fix?"]
+        var prompts = ["Why is it tight?", "How does my rent compare?", "What's my fastest fix?"]
         if let biggest = biggestSegment(plan) {
             prompts.append("What if \(biggest.label.lowercased()) dropped $100?")
         }
+        prompts.append("How do all my costs compare?")
         return prompts
     }
 
     static func opening(for plan: MoneyPlan) -> ChatAnswer {
         if plan.isComplete {
             return ChatAnswer(
-                text: "Ask me about your month. I'll explain it from the numbers you entered — why things are tight, where your money goes, and what would free up the most.",
+                text: "Ask me about your month. I'll explain it from the numbers you entered — why things are tight, where your money goes, what would free up the most, and how your costs compare to your area and the rest of the U.S.",
                 followUps: quickPrompts(for: plan)
             )
         }
@@ -91,6 +103,84 @@ enum PersonalChatEngine {
             text: "Once you add your numbers on the home screen, I can explain your month in plain dollars. I can still tell you how the safe line works in the meantime.",
             followUps: quickPrompts(for: plan)
         )
+    }
+
+    // MARK: - Comparison (integrates the county + national data)
+
+    /// Answers "how does my rent compare", "is my energy bill high", "how do I
+    /// compare to everyone else" — from the same `CostComparisons` the Compare
+    /// tab uses. Returns nil when the question isn't about comparing.
+    private static func comparisonAnswer(
+        _ q: String,
+        plan: MoneyPlan,
+        county: ScoredCounty?,
+        benchmarks: Benchmarks?
+    ) -> ChatAnswer? {
+        let markers = ["compare", "comparison", "typical", "average", "normal",
+                       "than most", "than everyone", "than others", "everyone else",
+                       "national", "nationally", "my area", "the area", "vs ", "versus",
+                       "too much", "too high", "too low", "higher", "lower than",
+                       "is my rent high", "is my", "how much do others", "how do i stack"]
+        guard has(q, markers) else { return nil }
+        guard plan.isComplete else { return needNumbers() }
+
+        let comps = CostComparisons.all(plan: plan, county: county, benchmarks: benchmarks)
+        guard !comps.isEmpty else {
+            return ChatAnswer(
+                text: "I can compare your costs to what's typical once the numbers are in. Add where you live on the Compare tab to include your local rent and energy.",
+                followUps: ["What's the safe line?"],
+                isDecline: true
+            )
+        }
+
+        // A specific cost named in the question wins.
+        if let kind = category(in: q), let match = comps.first(where: { $0.kind == kind }) {
+            return describeOne(match)
+        }
+        return overallComparison(comps)
+    }
+
+    private static func describeOne(_ c: Comparison) -> ChatAnswer {
+        var text = "Your \(c.kind.label.lowercased()) is **\(money(c.yours))** a month.\n\n"
+        for ref in c.refs {
+            text += "· \(ref.label): \(money(ref.amount))\n"
+        }
+        text += "\n\(c.verdict)"
+        return ChatAnswer(
+            text: text,
+            provenance: "Your numbers vs \(c.source)",
+            followUps: ["How do all my costs compare?", "What's my fastest fix?"]
+        )
+    }
+
+    private static func overallComparison(_ comps: [Comparison]) -> ChatAnswer {
+        let lines = comps.map { c -> String in
+            let ref = c.refs.first
+            let refText = ref.map { " vs \(money($0.amount)) \($0.label.lowercased())" } ?? ""
+            return "· \(c.kind.label): \(money(c.yours))\(refText) — \(standingWord(c.standing))"
+        }.joined(separator: "\n")
+
+        let highs = comps.filter { $0.standing == .above || $0.standing == .high }.map { $0.kind.label.lowercased() }
+        let closer = highs.isEmpty
+            ? "Nothing's standing out as high — you're close to or below typical across the board."
+            : "Running higher than most: \(ListFormatter.localizedString(byJoining: highs)). That's just where to look first."
+
+        return ChatAnswer(
+            text: "Here's how your costs line up with typical:\n\n\(lines)\n\n\(closer)",
+            provenance: "Your numbers vs Census, EIA, BLS",
+            followUps: ["What's my fastest fix?", "Why is it tight?"]
+        )
+    }
+
+    private static func standingWord(_ standing: CostStanding) -> String {
+        switch standing {
+        case .above: return "higher than most"
+        case .about: return "about typical"
+        case .below: return "lower than most"
+        case .healthy: return "comfortable"
+        case .watch: return "a bit high"
+        case .high: return "high"
+        }
     }
 
     // MARK: - Advice redirect

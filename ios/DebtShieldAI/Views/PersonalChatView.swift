@@ -8,6 +8,10 @@ import SwiftUI
 /// the app exactly.
 struct PersonalChatView: View {
     let store: MoneyPlanStore
+    /// The comparison data, so the AI can answer "how does my rent compare".
+    /// Optional-by-nature: the chat works without it, just without comparisons.
+    var dataStore: DataStore? = nil
+    var benchmarks: Benchmarks? = nil
 
     @State private var messages: [ChatMessage] = []
     @State private var draft: String = ""
@@ -15,6 +19,11 @@ struct PersonalChatView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var plan: MoneyPlan { store.plan }
+
+    private var homeCounty: ScoredCounty? {
+        guard let fips = store.homeCountyFIPS, let dataset = dataStore?.dataset else { return nil }
+        return dataset.county(fips: fips)
+    }
     private var conversationNotStarted: Bool { messages.count <= 1 }
 
     private var suggestions: [String] {
@@ -158,7 +167,7 @@ struct PersonalChatView: View {
         draft = ""
         messages.append(ChatMessage(role: .user, text: question))
 
-        let answer = PersonalChatEngine.respond(to: question, plan: plan)
+        let answer = PersonalChatEngine.respond(to: question, plan: plan, county: homeCounty, benchmarks: benchmarks)
         messages.append(ChatMessage(
             role: .assistant,
             text: answer.text,

@@ -56,15 +56,17 @@ struct ContentView: View {
         switch tab {
         case .safeLine:
             // The person's own numbers — never waits on the county data.
-            SafeLineView(store: moneyStore) {
-                selectedTab = .compare
-            }
+            SafeLineView(store: moneyStore)
         case .compare:
             // The comparison layer. Uses the county data when it's loaded, and
             // still shows national + food + debt while it isn't.
             CompareView(store: moneyStore, dataStore: store, benchmarks: benchmarks) {
                 selectedTab = .safeLine
             }
+        case .ask:
+            // The AI, in its own section — with the comparison data wired in so
+            // it can answer "how does my rent compare".
+            PersonalChatView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
         case .about:
             // About is static — it doesn't depend on the county data.
             AboutView {
@@ -78,10 +80,12 @@ struct ContentView: View {
 ///
 /// - **Home** — the Safe Line: your month in plain dollars
 /// - **Compare** — your spending vs. your area and the U.S.
+/// - **Ask** — the AI, in plain language, about your own numbers
 /// - **About** — how it works, privacy, and the disclaimer
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case safeLine
     case compare
+    case ask
     case about
 
     var id: String { rawValue }
@@ -90,6 +94,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .safeLine: return "Home"
         case .compare: return "Compare"
+        case .ask: return "Ask"
         case .about: return "About"
         }
     }
@@ -98,6 +103,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .safeLine: return "house.fill"
         case .compare: return "chart.bar.xaxis"
+        case .ask: return "bubble.left.and.text.bubble.right.fill"
         case .about: return "info.circle"
         }
     }

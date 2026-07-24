@@ -10,8 +10,6 @@ import SwiftUI
 /// budget must never wait on — or fail with — anything else.
 struct SafeLineView: View {
     let store: MoneyPlanStore
-    /// Jumps to the Compare tab.
-    var onCompare: () -> Void
 
     @State private var isEditing = false
 
@@ -26,8 +24,6 @@ struct SafeLineView: View {
                 if plan.isComplete {
                     resultCard
                     nextStepCard
-                    askLink
-                    compareCard
                     monthsCard
                     breakdownCard
                     editButton
@@ -197,45 +193,6 @@ struct SafeLineView: View {
         return text
     }
 
-    // MARK: - Compare
-
-    private var compareCard: some View {
-        Button {
-            onCompare()
-        } label: {
-            ActionRowLabel(
-                systemImage: "chart.bar.xaxis",
-                title: "See how you compare",
-                subtitle: "Your spending vs. your area and the U.S."
-            )
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Opens the Compare tab")
-    }
-
-    // MARK: - Ask
-
-    private var askLink: some View {
-        NavigationLink {
-            PersonalChatView(store: store)
-        } label: {
-            ActionRowLabel(
-                systemImage: "bubble.left.and.text.bubble.right",
-                title: askTitle,
-                subtitle: "A calm, plain explanation — no judgment"
-            )
-        }
-        .buttonStyle(.plain)
-        .accessibilityHint("Opens Ask DebtShield about your month")
-    }
-
-    private var askTitle: String {
-        switch plan.status {
-        case .over, .tight: return "Ask why it's tight"
-        default: return "Ask about your month"
-        }
-    }
-
     // MARK: - Breakdown
 
     private var breakdownCard: some View {
@@ -340,18 +297,18 @@ struct SafeLineView: View {
 
 #if DEBUG
 #Preview("Filled — tight") {
-    NavigationStack { SafeLineView(store: .preview(.sampleTight), onCompare: {}) }
+    NavigationStack { SafeLineView(store: .preview(.sampleTight)) }
 }
 
 #Preview("Filled — over") {
-    NavigationStack { SafeLineView(store: .preview(.sampleOver), onCompare: {}) }
+    NavigationStack { SafeLineView(store: .preview(.sampleOver)) }
 }
 
 #Preview("With history") {
-    NavigationStack { SafeLineView(store: .previewWithHistory(), onCompare: {}) }
+    NavigationStack { SafeLineView(store: .previewWithHistory()) }
 }
 
 #Preview("Empty") {
-    NavigationStack { SafeLineView(store: .preview(.empty), onCompare: {}) }
+    NavigationStack { SafeLineView(store: .preview(.empty)) }
 }
 #endif
