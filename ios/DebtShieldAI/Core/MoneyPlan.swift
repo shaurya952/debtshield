@@ -159,6 +159,23 @@ extension MoneyPlan {
         segments.reduce(0) { $0 + $1.amount }
     }
 
+    /// The single largest thing you pay — the biggest lever on the month.
+    var biggestEssential: EssentialSegment? {
+        segments.max { $0.amount < $1.amount }
+    }
+
+    /// The largest cost that usually *can* move quickly — i.e. not rent or a
+    /// mortgage, which rarely change month to month.
+    var biggestMovableEssential: EssentialSegment? {
+        segments.filter { $0.kind != .housing }.max { $0.amount < $1.amount }
+    }
+
+    /// One segment's share of income, 0…1, or nil without a usable income.
+    func share(of segment: EssentialSegment) -> Double? {
+        guard let income = monthlyIncome, income > 0 else { return nil }
+        return segment.amount / income
+    }
+
     /// Dollars left after essentials. Negative when the month doesn't cover
     /// itself — and shown that way, because a negative number is the honest
     /// answer. `nil` only when there is no income to subtract from.

@@ -25,8 +25,9 @@ struct SafeLineView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
                 if plan.isComplete {
                     resultCard
-                    compareCard
+                    nextStepCard
                     askLink
+                    compareCard
                     breakdownCard
                     editButton
                 } else {
@@ -106,6 +107,33 @@ struct SafeLineView: View {
     private func headlineAmount(_ left: Double) -> String {
         let magnitude = left.magnitude.formatted(.currency(code: "USD").precision(.fractionLength(0)))
         return left >= 0 ? magnitude : "−\(magnitude)"
+    }
+
+    // MARK: - Where to start
+
+    /// A gentle, immediate nudge — only when money's tight or over. Names the
+    /// biggest lever in dollars, and points at the easiest one to move.
+    @ViewBuilder
+    private var nextStepCard: some View {
+        if let status = plan.status, status != .okay, let biggest = plan.biggestEssential {
+            Card {
+                Label("Where to start", systemImage: "arrow.up.forward.circle.fill")
+                    .font(Theme.Typography.headline)
+                    .foregroundStyle(Theme.brand)
+                Text(nextStepText(biggest: biggest))
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func nextStepText(biggest: EssentialSegment) -> String {
+        var text = "Your biggest cost is \(biggest.label.lowercased()) at \(money(biggest.amount)). Trimming even a little there frees up the most — every $50 less is $50 back this month."
+        if biggest.kind == .housing, let movable = plan.biggestMovableEssential {
+            text += " Rent's the hardest to change fast, so \(movable.label.lowercased()) (\(money(movable.amount))) is often an easier place to start."
+        }
+        return text
     }
 
     // MARK: - Compare
@@ -195,14 +223,21 @@ struct SafeLineView: View {
                     Circle()
                         .fill(Theme.essentialColor(segment.kind))
                         .frame(width: 12, height: 12)
-                    Text(segment.label)
-                        .font(Theme.Typography.body)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(segment.label)
+                            .font(Theme.Typography.body)
+                        if let share = plan.share(of: segment) {
+                            Text("\(Int((share * 100).rounded()))% of income")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.secondaryText)
+                        }
+                    }
                     Spacer()
                     Text(money(segment.amount))
                         .font(Theme.Typography.money())
                         .foregroundStyle(.primary)
                 }
-                .frame(minHeight: 32)
+                .frame(minHeight: Theme.minimumTapTarget)
                 .accessibilityElement(children: .combine)
             }
 

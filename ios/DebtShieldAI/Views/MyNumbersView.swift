@@ -15,6 +15,9 @@ struct MyNumbersView: View {
     @State private var energy: Double?
     @State private var debt: Double?
 
+    @State private var savedTrigger = 0
+    @State private var showClearConfirm = false
+
     init(store: MoneyPlanStore) {
         self.store = store
         let plan = store.plan
@@ -52,6 +55,17 @@ struct MyNumbersView: View {
                         .font(Theme.Typography.caption)
                         .foregroundStyle(Theme.secondaryText)
                 }
+
+                if store.plan != .empty {
+                    Section {
+                        Button("Start over", role: .destructive) {
+                            showClearConfirm = true
+                        }
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    } footer: {
+                        Text("Clears every number from this phone.")
+                    }
+                }
             }
             .navigationTitle("Your numbers")
             .navigationBarTitleDisplayMode(.inline)
@@ -68,10 +82,21 @@ struct MyNumbersView: View {
                             energy: energy,
                             debtPayments: debt
                         ))
+                        savedTrigger += 1
                         dismiss()
                     }
                     .fontWeight(.semibold)
                 }
+            }
+            .sensoryFeedback(.success, trigger: savedTrigger)
+            .confirmationDialog("Clear all your numbers?", isPresented: $showClearConfirm, titleVisibility: .visible) {
+                Button("Clear everything", role: .destructive) {
+                    store.clear()
+                    dismiss()
+                }
+                Button("Keep them", role: .cancel) {}
+            } message: {
+                Text("This removes your income, essentials, and saved area from this phone. It can't be undone.")
             }
         }
     }

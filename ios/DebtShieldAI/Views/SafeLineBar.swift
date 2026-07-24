@@ -22,6 +22,8 @@ struct SafeLineBar: View {
     let plan: MoneyPlan
     var barHeight: CGFloat = 64
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var income: Double { max(plan.monthlyIncome ?? 0, 0) }
     private var essentials: Double { plan.essentialsTotal }
     private var isOver: Bool { essentials > income && income > 0 }
@@ -106,7 +108,7 @@ struct SafeLineBar: View {
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: barHeight / 2, style: .continuous))
-                .animation(.easeOut(duration: 0.4), value: plan)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.4), value: plan)
             }
             .frame(height: barHeight)
 
