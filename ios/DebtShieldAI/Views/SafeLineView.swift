@@ -55,6 +55,17 @@ struct SafeLineView: View {
                 BrandMark(size: 28)
                     .accessibilityLabel("DebtShield")
             }
+            if plan.isComplete {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isEditing = true
+                    } label: {
+                        Label("Edit your numbers", systemImage: "square.and.pencil")
+                    }
+                    .fontWeight(.semibold)
+                    .accessibilityLabel("Edit your numbers")
+                }
+            }
         }
         .sheet(isPresented: $isEditing) {
             MyNumbersView(store: store)
