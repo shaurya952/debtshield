@@ -28,6 +28,7 @@ struct SafeLineView: View {
                     nextStepCard
                     askLink
                     compareCard
+                    monthsCard
                     breakdownCard
                     editButton
                 } else {
@@ -65,6 +66,8 @@ struct SafeLineView: View {
                         .font(Theme.Typography.subheadline)
                         .foregroundStyle(Theme.secondaryText)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(spokenMoneyLeft(left))
             }
 
             SafeLineBar(plan: plan)
@@ -74,6 +77,19 @@ struct SafeLineView: View {
                 .font(Theme.Typography.subheadline)
                 .foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if let trend = trendLine {
+                Divider()
+                Label {
+                    Text(trend.text)
+                        .font(Theme.Typography.subheadline)
+                } icon: {
+                    Image(systemName: trend.up ? "arrow.up.right" : "arrow.down.right")
+                        .font(.caption.weight(.bold))
+                }
+                .foregroundStyle(trend.up ? Theme.statusColor(.okay) : Theme.secondaryText)
+                .accessibilityElement(children: .combine)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.comfortable)
@@ -107,6 +123,51 @@ struct SafeLineView: View {
     private func headlineAmount(_ left: Double) -> String {
         let magnitude = left.magnitude.formatted(.currency(code: "USD").precision(.fractionLength(0)))
         return left >= 0 ? magnitude : "−\(magnitude)"
+    }
+
+    /// A spoken version of the headline, so VoiceOver says "250 dollars short
+    /// this month" rather than reading a minus glyph.
+    private func spokenMoneyLeft(_ left: Double) -> String {
+        let amount = left.magnitude.formatted(.currency(code: "USD").precision(.fractionLength(0)))
+        return left >= 0 ? "\(amount) left this month" : "\(amount) short this month"
+    }
+
+    // MARK: - Trend vs last month
+
+    private var trendLine: (text: String, up: Bool)? {
+        guard let now = plan.moneyLeft,
+              let last = store.lastMonth, let then = last.moneyLeft else { return nil }
+        let diff = now - then
+        if abs(diff) < 1 {
+            return ("About the same as \(last.label)", true)
+        }
+        let amount = money(abs(diff))
+        return ("\(amount) \(diff > 0 ? "more" : "less") than \(last.label)", diff > 0)
+    }
+
+    // MARK: - Your months
+
+    /// Past months (oldest first) plus this month, capped to the last six.
+    private var recentMonths: [MonthRecord] {
+        var months = store.history.reversed().map { $0 }
+        if plan.isComplete, !store.month.isEmpty {
+            months.append(MonthRecord(monthKey: store.month, plan: plan))
+        }
+        return Array(months.suffix(6))
+    }
+
+    @ViewBuilder
+    private var monthsCard: some View {
+        if !store.history.isEmpty, recentMonths.count >= 2 {
+            Card {
+                SectionHeader(
+                    title: "Your months",
+                    subtitle: "How much you had left, month to month"
+                )
+                MonthlyTrendView(months: recentMonths)
+                    .padding(.top, Theme.Spacing.tight)
+            }
+        }
     }
 
     // MARK: - Where to start

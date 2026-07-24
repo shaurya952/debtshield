@@ -13,10 +13,19 @@ final class MoneyPlanStore {
 
     static let defaultsKey = "debtshield.moneyPlan"
     static let homeCountyKey = "debtshield.homeCounty"
+    static let historyKey = "debtshield.history"
+    static let currentMonthKey = "debtshield.currentMonth"
 
     /// The current plan. Reading is free; writing goes through `save` so it
     /// always hits disk.
     private(set) var plan: MoneyPlan
+
+    /// Finished months, most recent first. Capped so it never grows unbounded.
+    private(set) var history: [MonthRecord] = []
+
+    /// The "yyyy-MM" month the current `plan` belongs to. Empty until the first
+    /// rollover check stamps it.
+    private(set) var month: String = ""
 
     /// Where the person lives, if they've chosen it — used only to compare
     /// their rent to the local typical. FIPS is the key into the county data;
@@ -24,6 +33,9 @@ final class MoneyPlanStore {
     /// finishes loading.
     private(set) var homeCountyFIPS: String?
     private(set) var homeCountyName: String?
+
+    /// Keep at most a year of history — plenty for a trend, and bounded.
+    static let historyLimit = 12
 
     private let defaults: UserDefaults
 
@@ -39,6 +51,38 @@ final class MoneyPlanStore {
            let home = try? JSONDecoder().decode(HomeCounty.self, from: data) {
             homeCountyFIPS = home.fips
             homeCountyName = home.name
+        }
+        if let data = defaults.data(forKey: Self.historyKey),
+           let decoded = try? JSONDecoder().decode([MonthRecord].self, from: data) {
+            history = decoded
+        }
+        month = defaults.string(forKey: Self.currentMonthKey) ?? ""
+    }
+
+    /// The most recent finished month, for the "vs last month" trend.
+    var lastMonth: MonthRecord? { history.first }
+
+    /// Roll the current plan into history when the calendar month has changed.
+    ///
+    /// Called on launch. On the first run it just stamps the current month. When
+    /// a new month has begun and the finished month held real data, that month
+    /// is archived and the plan carries forward as the new month's starting
+    /// point — bills usually recur, and the person can adjust.
+    func rollOverIfNeeded(now: Date = Date()) {
+        let key = MonthRecord.key(for: now)
+        guard month != key else { return }
+        if !month.isEmpty, plan.isComplete {
+            history.insert(MonthRecord(monthKey: month, plan: plan), at: 0)
+            if history.count > Self.historyLimit { history.removeLast(history.count - Self.historyLimit) }
+            persistHistory()
+        }
+        month = key
+        defaults.set(month, forKey: Self.currentMonthKey)
+    }
+
+    private func persistHistory() {
+        if let data = try? JSONEncoder().encode(history) {
+            defaults.set(data, forKey: Self.historyKey)
         }
     }
 
@@ -73,9 +117,12 @@ final class MoneyPlanStore {
     }
 
     /// Wipe the numbers from memory and disk — the "start over" affordance.
+    /// Clears the month history too, so nothing lingers.
     func clear() {
         plan = .empty
+        history = []
         defaults.removeObject(forKey: Self.defaultsKey)
+        defaults.removeObject(forKey: Self.historyKey)
         clearHomeCounty()
     }
 }
@@ -88,6 +135,20 @@ extension MoneyPlanStore {
         let suite = UserDefaults(suiteName: "preview.moneyplan") ?? .standard
         let store = MoneyPlanStore(defaults: suite)
         store.save(plan)
+        return store
+    }
+
+    /// A store seeded with a few months of history, for previewing the trend.
+    static func previewWithHistory() -> MoneyPlanStore {
+        let suite = UserDefaults(suiteName: "preview.moneyplan.history") ?? .standard
+        let store = MoneyPlanStore(defaults: suite)
+        store.history = [
+            MonthRecord(monthKey: "2026-06", plan: MoneyPlan(monthlyIncome: 3000, housing: 1500, food: 350, energy: 180, debtPayments: 150)),
+            MonthRecord(monthKey: "2026-05", plan: MoneyPlan(monthlyIncome: 3000, housing: 1500, food: 420, energy: 200, debtPayments: 300)),
+            MonthRecord(monthKey: "2026-04", plan: MoneyPlan(monthlyIncome: 2800, housing: 1500, food: 400, energy: 220, debtPayments: 300))
+        ]
+        store.month = "2026-07"
+        store.save(.sampleOkay)
         return store
     }
 }

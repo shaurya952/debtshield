@@ -35,6 +35,10 @@ struct ContentView: View {
             // screen never waits on this — it renders and works regardless.
             await store.load()
         }
+        .onAppear {
+            // Archive the finished month if the calendar has turned over.
+            moneyStore.rollOverIfNeeded()
+        }
         .fullScreenCover(isPresented: $isShowingOnboarding) {
             OnboardingView {
                 hasSeenOnboarding = true

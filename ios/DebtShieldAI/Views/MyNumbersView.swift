@@ -126,6 +126,8 @@ struct CurrencyField: View {
                     .multilineTextAlignment(.trailing)
                     .font(Theme.Typography.money())
                     .frame(minWidth: 60)
+                    .accessibilityLabel(title)
+                    .accessibilityValue(value.map { "\(Int($0)) dollars" } ?? "empty")
             }
         }
         .frame(minHeight: Theme.minimumTapTarget)
