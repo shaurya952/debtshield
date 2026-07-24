@@ -55,6 +55,10 @@ struct PrivacyView: View {
             )
 
             storedItem(
+                "Your name and email",
+                "What you entered when you set up — so the app can greet you. There's no account and no password; it's just saved here, never sent anywhere."
+            )
+            storedItem(
                 "Your numbers",
                 "The income and monthly essentials you enter — income, rent or mortgage, food, energy, and debt payments. Kept so the app remembers your month between visits."
             )

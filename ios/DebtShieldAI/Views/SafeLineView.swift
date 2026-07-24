@@ -11,7 +11,12 @@ import SwiftUI
 struct SafeLineView: View {
     let store: MoneyPlanStore
 
+    @AppStorage("debtshield.userName") private var userName = ""
     @State private var isEditing = false
+
+    private var firstName: String {
+        userName.split(separator: " ").first.map(String.init) ?? userName
+    }
 
     /// The big money figure — larger than any Theme style, scales with type.
     @ScaledMetric(relativeTo: .largeTitle) private var heroSize: CGFloat = 46
@@ -21,6 +26,13 @@ struct SafeLineView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
+                if !firstName.isEmpty {
+                    Text("Hi, \(firstName)")
+                        .font(Theme.Typography.headline)
+                        .foregroundStyle(Theme.secondaryText)
+                        .accessibilityAddTraits(.isHeader)
+                }
+
                 if plan.isComplete {
                     resultCard
                     nextStepCard
@@ -37,6 +49,12 @@ struct SafeLineView: View {
         }
         .background(Theme.screenBackground)
         .navigationTitle("Your month")
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                BrandMark(size: 28)
+                    .accessibilityLabel("DebtShield")
+            }
+        }
         .sheet(isPresented: $isEditing) {
             MyNumbersView(store: store)
         }
