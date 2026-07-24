@@ -92,7 +92,7 @@ struct CompareView: View {
                     subtitle: "To compare rent and energy to your area. Food, debt, and the U.S. figures show either way."
                 )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PressableCardStyle())
         }
     }
 

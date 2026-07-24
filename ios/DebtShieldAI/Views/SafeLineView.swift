@@ -35,7 +35,7 @@ struct SafeLineView: View {
 
                 if plan.isComplete {
                     resultCard
-                    headingCard
+                    situationCard
                     nextStepCard
                     monthsCard
                     breakdownCard
@@ -181,77 +181,68 @@ struct SafeLineView: View {
         return months
     }
 
-    private var trajectory: Trajectory? {
-        let values = allMonths.compactMap { $0.moneyLeft }
-        guard let key = allMonths.last?.monthKey else { return nil }
-        return TrajectoryEngine.read(moneyLeft: values, currentMonthKey: key)
+    private var situationRead: SituationRead? {
+        SituationEngine.assess(plan: plan, months: allMonths)
     }
 
+    /// The verdict card — the synthesized read of where you stand on the road to
+    /// (or out of) debt. Escalates in colour and weight with severity.
     @ViewBuilder
-    private var headingCard: some View {
-        if let t = trajectory {
-            Card {
-                Label {
-                    Text(t.headline)
-                        .font(Theme.Typography.headline)
-                } icon: {
-                    Image(systemName: headingIcon(t.direction))
+    private var situationCard: some View {
+        if let read = situationRead {
+            let color = situationColor(read.situation)
+            let heavy = read.situation.severity >= Situation.headingToDebt.severity
+            VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
+                HStack(alignment: .center, spacing: Theme.Spacing.regular) {
+                    Image(systemName: read.situation.symbol)
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 44, height: 44)
+                        .background(color, in: Circle())
+                        .accessibilityHidden(true)
+                    Text(read.headline)
+                        .font(Theme.Typography.title)
+                        .foregroundStyle(color)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .foregroundStyle(headingColor(t.direction))
-                .accessibilityAddTraits(.isHeader)
-
-                Text(.init(t.detail))
+                Text(.init(read.detail))
                     .font(Theme.Typography.subheadline)
                     .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
-
-                Text("A rough heading from your last \(allMonths.count) months — not a certainty. It only lives on your phone.")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Theme.Spacing.comfortable)
+            .background {
+                RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                    .fill(Theme.cardBackground)
+                    .overlay {
+                        if heavy {
+                            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                                .fill(color.opacity(0.10))
+                        }
+                    }
+                    .overlay(alignment: .leading) {
+                        // A colour accent down the leading edge at the serious end.
+                        if heavy {
+                            color.frame(width: 4)
+                                .clipShape(RoundedRectangle(cornerRadius: 2))
+                                .padding(.vertical, Theme.Spacing.comfortable)
+                        }
+                    }
+                    .shadow(color: heavy ? color.opacity(0.18) : Theme.cardShadow,
+                            radius: heavy ? 14 : 10, x: 0, y: heavy ? 7 : 4)
             }
             .accessibilityElement(children: .combine)
-        } else {
-            headingPlaceholder
         }
     }
 
-    /// Before there are enough months, promise the early-warning rather than
-    /// leaving a blank — new users learn the app watches their trend for them.
-    private var headingPlaceholder: some View {
-        Card {
-            Label {
-                Text("We'll spot where you're heading")
-                    .font(Theme.Typography.headline)
-            } icon: {
-                Image(systemName: "dot.radiowaves.left.and.right")
-            }
-            .foregroundStyle(Theme.brand)
-            .accessibilityAddTraits(.isHeader)
-
-            Text("Check back each month. After a couple, DebtShield will tell you if you're drifting toward a tight spot — early, while it's still easy to change course. It all stays on your phone.")
-                .font(Theme.Typography.subheadline)
-                .foregroundStyle(Theme.secondaryText)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private func headingIcon(_ direction: Trajectory.Direction) -> String {
-        switch direction {
-        case .improving: return "chart.line.uptrend.xyaxis"
-        case .steady: return "arrow.right.circle.fill"
-        case .slipping: return "chart.line.downtrend.xyaxis"
-        case .underwater: return "exclamationmark.triangle.fill"
-        }
-    }
-
-    private func headingColor(_ direction: Trajectory.Direction) -> Color {
-        switch direction {
-        case .improving: return Theme.statusColor(.okay)
-        case .steady: return Theme.brand
-        case .slipping: return Theme.statusColor(.tight)
-        case .underwater: return Theme.statusColor(.over)
+    private func situationColor(_ situation: Situation) -> Color {
+        switch situation {
+        case .good: return Theme.statusColor(.okay)
+        case .watch: return Theme.brand
+        case .tight: return Theme.statusColor(.tight)
+        case .headingToDebt: return Theme.statusColor(.tight)
+        case .goingIntoDebt, .deepInDebt: return Theme.statusColor(.over)
         }
     }
 

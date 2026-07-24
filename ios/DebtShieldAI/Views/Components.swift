@@ -51,6 +51,21 @@ struct UnscoredBadge: View {
     }
 }
 
+// MARK: - Press feedback
+
+/// A button style that gives a card a subtle, springy press — the small tactile
+/// cue that makes an app feel alive and premium. Respects Reduce Motion.
+struct PressableCardStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(reduceMotion ? 1 : (configuration.isPressed ? 0.975 : 1))
+            .opacity(configuration.isPressed ? 0.92 : 1)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
 // MARK: - Status pill
 
 /// The month's situation as a pill — icon, colour, and words together, so it

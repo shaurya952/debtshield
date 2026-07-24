@@ -39,10 +39,10 @@ enum PersonalChatEngine {
         // Advice territory is turned away before anything else.
         if let redirect = adviceRedirect(q) { return redirect }
 
-        // "Where is this heading" — the early-warning, from the month history.
-        // Checked before "what if" so "will I be short next month" reads as a
-        // trajectory question, not a hypothetical.
-        if let heading = trajectoryAnswer(q, months: months) { return heading }
+        // "Where is this heading / am I going into debt" — the synthesized
+        // verdict. Checked before "what if" so "will I be short next month"
+        // reads as a situation question, not a hypothetical.
+        if let heading = situationAnswer(q, plan: plan, months: months) { return heading }
 
         // "What if …" works on the entered numbers.
         if let whatIf = whatIf(q, plan: plan) { return whatIf }
@@ -111,30 +111,27 @@ enum PersonalChatEngine {
         )
     }
 
-    // MARK: - Trajectory (the early-warning)
+    // MARK: - Situation (the synthesized verdict / early-warning)
 
-    /// "Am I heading toward debt", "is this getting worse", "where's this going"
-    /// — answered from the month history via `TrajectoryEngine`.
-    private static func trajectoryAnswer(_ q: String, months: [MonthRecord]) -> ChatAnswer? {
+    /// "Am I going into debt", "am I in trouble", "where's this heading",
+    /// "is this getting worse" — answered by `SituationEngine`, which weighs
+    /// being over budget, how heavy debt already is, and where the trend points.
+    private static func situationAnswer(_ q: String, plan: MoneyPlan, months: [MonthRecord]) -> ChatAnswer? {
         let markers = ["heading", "headed", "trajectory", "getting worse", "getting better",
                        "where am i going", "where is this going", "where this is going",
                        "where is this heading", "am i heading", "toward debt", "towards debt",
-                       "into debt", "on track", "coming months", "am i improving",
-                       "am i getting", "will i be short", "will i run out", "my trend"]
+                       "into debt", "in debt", "debt trouble", "on track", "coming months",
+                       "am i improving", "will i be short", "will i run out", "my trend",
+                       "am i in trouble", "how bad", "where do i stand", "my situation",
+                       "am i drifting", "how deep"]
         guard has(q, markers) else { return nil }
 
-        let values = months.compactMap { $0.moneyLeft }
-        guard let key = months.last?.monthKey,
-              let t = TrajectoryEngine.read(moneyLeft: values, currentMonthKey: key) else {
-            return ChatAnswer(
-                text: "I need a few months of your numbers to see where things are heading — I'll be able to tell after a month or two of tracking. Everything's saved right here on your phone.",
-                followUps: ["Why is it tight?", "How does my rent compare?"],
-                isDecline: true
-            )
+        guard let read = SituationEngine.assess(plan: plan, months: months) else {
+            return needNumbers()
         }
         return ChatAnswer(
-            text: "\(t.headline)\n\n\(t.detail)",
-            provenance: "Your last \(values.count) months, on this device",
+            text: "\(read.headline)\n\n\(read.detail)",
+            provenance: "Your numbers, on this device",
             followUps: ["What's my fastest fix?", "How do all my costs compare?"]
         )
     }
