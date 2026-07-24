@@ -70,7 +70,7 @@ enum CostComparisons {
         guard !refs.isEmpty else { return nil }
         let (standing, verdict) = read(yours, refs)
         return Comparison(kind: .housing, yours: yours, refs: refs,
-                          verdict: verdict, standing: standing, source: "U.S. Census")
+                          verdict: verdict, standing: standing, source: "U.S. Census, 2019–2023")
     }
 
     static func energy(_ plan: MoneyPlan, _ county: ScoredCounty?, _ benchmarks: Benchmarks?) -> Comparison? {

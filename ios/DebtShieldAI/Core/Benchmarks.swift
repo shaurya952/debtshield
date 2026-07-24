@@ -65,6 +65,12 @@ struct FoodBenchmark: Equatable, Sendable {
 /// skipped, not fatal.
 enum BenchmarksLoader {
 
+    /// U.S. median gross rent, monthly — Census ACS 5-year, 2019–2023, the same
+    /// basis as the county file. An official published figure, deliberately NOT
+    /// an unweighted mean of the county medians: most counties are rural and
+    /// cheap, so that mean (~$938) badly understates the real national typical.
+    static let officialNationalRent: Double = 1348
+
     static func load(bundle: Bundle = .main) -> Benchmarks {
         let energy = loadEnergy(bundle: bundle)
         let bills = Array(energy.byState.values)
@@ -72,7 +78,7 @@ enum BenchmarksLoader {
         return Benchmarks(
             energy: energy,
             food: loadFood(bundle: bundle),
-            nationalRent: loadNationalRent(bundle: bundle),
+            nationalRent: officialNationalRent,
             nationalEnergy: nationalEnergy
         )
     }
@@ -100,29 +106,6 @@ enum BenchmarksLoader {
             bands.append(FoodBenchmark.Band(low: low, high: high, annual: annual))
         }
         return FoodBenchmark(bands: bands.sorted { $0.low < $1.low })
-    }
-
-    /// Average monthly rent across all counties, read straight from the bundled
-    /// county file. A light single-column pass — no full parse needed.
-    static func loadNationalRent(bundle: Bundle) -> Double {
-        guard let url = bundle.url(forResource: "real_county_data", withExtension: "csv"),
-              let text = try? String(contentsOf: url, encoding: .utf8) else { return 0 }
-
-        let lines = text.components(separatedBy: .newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-        guard let header = lines.first else { return 0 }
-        let cols = header.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
-        guard let rentIndex = cols.firstIndex(of: "acs_median_gross_rent") else { return 0 }
-
-        var total = 0.0
-        var count = 0
-        for line in lines.dropFirst() {
-            let fields = line.components(separatedBy: ",")
-            guard rentIndex < fields.count,
-                  let rent = Double(fields[rentIndex].trimmingCharacters(in: .whitespaces)) else { continue }
-            total += rent
-            count += 1
-        }
-        return count == 0 ? 0 : total / Double(count)
     }
 
     /// Split a bundled CSV into rows of fields, dropping the header and blanks.
