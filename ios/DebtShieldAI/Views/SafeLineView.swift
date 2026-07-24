@@ -200,7 +200,30 @@ struct SafeLineView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .accessibilityElement(children: .combine)
+        } else {
+            headingPlaceholder
         }
+    }
+
+    /// Before there are enough months, promise the early-warning rather than
+    /// leaving a blank — new users learn the app watches their trend for them.
+    private var headingPlaceholder: some View {
+        Card {
+            Label {
+                Text("We'll spot where you're heading")
+                    .font(Theme.Typography.headline)
+            } icon: {
+                Image(systemName: "dot.radiowaves.left.and.right")
+            }
+            .foregroundStyle(Theme.brand)
+            .accessibilityAddTraits(.isHeader)
+
+            Text("Check back each month. After a couple, DebtShield will tell you if you're drifting toward a tight spot — early, while it's still easy to change course. It all stays on your phone.")
+                .font(Theme.Typography.subheadline)
+                .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private func headingIcon(_ direction: Trajectory.Direction) -> String {
