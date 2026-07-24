@@ -115,7 +115,7 @@ struct SafeLineBar: View {
             HStack(spacing: 4) {
                 Image(systemName: "arrow.up")
                     .font(.caption2.weight(.bold))
-                Text("safe line — essentials best kept under \(Int((MoneyPlan.safeLineShare * 100).rounded()))% of income")
+                Text("safe line — keep the basics under \(Int((MoneyPlan.safeLineShare * 100).rounded()))% of your income")
                     .font(Theme.Typography.caption)
             }
             .foregroundStyle(Theme.secondaryText)

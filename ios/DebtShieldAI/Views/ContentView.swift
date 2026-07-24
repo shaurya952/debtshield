@@ -51,13 +51,18 @@ struct ContentView: View {
     private func content(for tab: AppTab) -> some View {
         switch tab {
         case .safeLine:
-            // Deliberately NOT routed through `loaded(...)`: the person's own
-            // numbers must never wait on, or fail with, the county dataset.
-            SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
-                .navigationTitle("Your month")
+            // The person's own numbers — never waits on the county data.
+            SafeLineView(store: moneyStore) {
+                selectedTab = .compare
+            }
+        case .compare:
+            // The comparison layer. Uses the county data when it's loaded, and
+            // still shows national + food + debt while it isn't.
+            CompareView(store: moneyStore, dataStore: store, benchmarks: benchmarks) {
+                selectedTab = .safeLine
+            }
         case .about:
-            // About is static — it doesn't depend on the county data, so it
-            // never waits on or fails with that load.
+            // About is static — it doesn't depend on the county data.
             AboutView {
                 isShowingOnboarding = true
             }
@@ -65,12 +70,14 @@ struct ContentView: View {
     }
 }
 
-/// The tab set — just two, for a focused personal tool.
+/// The tab set — a focused personal tool.
 ///
-/// - **Home** — the Safe Line: your month in plain dollars, plus comparisons
+/// - **Home** — the Safe Line: your month in plain dollars
+/// - **Compare** — your spending vs. your area and the U.S.
 /// - **About** — how it works, privacy, and the disclaimer
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case safeLine
+    case compare
     case about
 
     var id: String { rawValue }
@@ -78,6 +85,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var title: String {
         switch self {
         case .safeLine: return "Home"
+        case .compare: return "Compare"
         case .about: return "About"
         }
     }
@@ -85,6 +93,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var systemImage: String {
         switch self {
         case .safeLine: return "house.fill"
+        case .compare: return "chart.bar.xaxis"
         case .about: return "info.circle"
         }
     }

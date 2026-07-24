@@ -1,48 +1,55 @@
 import Foundation
 
-/// How one of the person's costs compares to a typical figure or a guideline.
+/// How one of the person's costs stacks up against typical spending.
 ///
-/// The "typical" standings (`above` / `about` / `below`) are **neutral** — being
-/// above the local typical rent isn't a failing, it's just information, so the
-/// UI colours them plainly. Only debt, which is measured against a real
-/// affordability guideline, carries a green/amber/red feel.
+/// The everyday standings (`below` / `about` / `above`) are **neutral** — paying
+/// more than typical isn't a failing, it's just information — so the UI colours
+/// them plainly. Only debt, measured against an affordability guideline, carries
+/// a green/amber/red feel.
 enum CostStanding: Equatable, Sendable {
-    case above, about, below      // vs a typical amount
+    case below, about, above      // vs typical spending
     case healthy, watch, high     // vs the debt guideline
 }
 
-/// One line of the "how your costs compare" section.
-struct CostComparison: Identifiable, Equatable, Sendable {
-    let kind: EssentialKind
-    let yours: Double
-    /// The typical amount (rent / energy / food) or the guideline amount (debt).
-    let benchmark: Double
-    let standing: CostStanding
-    /// Short trailing phrase: "$200 above typical", "about typical", "18% of income".
-    let headline: String
-    /// Secondary line naming the benchmark and its source.
-    let detail: String
-
-    var id: String { kind.id }
+/// One reference point to compare against — "Your area", "Across the U.S.", or
+/// the debt guideline.
+struct ComparisonRef: Identifiable, Equatable, Sendable {
+    let label: String
+    let amount: Double
+    var id: String { label }
 }
 
-/// Builds the comparisons for a person's plan. Pure and synchronous; each
-/// comparison appears only when the person entered that cost *and* a benchmark
-/// exists for it. Everything degrades quietly to "not shown".
+/// One cost, with what you pay and the typical figures to compare it to.
+struct Comparison: Identifiable, Equatable, Sendable {
+    let kind: EssentialKind
+    let yours: Double
+    /// Typical figures, most-local first (your area, then the U.S.).
+    let refs: [ComparisonRef]
+    /// A plain, kind, one-line read.
+    let verdict: String
+    let standing: CostStanding
+    let source: String
+
+    var id: String { kind.id }
+
+    /// The biggest bar to scale against — you or any reference.
+    var peak: Double { max(yours, refs.map(\.amount).max() ?? 0, 1) }
+}
+
+/// Builds the comparisons for a plan. Pure and synchronous. A cost appears only
+/// when the person entered it *and* at least one typical figure exists for it.
 enum CostComparisons {
 
-    /// A cost within this fraction of typical reads as "about typical".
+    /// Within this fraction of typical reads as "about the same".
     static let typicalBand = 0.10
 
-    /// Debt payments are compared to this share of income. 20% is the common
-    /// rule of thumb for *non-housing* debt — and housing is tracked
-    /// separately here, so 20% is the honest yardstick for this field.
+    /// Debt payments are compared to this share of income — the common rule of
+    /// thumb for non-housing debt (housing is counted separately here).
     static let debtHealthyShare = 0.20
-    /// Above this share, debt reads as high regardless.
     static let debtHighShare = 0.36
 
-    static func all(plan: MoneyPlan, county: ScoredCounty?, benchmarks: Benchmarks?) -> [CostComparison] {
-        [housing(plan, county),
+    static func all(plan: MoneyPlan, county: ScoredCounty?, benchmarks: Benchmarks?) -> [Comparison] {
+        [housing(plan, county, benchmarks),
          energy(plan, county, benchmarks),
          food(plan, benchmarks),
          debt(plan)]
@@ -51,79 +58,85 @@ enum CostComparisons {
 
     // MARK: - Each cost
 
-    static func housing(_ plan: MoneyPlan, _ county: ScoredCounty?) -> CostComparison? {
-        guard let yours = plan.housing, yours > 0,
-              let county, let rent = county.record.medianGrossRent, rent > 0 else { return nil }
-        let (standing, headline) = compareToTypical(yours, rent)
-        return CostComparison(
-            kind: .housing, yours: yours, benchmark: rent, standing: standing,
-            headline: headline,
-            detail: "Typical rent in \(county.county): \(money(rent)) · Census"
-        )
+    static func housing(_ plan: MoneyPlan, _ county: ScoredCounty?, _ benchmarks: Benchmarks?) -> Comparison? {
+        guard let yours = plan.housing, yours > 0 else { return nil }
+        var refs: [ComparisonRef] = []
+        if let rent = county?.record.medianGrossRent, rent > 0 {
+            refs.append(ComparisonRef(label: "Your area", amount: rent))
+        }
+        if let national = benchmarks?.nationalRent, national > 0 {
+            refs.append(ComparisonRef(label: "Across the U.S.", amount: national))
+        }
+        guard !refs.isEmpty else { return nil }
+        let (standing, verdict) = read(yours, refs)
+        return Comparison(kind: .housing, yours: yours, refs: refs,
+                          verdict: verdict, standing: standing, source: "U.S. Census")
     }
 
-    static func energy(_ plan: MoneyPlan, _ county: ScoredCounty?, _ benchmarks: Benchmarks?) -> CostComparison? {
-        guard let yours = plan.energy, yours > 0,
-              let county, let typical = benchmarks?.energy.typicalBill(inState: county.state), typical > 0
-        else { return nil }
-        let (standing, headline) = compareToTypical(yours, typical)
-        return CostComparison(
-            kind: .energy, yours: yours, benchmark: typical, standing: standing,
-            headline: headline,
-            detail: "Typical electricity bill in \(county.state): \(money(typical)) · EIA 2024"
-        )
+    static func energy(_ plan: MoneyPlan, _ county: ScoredCounty?, _ benchmarks: Benchmarks?) -> Comparison? {
+        guard let yours = plan.energy, yours > 0 else { return nil }
+        var refs: [ComparisonRef] = []
+        if let state = county?.state, let bill = benchmarks?.energy.typicalBill(inState: state), bill > 0 {
+            refs.append(ComparisonRef(label: "Your state", amount: bill))
+        }
+        if let national = benchmarks?.nationalEnergy, national > 0 {
+            refs.append(ComparisonRef(label: "Across the U.S.", amount: national))
+        }
+        guard !refs.isEmpty else { return nil }
+        let (standing, verdict) = read(yours, refs)
+        return Comparison(kind: .energy, yours: yours, refs: refs,
+                          verdict: verdict, standing: standing, source: "EIA 2024")
     }
 
-    static func food(_ plan: MoneyPlan, _ benchmarks: Benchmarks?) -> CostComparison? {
+    static func food(_ plan: MoneyPlan, _ benchmarks: Benchmarks?) -> Comparison? {
         guard let yours = plan.food, yours > 0,
               let income = plan.monthlyIncome, income > 0,
               let typical = benchmarks?.food.typicalMonthly(forMonthlyIncome: income), typical > 0
         else { return nil }
-        let (standing, headline) = compareToTypical(yours, typical)
-        return CostComparison(
-            kind: .food, yours: yours, benchmark: typical, standing: standing,
-            headline: headline,
-            detail: "Typical for your income: \(money(typical))/mo · BLS 2024"
-        )
+        let refs = [ComparisonRef(label: "Typical for your income", amount: typical)]
+        let (standing, verdict) = read(yours, refs)
+        return Comparison(kind: .food, yours: yours, refs: refs,
+                          verdict: verdict, standing: standing, source: "BLS 2024")
     }
 
-    static func debt(_ plan: MoneyPlan) -> CostComparison? {
+    static func debt(_ plan: MoneyPlan) -> Comparison? {
         guard let yours = plan.debtPayments, yours > 0,
               let income = plan.monthlyIncome, income > 0 else { return nil }
         let share = yours / income
         let pct = Int((share * 100).rounded())
+        let guideline = income * debtHealthyShare
         let standing: CostStanding
-        let detail: String
+        let verdict: String
         if share <= debtHealthyShare {
             standing = .healthy
-            detail = "Under \(Int(debtHealthyShare * 100))% of income is a comfortable sign"
+            verdict = "Comfortable — that's \(pct)% of your income, under the 20% guideline."
         } else if share <= debtHighShare {
             standing = .watch
-            detail = "Over a fifth of your income goes to debt — worth watching"
+            verdict = "Getting high — that's \(pct)% of your income. Worth keeping an eye on."
         } else {
             standing = .high
-            detail = "Over a third of your income goes to debt payments"
+            verdict = "High — \(pct)% of your income goes to debt payments."
         }
-        return CostComparison(
-            kind: .debt, yours: yours, benchmark: income * debtHealthyShare, standing: standing,
-            headline: "\(pct)% of income", detail: detail
-        )
+        return Comparison(kind: .debt, yours: yours,
+                          refs: [ComparisonRef(label: "Healthy guideline (20%)", amount: guideline)],
+                          verdict: verdict, standing: standing, source: "20% rule of thumb")
     }
 
-    // MARK: - Helpers
+    // MARK: - Reading a comparison
 
-    private static func compareToTypical(_ yours: Double, _ typical: Double) -> (CostStanding, String) {
-        let ratio = (yours - typical) / typical
+    /// Compares what you pay to the most-local typical, and writes a plain,
+    /// kind verdict — mentioning both area and national when they point the
+    /// same way.
+    private static func read(_ yours: Double, _ refs: [ComparisonRef]) -> (CostStanding, String) {
+        let primary = refs[0].amount
+        let ratio = (yours - primary) / primary
+        let both = refs.count > 1
         if ratio > typicalBand {
-            return (.above, "\(money(yours - typical)) above typical")
+            return (.above, both ? "You spend more than most — here and across the U.S." : "You spend more than most.")
         }
         if ratio < -typicalBand {
-            return (.below, "\(money(typical - yours)) below typical")
+            return (.below, both ? "You spend less than most — here and across the U.S." : "You spend less than most.")
         }
-        return (.about, "about typical")
-    }
-
-    private static func money(_ value: Double) -> String {
-        value.formatted(.currency(code: "USD").precision(.fractionLength(0)))
+        return (.about, both ? "About the same as most, here and nationally." : "About the same as most.")
     }
 }

@@ -42,9 +42,9 @@ struct MyNumbersView: View {
                     CurrencyField(title: EssentialKind.energy.label, value: $energy)
                     CurrencyField(title: EssentialKind.debt.label, value: $debt)
                 } header: {
-                    Text("Going out on essentials")
+                    Text("What goes out each month")
                 } footer: {
-                    Text("Rough monthly amounts are fine. Debt payments means the minimums due this month, not the total you owe.")
+                    Text("Rough amounts are fine. Debt payments means the least you must pay this month, not the total you owe.")
                 }
 
                 Section {

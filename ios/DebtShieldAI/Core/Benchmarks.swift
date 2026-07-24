@@ -1,15 +1,22 @@
 import Foundation
 
-/// Typical-cost reference data, loaded from the bundled comparison CSVs.
+/// Typical-cost reference data — what a person's own spending is measured
+/// against. It ships inside the app and never leaves the device.
 ///
-/// These are the numbers a person's own spending is measured against — the
-/// "comparison layer". Like the county data they ship inside the app and never
-/// leave the device. Anything the files don't cover (a state with no row, an
-/// income that falls in a gap) simply returns `nil`, and the app shows no
+/// It carries three levels of "typical":
+/// - **your area** — your county's rent, your state's energy bill
+/// - **across the U.S.** — the national averages, computed from the same data
+/// - **a guideline** — for debt, the common rule of thumb
+///
+/// Anything the data doesn't cover returns `nil`, and the app simply shows no
 /// comparison rather than a guessed one.
 struct Benchmarks: Equatable, Sendable {
     let energy: EnergyBenchmark
     let food: FoodBenchmark
+    /// Average monthly rent across every U.S. county (Census).
+    let nationalRent: Double
+    /// Average monthly electricity bill across all states (EIA).
+    let nationalEnergy: Double
 }
 
 /// Average monthly residential electricity bill, by state (EIA).
@@ -38,9 +45,9 @@ struct FoodBenchmark: Equatable, Sendable {
     let bands: [Band]
 
     /// Typical monthly food spend for a given *monthly* income, or `nil` if the
-    /// income falls in a band the data doesn't cover (e.g. the $50k–$70k gap in
-    /// the current file). The bands are keyed on annual income, so the monthly
-    /// figure is annualised to find the band and the result divided back down.
+    /// income falls in a band the data doesn't cover. Bands are keyed on annual
+    /// income, so the monthly figure is annualised to find the band and the
+    /// result divided back down.
     func typicalMonthly(forMonthlyIncome monthly: Double) -> Double? {
         let annual = monthly * 12
         let band = bands.first { annual >= $0.low && (($0.high == nil) || annual <= $0.high!) }
@@ -53,15 +60,20 @@ struct FoodBenchmark: Equatable, Sendable {
 
 // MARK: - Loading
 
-/// Reads the two comparison CSVs from the bundle. Tiny files, so this is
-/// synchronous. Malformed or incomplete rows are skipped, not fatal — a partly
-/// filled file still powers every comparison it can.
+/// Reads the comparison data from the bundle and computes the national
+/// averages. Tiny work, so it's synchronous. Malformed or incomplete rows are
+/// skipped, not fatal.
 enum BenchmarksLoader {
 
     static func load(bundle: Bundle = .main) -> Benchmarks {
-        Benchmarks(
-            energy: loadEnergy(bundle: bundle),
-            food: loadFood(bundle: bundle)
+        let energy = loadEnergy(bundle: bundle)
+        let bills = Array(energy.byState.values)
+        let nationalEnergy = bills.isEmpty ? 0 : bills.reduce(0, +) / Double(bills.count)
+        return Benchmarks(
+            energy: energy,
+            food: loadFood(bundle: bundle),
+            nationalRent: loadNationalRent(bundle: bundle),
+            nationalEnergy: nationalEnergy
         )
     }
 
@@ -82,7 +94,7 @@ enum BenchmarksLoader {
             guard row.count >= 3,
                   let low = Double(row[0].trimmingCharacters(in: .whitespaces)),
                   let annual = Double(row[2].trimmingCharacters(in: .whitespaces))
-            else { continue } // skips VERIFY / blank / header-mismatched rows
+            else { continue }
             let highRaw = row[1].trimmingCharacters(in: .whitespaces)
             let high = highRaw.isEmpty ? nil : Double(highRaw)
             bands.append(FoodBenchmark.Band(low: low, high: high, annual: annual))
@@ -90,8 +102,30 @@ enum BenchmarksLoader {
         return FoodBenchmark(bands: bands.sorted { $0.low < $1.low })
     }
 
-    /// Split a bundled CSV into rows of fields, dropping the header and any
-    /// blank lines. No quoted-field handling needed — these files have none.
+    /// Average monthly rent across all counties, read straight from the bundled
+    /// county file. A light single-column pass — no full parse needed.
+    static func loadNationalRent(bundle: Bundle) -> Double {
+        guard let url = bundle.url(forResource: "real_county_data", withExtension: "csv"),
+              let text = try? String(contentsOf: url, encoding: .utf8) else { return 0 }
+
+        let lines = text.components(separatedBy: .newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        guard let header = lines.first else { return 0 }
+        let cols = header.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+        guard let rentIndex = cols.firstIndex(of: "acs_median_gross_rent") else { return 0 }
+
+        var total = 0.0
+        var count = 0
+        for line in lines.dropFirst() {
+            let fields = line.components(separatedBy: ",")
+            guard rentIndex < fields.count,
+                  let rent = Double(fields[rentIndex].trimmingCharacters(in: .whitespaces)) else { continue }
+            total += rent
+            count += 1
+        }
+        return count == 0 ? 0 : total / Double(count)
+    }
+
+    /// Split a bundled CSV into rows of fields, dropping the header and blanks.
     private static func rows(of resource: String, bundle: Bundle) -> [[String]] {
         guard let url = bundle.url(forResource: resource, withExtension: "csv"),
               let text = try? String(contentsOf: url, encoding: .utf8) else {
@@ -99,7 +133,7 @@ enum BenchmarksLoader {
         }
         return text
             .components(separatedBy: .newlines)
-            .dropFirst() // header
+            .dropFirst()
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
             .map { $0.components(separatedBy: ",") }
@@ -115,7 +149,9 @@ extension Benchmarks {
             .init(low: 0, high: 15000, annual: 5315),
             .init(low: 30000, high: 39999, annual: 6956),
             .init(low: 200000, high: nil, annual: 18453)
-        ])
+        ]),
+        nationalRent: 1300,
+        nationalEnergy: 137
     )
 }
 #endif

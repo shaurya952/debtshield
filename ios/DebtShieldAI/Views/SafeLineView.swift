@@ -1,48 +1,33 @@
 import SwiftUI
 
-/// The home screen. The first thing a person sees, and the heart of the app.
+/// The home screen — the personal heart of the app.
 ///
 /// It answers one question in dollars — *how does this month stand?* — with the
-/// Safe Line bar, a single headline figure, and a calm one-line verdict. No
-/// score, no grade, no jargon. If nothing has been entered yet it shows a warm
-/// invitation rather than an empty chart.
+/// Safe Line bar, a single headline figure, a plain-language read of where you
+/// are, and a clear way into the comparison. No score, no grade, no jargon.
 ///
-/// It deliberately depends only on `MoneyPlanStore`, never on the county
-/// `Dataset`. A person's budget must never wait on — or fail with — the load of
-/// 3,000 counties. The housing comparison layer arrives later and is purely
-/// additive on top of this.
+/// It depends only on `MoneyPlanStore`, never on the county data. A person's
+/// budget must never wait on — or fail with — anything else.
 struct SafeLineView: View {
     let store: MoneyPlanStore
-    /// The county data, for the local rent + energy comparison only.
-    /// Optional-by-nature: the screen renders fully whether or not this has
-    /// loaded, so a budget never waits on it.
-    let dataStore: DataStore
-    /// Typical-cost reference data (energy by state, food by income band).
-    let benchmarks: Benchmarks
+    /// Jumps to the Compare tab.
+    var onCompare: () -> Void
 
     @State private var isEditing = false
-    @State private var isChoosingArea = false
 
-    /// The big money figure — larger than any Theme style, and scales with
-    /// Dynamic Type.
+    /// The big money figure — larger than any Theme style, scales with type.
     @ScaledMetric(relativeTo: .largeTitle) private var heroSize: CGFloat = 46
 
     private var plan: MoneyPlan { store.plan }
-
-    /// The county the person said they live in, if chosen and loaded.
-    private var homeCounty: ScoredCounty? {
-        guard let fips = store.homeCountyFIPS, let dataset = dataStore.dataset else { return nil }
-        return dataset.county(fips: fips)
-    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
                 if plan.isComplete {
                     resultCard
+                    compareCard
                     askLink
                     breakdownCard
-                    comparisonSection
                     editButton
                 } else {
                     emptyState
@@ -57,117 +42,16 @@ struct SafeLineView: View {
         .sheet(isPresented: $isEditing) {
             MyNumbersView(store: store)
         }
-        .sheet(isPresented: $isChoosingArea) {
-            if let searchIndex = dataStore.searchIndex {
-                AreaPickerView(searchIndex: searchIndex) { county in
-                    store.setHomeCounty(fips: county.record.fips, name: county.county)
-                }
-            }
-        }
     }
 
-    // MARK: - Cost comparisons
-
-    /// One card comparing each entered cost to a typical figure or guideline.
-    /// Every row is optional and additive — food and debt appear as soon as
-    /// income is known; rent and energy appear once an area is chosen. The whole
-    /// section is absent until the county data has loaded or a comparison exists.
-    @ViewBuilder
-    private var comparisonSection: some View {
-        let comparisons = CostComparisons.all(plan: plan, county: homeCounty, benchmarks: benchmarks)
-        let canPickArea = dataStore.searchIndex != nil
-        if !comparisons.isEmpty || canPickArea {
-            Card {
-                SectionHeader(
-                    title: "How your costs compare",
-                    subtitle: "Rough markers from public data — guides, not targets"
-                )
-
-                ForEach(comparisons) { comparison in
-                    comparisonRow(comparison)
-                }
-
-                areaControl(canPickArea: canPickArea, hasComparisons: !comparisons.isEmpty)
-
-                Text("Sources: Census (rent), EIA (energy), BLS (food). Debt is compared to the common guideline of keeping payments under \(Int(CostComparisons.debtHealthyShare * 100))% of income.")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    private func comparisonRow(_ comparison: CostComparison) -> some View {
-        HStack(spacing: Theme.Spacing.regular) {
-            Circle()
-                .fill(Theme.essentialColor(comparison.kind))
-                .frame(width: 12, height: 12)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(comparison.kind.label)
-                    .font(Theme.Typography.body)
-                Text(comparison.detail)
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: Theme.Spacing.tight)
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(money(comparison.yours))
-                    .font(Theme.Typography.money())
-                Text(comparison.headline)
-                    .font(Theme.Typography.caption.weight(.semibold))
-                    .foregroundStyle(standingColor(comparison.standing))
-            }
-        }
-        .frame(minHeight: Theme.minimumTapTarget)
-        .accessibilityElement(children: .combine)
-    }
-
-    private func standingColor(_ standing: CostStanding) -> Color {
-        switch standing {
-        case .healthy: return Theme.statusColor(.okay)
-        case .watch: return Theme.statusColor(.tight)
-        case .high: return Theme.statusColor(.over)
-        case .above, .below, .about: return Theme.secondaryText
-        }
-    }
-
-    @ViewBuilder
-    private func areaControl(canPickArea: Bool, hasComparisons: Bool) -> some View {
-        if let name = store.homeCountyName {
-            Divider()
-            HStack {
-                Label("Rent & energy vs. \(name)", systemImage: "mappin.and.ellipse")
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.secondaryText)
-                Spacer()
-                Button("Change") { isChoosingArea = true }
-                    .font(Theme.Typography.subheadline.weight(.semibold))
-            }
-            .frame(minHeight: Theme.minimumTapTarget)
-        } else if canPickArea {
-            if hasComparisons { Divider() }
-            Button {
-                isChoosingArea = true
-            } label: {
-                Label("Add where you live to compare rent & energy", systemImage: "mappin.and.ellipse")
-                    .font(Theme.Typography.subheadline.weight(.semibold))
-                    .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
-            }
-        }
-    }
-
-    // MARK: - Result
+    // MARK: - Result (hero)
 
     @ViewBuilder
     private var resultCard: some View {
         let status = plan.status ?? .okay
         VStack(alignment: .leading, spacing: Theme.Spacing.comfortable) {
-            // The situation, as a pill: icon + colour + words.
             StatusPill(status: status)
 
-            // The one number that matters — big, friendly, rounded.
             if let left = plan.moneyLeft {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(headlineAmount(left))
@@ -184,6 +68,11 @@ struct SafeLineView: View {
 
             SafeLineBar(plan: plan)
                 .padding(.top, Theme.Spacing.tight)
+
+            Text(insight)
+                .font(Theme.Typography.subheadline)
+                .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.comfortable)
@@ -198,9 +87,60 @@ struct SafeLineView: View {
         }
     }
 
+    /// A plain, kind read of the month — concrete numbers, no jargon.
+    private var insight: String {
+        guard let share = plan.essentialsShare, let status = plan.status else { return "" }
+        let pct = Int((share * 100).rounded())
+        switch status {
+        case .okay:
+            return "You're spending \(pct)% of what you earn on the basics — under your safe line. You've got room."
+        case .tight:
+            let over = (plan.safeLineAmount.map { plan.essentialsTotal - $0 }) ?? 0
+            return "You're spending \(pct)% on the basics — a little over the safe line. About \(money(max(0, over))) less would put you back under."
+        case .over:
+            let short = plan.moneyLeft.map { -$0 } ?? 0
+            return "The basics cost more than you bring in — about \(money(short)) more. Ask below for the fastest way to free up room."
+        }
+    }
+
     private func headlineAmount(_ left: Double) -> String {
         let magnitude = left.magnitude.formatted(.currency(code: "USD").precision(.fractionLength(0)))
         return left >= 0 ? magnitude : "−\(magnitude)"
+    }
+
+    // MARK: - Compare
+
+    private var compareCard: some View {
+        Button {
+            onCompare()
+        } label: {
+            HStack(spacing: Theme.Spacing.regular) {
+                Image(systemName: "chart.bar.xaxis")
+                    .font(.title3)
+                    .foregroundStyle(Theme.brand)
+                    .frame(width: 38, height: 38)
+                    .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("See how you compare")
+                        .font(Theme.Typography.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text("Your spending vs. your area and the U.S.")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryText)
+                    .accessibilityHidden(true)
+            }
+            .padding(Theme.Spacing.comfortable)
+            .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+            .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens the Compare tab")
     }
 
     // MARK: - Ask
@@ -342,14 +282,14 @@ struct SafeLineView: View {
 
 #if DEBUG
 #Preview("Filled — tight") {
-    NavigationStack { SafeLineView(store: .preview(.sampleTight), dataStore: DataStore(), benchmarks: .previewSample) }
+    NavigationStack { SafeLineView(store: .preview(.sampleTight), onCompare: {}) }
 }
 
 #Preview("Filled — over") {
-    NavigationStack { SafeLineView(store: .preview(.sampleOver), dataStore: DataStore(), benchmarks: .previewSample) }
+    NavigationStack { SafeLineView(store: .preview(.sampleOver), onCompare: {}) }
 }
 
 #Preview("Empty") {
-    NavigationStack { SafeLineView(store: .preview(.empty), dataStore: DataStore(), benchmarks: .previewSample) }
+    NavigationStack { SafeLineView(store: .preview(.empty), onCompare: {}) }
 }
 #endif
