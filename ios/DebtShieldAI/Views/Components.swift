@@ -74,6 +74,46 @@ struct StatusPill: View {
     }
 }
 
+// MARK: - Action row
+
+/// A tappable card row: a tinted icon, a title and subtitle, and a chevron.
+/// The single source of truth for the "leads somewhere" cards on the home and
+/// compare screens, so they stay pixel-identical. Wrap it in a `Button` or
+/// `NavigationLink`; the button trait and hint come from the caller.
+struct ActionRowLabel: View {
+    let systemImage: String
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.regular) {
+            Image(systemName: systemImage)
+                .font(.title3)
+                .foregroundStyle(Theme.brand)
+                .frame(width: 38, height: 38)
+                .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(Theme.Typography.body.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Text(subtitle)
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(Theme.secondaryText)
+                .accessibilityHidden(true)
+        }
+        .padding(Theme.Spacing.comfortable)
+        .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+        .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+    }
+}
+
 // MARK: - Cards
 
 /// Standard rounded surface. Everything on a screen sits in one of these so

@@ -203,30 +203,11 @@ struct SafeLineView: View {
         Button {
             onCompare()
         } label: {
-            HStack(spacing: Theme.Spacing.regular) {
-                Image(systemName: "chart.bar.xaxis")
-                    .font(.title3)
-                    .foregroundStyle(Theme.brand)
-                    .frame(width: 38, height: 38)
-                    .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("See how you compare")
-                        .font(Theme.Typography.body.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text("Your spending vs. your area and the U.S.")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.secondaryText)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Theme.secondaryText)
-                    .accessibilityHidden(true)
-            }
-            .padding(Theme.Spacing.comfortable)
-            .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
-            .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+            ActionRowLabel(
+                systemImage: "chart.bar.xaxis",
+                title: "See how you compare",
+                subtitle: "Your spending vs. your area and the U.S."
+            )
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens the Compare tab")
@@ -238,30 +219,11 @@ struct SafeLineView: View {
         NavigationLink {
             PersonalChatView(store: store)
         } label: {
-            HStack(spacing: Theme.Spacing.regular) {
-                Image(systemName: "bubble.left.and.text.bubble.right")
-                    .font(.title3)
-                    .foregroundStyle(Theme.brand)
-                    .frame(width: 38, height: 38)
-                    .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(askTitle)
-                        .font(Theme.Typography.body.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text("A calm, plain explanation — no judgment")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.secondaryText)
-                }
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(Theme.secondaryText)
-                    .accessibilityHidden(true)
-            }
-            .padding(Theme.Spacing.comfortable)
-            .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
-            .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+            ActionRowLabel(
+                systemImage: "bubble.left.and.text.bubble.right",
+                title: askTitle,
+                subtitle: "A calm, plain explanation — no judgment"
+            )
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens Ask DebtShield about your month")
@@ -383,6 +345,10 @@ struct SafeLineView: View {
 
 #Preview("Filled — over") {
     NavigationStack { SafeLineView(store: .preview(.sampleOver), onCompare: {}) }
+}
+
+#Preview("With history") {
+    NavigationStack { SafeLineView(store: .previewWithHistory(), onCompare: {}) }
 }
 
 #Preview("Empty") {

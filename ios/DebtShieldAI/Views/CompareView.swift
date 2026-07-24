@@ -86,31 +86,11 @@ struct CompareView: View {
             Button {
                 isChoosingArea = true
             } label: {
-                HStack(spacing: Theme.Spacing.regular) {
-                    Image(systemName: "mappin.and.ellipse")
-                        .font(.title3)
-                        .foregroundStyle(Theme.brand)
-                        .frame(width: 38, height: 38)
-                        .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Add where you live")
-                            .font(Theme.Typography.body.weight(.semibold))
-                            .foregroundStyle(.primary)
-                        Text("To compare rent and energy to your area. Food, debt, and the U.S. figures show either way.")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.secondaryText)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Theme.secondaryText)
-                        .accessibilityHidden(true)
-                }
-                .padding(Theme.Spacing.comfortable)
-                .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
-                .background(Theme.cardBackground, in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+                ActionRowLabel(
+                    systemImage: "mappin.and.ellipse",
+                    title: "Add where you live",
+                    subtitle: "To compare rent and energy to your area. Food, debt, and the U.S. figures show either way."
+                )
             }
             .buttonStyle(.plain)
         }
