@@ -83,8 +83,6 @@ struct SafeLineView: View {
     private var resultCard: some View {
         let status = plan.status ?? .okay
         VStack(alignment: .leading, spacing: Theme.Spacing.comfortable) {
-            StatusPill(status: status)
-
             if let left = plan.moneyLeft {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(headlineAmount(left))
@@ -280,13 +278,41 @@ struct SafeLineView: View {
             NavigationLink {
                 MoveView(store: store, dataStore: dataStore, benchmarks: benchmarks)
             } label: {
-                ActionRowLabel(
-                    systemImage: "map.fill",
-                    title: "Thinking about a move?",
-                    subtitle: "See if a new place keeps you out of debt — before you go"
-                )
+                HStack(spacing: Theme.Spacing.comfortable) {
+                    Image(systemName: "map.fill")
+                        .font(.title2)
+                        .foregroundStyle(.white)
+                        .frame(width: 48, height: 48)
+                        .background(Theme.brand, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Thinking about a move?")
+                            .font(Theme.Typography.body.weight(.bold))
+                            .foregroundStyle(.primary)
+                        Text("See if a new place keeps you out of debt — before you go")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: Theme.Spacing.tight)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Theme.brand)
+                        .accessibilityHidden(true)
+                }
+                .padding(Theme.Spacing.comfortable)
+                .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+                .background {
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                        .fill(Theme.iconWell(Theme.brand))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                                .strokeBorder(Theme.brand.opacity(0.18), lineWidth: 1)
+                        }
+                }
             }
             .buttonStyle(PressableCardStyle())
+            .accessibilityHint("Opens the move affordability check")
         }
     }
 

@@ -66,29 +66,6 @@ struct PressableCardStyle: ButtonStyle {
     }
 }
 
-// MARK: - Status pill
-
-/// The month's situation as a pill — icon, colour, and words together, so it
-/// never leans on colour alone. Used at the top of the Safe Line hero card.
-struct StatusPill: View {
-    let status: MoneyStatus
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: status.symbolName)
-                .font(.caption.weight(.bold))
-            Text(status.headline)
-                .font(Theme.Typography.subheadline.weight(.semibold))
-        }
-        .foregroundStyle(Theme.statusColor(status))
-        .padding(.horizontal, Theme.Spacing.regular)
-        .padding(.vertical, 7)
-        .background(Theme.statusFill(status), in: Capsule())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(status.headline)
-    }
-}
-
 // MARK: - Action row
 
 /// A tappable card row: a tinted icon, a title and subtitle, and a chevron.
