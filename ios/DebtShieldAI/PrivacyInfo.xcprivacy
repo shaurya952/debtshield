@@ -4,7 +4,7 @@
 <dict>
     <!--
       Apple has required a privacy manifest since May 2024 for apps using
-      "required reason" APIs. DebtShield AI uses UserDefaults, which is one of
+      "required reason" APIs. DebtShield uses UserDefaults, which is one of
       them, so this file is mandatory for App Store submission.
 
       Every entry was checked against the source. The app makes no network
@@ -17,9 +17,10 @@
     <array/>
 
     <!--
-      Nothing is collected. Saved and recently viewed counties are FIPS codes
-      held on device only and never transmitted, so under Apple's definition
-      they are not "collected" data.
+      Nothing is collected under Apple's definition. The person's name, email,
+      money numbers, chosen home county, and month history are stored only on
+      the device (UserDefaults) and are never transmitted off it, so they are
+      not "collected" data.
     -->
     <key>NSPrivacyCollectedDataTypes</key>
     <array/>
@@ -28,11 +29,11 @@
     <array>
         <dict>
             <!--
-              UserDefaults, used only for this app's own settings: saved
-              counties, recently viewed counties, the recommendations audience
-              preference, and whether onboarding has been seen. CA92.1 is the
-              reason code for accessing UserDefaults solely for the containing
-              app.
+              UserDefaults, used only for this app's own on-device settings:
+              the person's money plan, name and email, chosen home county,
+              month history, and whether onboarding has been seen. CA92.1 is
+              the reason code for accessing UserDefaults solely for the
+              containing app.
             -->
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
