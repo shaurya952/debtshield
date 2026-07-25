@@ -33,6 +33,9 @@ struct MoveView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
                 intro
                 placeCard
+                if let place {
+                    fullPictureLink(place)
+                }
                 if let outlook {
                     incomeCard
                     resultCard(outlook)
@@ -89,6 +92,20 @@ struct MoveView: View {
                     subtitle: "Any county in the U.S."
                 )
             }
+        }
+        .buttonStyle(PressableCardStyle())
+    }
+
+    @ViewBuilder
+    private func fullPictureLink(_ place: ScoredCounty) -> some View {
+        NavigationLink {
+            PlaceDetailView(county: place, benchmarks: benchmarks)
+        } label: {
+            ActionRowLabel(
+                systemImage: "list.bullet.rectangle",
+                title: "See the full cost of living here",
+                subtitle: "Rent, energy and food — plus what locals earn"
+            )
         }
         .buttonStyle(PressableCardStyle())
     }
