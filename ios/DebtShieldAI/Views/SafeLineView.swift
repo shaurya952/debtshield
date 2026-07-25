@@ -10,6 +10,10 @@ import SwiftUI
 /// budget must never wait on — or fail with — anything else.
 struct SafeLineView: View {
     let store: MoneyPlanStore
+    /// For the "could you afford a move?" feature. Optional so the screen still
+    /// renders (without that card) if the county data hasn't loaded.
+    var dataStore: DataStore? = nil
+    var benchmarks: Benchmarks? = nil
 
     @AppStorage("debtshield.userName") private var userName = ""
     @State private var isEditing = false
@@ -37,6 +41,7 @@ struct SafeLineView: View {
                     resultCard
                     situationCard
                     nextStepCard
+                    moveCard
                     monthsCard
                     breakdownCard
                     editButton
@@ -264,6 +269,24 @@ struct SafeLineView: View {
                 MonthlyTrendView(months: recentMonths)
                     .padding(.top, Theme.Spacing.tight)
             }
+        }
+    }
+
+    // MARK: - Could you afford a move?
+
+    @ViewBuilder
+    private var moveCard: some View {
+        if let dataStore, let benchmarks {
+            NavigationLink {
+                MoveView(store: store, dataStore: dataStore, benchmarks: benchmarks)
+            } label: {
+                ActionRowLabel(
+                    systemImage: "map.fill",
+                    title: "Thinking about a move?",
+                    subtitle: "See if a new place keeps you out of debt — before you go"
+                )
+            }
+            .buttonStyle(PressableCardStyle())
         }
     }
 

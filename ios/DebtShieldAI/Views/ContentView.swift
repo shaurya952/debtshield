@@ -55,8 +55,10 @@ struct ContentView: View {
     private func content(for tab: AppTab) -> some View {
         switch tab {
         case .safeLine:
-            // The person's own numbers — never waits on the county data.
-            SafeLineView(store: moneyStore)
+            // The person's own numbers — never waits on the county data. The
+            // county data + benchmarks power the "afford a move?" feature and
+            // are optional-by-nature.
+            SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
         case .compare:
             // The comparison layer. Uses the county data when it's loaded, and
             // still shows national + food + debt while it isn't.
