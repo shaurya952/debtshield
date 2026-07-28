@@ -48,7 +48,7 @@ struct AreaPickerView: View {
             .autocorrectionDisabled()
             .textInputAutocapitalization(.words)
             .task(id: query) {
-                outcome = searchIndex.results(for: query, riskFilter: nil)
+                outcome = searchIndex.results(for: query)
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

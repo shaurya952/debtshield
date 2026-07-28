@@ -2,11 +2,10 @@ import Foundation
 
 /// One person's monthly money picture — the heart of the app.
 ///
-/// This is the personal counterpart to `RiskScoring`: a pure, synchronous,
-/// value-type model with **no SwiftUI import**, so it can be reasoned about and
-/// previewed in isolation and can never accidentally depend on a view. Colours
-/// live in `Theme`; this file only knows about dollars and which situation the
-/// numbers describe.
+/// A pure, synchronous, value-type model with **no SwiftUI import**, so it can
+/// be reasoned about and previewed in isolation and can never accidentally
+/// depend on a view. Colours live in `Theme`; this file only knows about
+/// dollars and which situation the numbers describe.
 ///
 /// ## The honesty rule, carried over from the county work
 ///
@@ -114,15 +113,6 @@ enum MoneyStatus: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// A distinct SF Symbol per status, so the situation is carried by shape as
-    /// well as colour — it survives greyscale, colour-blindness, and VoiceOver.
-    var symbolName: String {
-        switch self {
-        case .okay: return "checkmark.circle.fill"
-        case .tight: return "equal.circle.fill"
-        case .over: return "exclamationmark.triangle.fill"
-        }
-    }
 }
 
 // MARK: - Computed picture

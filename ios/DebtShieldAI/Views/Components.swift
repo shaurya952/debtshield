@@ -1,56 +1,5 @@
 import SwiftUI
 
-// MARK: - Risk badge
-
-/// Risk shown three ways at once: shape, colour, and words.
-///
-/// Removing any one of the three still leaves the meaning intact, which is the
-/// whole point — greyscale, colour-blindness, and VoiceOver each lose a
-/// different channel.
-struct RiskBadge: View {
-    let level: RiskLevel
-    var compact: Bool = false
-
-    var body: some View {
-        Label {
-            Text(compact ? level.label : "\(level.label) risk")
-                .font(.subheadline.weight(.semibold))
-        } icon: {
-            Image(systemName: level.symbolName)
-                .imageScale(.small)
-        }
-        .foregroundStyle(Theme.riskColor(level))
-        .padding(.horizontal, Theme.Spacing.regular)
-        .padding(.vertical, Theme.Spacing.tight)
-        .background(Theme.riskFill(level), in: Capsule())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(level.label) risk")
-        .accessibilityHint(level.plainEnglish)
-    }
-}
-
-/// Shown in place of a `RiskBadge` for counties the Census does not publish
-/// enough data to score. Deliberately neutral — an unscored county is not a
-/// safe county, and must not read as one.
-struct UnscoredBadge: View {
-    var body: some View {
-        Label {
-            Text("No score")
-                .font(.subheadline.weight(.semibold))
-        } icon: {
-            Image(systemName: "questionmark.circle.fill")
-                .imageScale(.small)
-        }
-        .foregroundStyle(.primary)
-        .padding(.horizontal, Theme.Spacing.regular)
-        .padding(.vertical, Theme.Spacing.tight)
-        .background(Color(uiColor: .secondarySystemFill), in: Capsule())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("No score")
-        .accessibilityHint("The Census does not publish enough data to score this county")
-    }
-}
-
 // MARK: - Press feedback
 
 /// A button style that gives a card a subtle, springy press — the small tactile

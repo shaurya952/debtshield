@@ -42,72 +42,6 @@ struct CountySearchIndex: Sendable {
         }
     }
 
-    // MARK: - Entity extraction
-
-    /// Finds a county named anywhere inside a free-form sentence.
-    ///
-    /// The chatbot needs this: "what is the poverty rate in Cook County
-    /// Illinois" should be understood as a question *about Cook County*, but a
-    /// plain search over the whole sentence returns nothing useful because the
-    /// question words drown out the name.
-    ///
-    /// Scans word n-grams from longest to shortest so "east carroll parish"
-    /// wins over "carroll", and only accepts an exact name match — a partial
-    /// hit like "co" must not silently bind the answer to some random county.
-    /// Ambiguous names ("Washington County" exists in 30 states) are resolved
-    /// by a state named elsewhere in the same sentence, and otherwise refused.
-    func mentionedCounty(in text: String) -> ScoredCounty? {
-        let found = countyMentions(in: text)
-        return found.count == 1 ? found[0] : nil
-    }
-
-    /// Every county matching the longest name found in the sentence.
-    ///
-    /// Empty when nothing matched, one when unambiguous, several when the name
-    /// is shared — "Washington County" exists in 30 states. The caller decides
-    /// whether to answer or ask which state.
-    func countyMentions(in text: String) -> [ScoredCounty] {
-        let normalised = Self.normalise(text)
-        let words = normalised.split(separator: " ").map(String.init)
-        guard !words.isEmpty else { return [] }
-
-        let mentionedState = entries.first { normalised.contains($0.state) }?.state
-
-        for length in stride(from: min(4, words.count), through: 1, by: -1) {
-            for start in 0...(words.count - length) {
-                let phrase = words[start..<(start + length)].joined(separator: " ")
-                guard phrase.count >= 3 else { continue }
-
-                var matches = entries.filter { $0.baseName == phrase || $0.name == phrase }
-                guard !matches.isEmpty else { continue }
-
-                if matches.count > 1, let mentionedState {
-                    let narrowed = matches.filter { $0.state == mentionedState }
-                    // Only narrow if it actually leaves something. "Washington
-                    // County" contains the state name "Washington", but there
-                    // is no Washington County *in* Washington — filtering there
-                    // would wrongly report no county at all.
-                    if !narrowed.isEmpty { matches = narrowed }
-                }
-                return matches.map(\.county)
-            }
-        }
-        return []
-    }
-
-    /// Finds a state named anywhere inside a sentence.
-    func mentionedState(in text: String) -> String? {
-        let normalised = Self.normalise(text)
-        // A state name directly followed by a county suffix is part of a county
-        // name, not a state reference: "Washington County" is a county.
-        let suffixes = ["county", "parish", "borough", "city", "municipality", "census area"]
-        return entries.first { entry in
-            guard let range = normalised.range(of: entry.state) else { return false }
-            let rest = normalised[range.upperBound...].trimmingCharacters(in: .whitespaces)
-            return !suffixes.contains { rest.hasPrefix($0) }
-        }?.county.state
-    }
-
     // MARK: - Normalisation
 
     /// Case- and accent-insensitive, so "Doña Ana" and "dona ana" are the same
@@ -163,17 +97,17 @@ struct CountySearchIndex: Sendable {
 
     /// Single entry point for the UI. Returning both values together keeps the
     /// per-keystroke cost to one pass over the 3,142 entries.
-    func results(for rawQuery: String, riskFilter: RiskLevel? = nil, limit: Int = 60) -> Outcome {
-        let matches = search(rawQuery, riskFilter: riskFilter, limit: Int.max)
+    func results(for rawQuery: String, limit: Int = 60) -> Outcome {
+        let matches = search(rawQuery, limit: Int.max)
         return Outcome(
             counties: Array(matches.prefix(limit)),
             totalMatches: matches.count
         )
     }
 
-    func search(_ rawQuery: String, riskFilter: RiskLevel? = nil, limit: Int = 60) -> [ScoredCounty] {
+    func search(_ rawQuery: String, limit: Int = 60) -> [ScoredCounty] {
         let query = Self.normalise(rawQuery)
-        let pool = riskFilter.map { level in entries.filter { $0.county.riskLevel == level } } ?? entries
+        let pool = entries
 
         guard !query.isEmpty else {
             // No query: show the pool alphabetically rather than in file order.

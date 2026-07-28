@@ -150,11 +150,10 @@ struct PlaceDetailView: View {
 #Preview {
     // A stand-in county for the preview.
     let record = CountyRecord(
-        fips: "06081", state: "California", county: "San Mateo County", year: 2023,
-        medianHouseholdIncome: 156000, medianGrossRent: 2893, rentBurdenPct: 30,
-        povertyRate: 7, unemploymentRate: 4
+        fips: "06081", state: "California", county: "San Mateo County",
+        medianHouseholdIncome: 156000, medianGrossRent: 2893
     )
-    let county = ScoredCounty(record: record, drivers: [], index: nil, riskLevel: nil, missingIndicators: [])
+    let county = ScoredCounty(record: record)
     return NavigationStack { PlaceDetailView(county: county, benchmarks: .previewSample) }
 }
 #endif

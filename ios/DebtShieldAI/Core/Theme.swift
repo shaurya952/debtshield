@@ -13,29 +13,10 @@ enum Theme {
 
     static let brand = Color.adaptive(light: 0x1D4ED8, dark: 0x93C5FD)
 
-    static func riskColor(_ level: RiskLevel) -> Color {
-        switch level {
-        case .low: return .adaptive(light: 0x14602F, dark: 0x6EE7A0)
-        case .medium: return .adaptive(light: 0x7A4E00, dark: 0xFCD34D)
-        case .high: return .adaptive(light: 0x991B1B, dark: 0xFCA5A5)
-        }
-    }
-
-    /// Low-saturation fill for badges and chips.
-    ///
-    /// Deliberately faint. The badge text is a dark tint of the same hue, so a
-    /// *lighter* fill raises contrast — an earlier attempt to darken it to 20%
-    /// moved the ratio the wrong way and the audit caught it.
-    static func riskFill(_ level: RiskLevel) -> Color {
-        riskColor(level).opacity(0.12)
-    }
-
     // MARK: - Personal status colour
     //
-    // The green / amber / red the app keeps, but for a *person's* situation
-    // rather than a county grade. These reuse the exact hexes as `riskColor`, so
-    // they inherit the same WCAG-AA contrast that was tuned for the county work —
-    // there is deliberately one set of green/amber/red in the whole app.
+    // The green / amber / red for a person's situation. WCAG-AA contrast tuned
+    // in each appearance — one set of green/amber/red for the whole app.
 
     static func statusColor(_ status: MoneyStatus) -> Color {
         switch status {
@@ -79,41 +60,6 @@ enum Theme {
         case .debt:    return .adaptive(light: 0x4338CA, dark: 0xA5B4FC) // indigo
         }
     }
-
-    /// Accents for the Compare screen, so each county's bars are consistent
-    /// from card to card. Purely decorative — every bar is labelled with its
-    /// county name, so nothing is lost without the colour.
-    static let comparisonPalette: [Color] = [
-        .adaptive(light: 0x1D4ED8, dark: 0x93C5FD),
-        .adaptive(light: 0xB45309, dark: 0xFBBF24),
-        .adaptive(light: 0x7E22CE, dark: 0xD8B4FE),
-        .adaptive(light: 0x0F766E, dark: 0x5EEAD4)
-    ]
-
-    static func comparisonColor(at index: Int) -> Color {
-        comparisonPalette[index % comparisonPalette.count]
-    }
-
-    /// Five-step sequential ramp for the state grid, light and dark variants.
-    /// Single hue, increasing intensity — never a rainbow, which carries no
-    /// order. The tile always prints its value, so the shade is reinforcement
-    /// rather than the only signal.
-    static let mapRamp: [Color] = [
-        .adaptive(light: 0xE3EDFB, dark: 0x17304F),
-        .adaptive(light: 0xC3DAF8, dark: 0x1D4E8F),
-        .adaptive(light: 0x8FC0F4, dark: 0x2563EB),
-        .adaptive(light: 0x2D6FD4, dark: 0x5B9BF0),
-        .adaptive(light: 0x123E82, dark: 0xA9CBFA)
-    ]
-
-    /// Text that stays legible on each ramp step.
-    static let mapRampForeground: [Color] = [
-        .adaptive(light: 0x0B1220, dark: 0xEEF4FF),
-        .adaptive(light: 0x0B1220, dark: 0xEEF4FF),
-        .adaptive(light: 0x0B1220, dark: 0xFFFFFF),
-        .adaptive(light: 0xFFFFFF, dark: 0x0B1220),
-        .adaptive(light: 0xFFFFFF, dark: 0x0B1220)
-    ]
 
     /// The gold from the app icon's bars. Used sparingly, as an accent.
     static let accentWarm = Color.adaptive(light: 0xE0A32E, dark: 0xFBD24D)
