@@ -195,10 +195,12 @@ private struct RangeBar: View {
         VStack(spacing: 20) {
             OutlookCard(result: MonteCarloResult(
                 mode: .nationalDefault, runs: 500,
+                assumptions: .init(mode: .nationalDefault, runs: 500, startingBalance: 0, categories: [], surpriseApplied: true, surpriseChancePerMonth: 0.15, surpriseMean: 300),
                 probNegativeWithin6mo: 0.02, probNegativeWithin12mo: 0.03,
                 endingBalances6mo: [15000], endingBalances12mo: [33000, 34000, 35000, 36000, 37000]))
             OutlookCard(result: MonteCarloResult(
                 mode: .personalHistory, runs: 500,
+                assumptions: .init(mode: .personalHistory, runs: 500, startingBalance: 0, categories: [], surpriseApplied: false, surpriseChancePerMonth: 0.15, surpriseMean: 300),
                 probNegativeWithin6mo: 0.5, probNegativeWithin12mo: 0.52,
                 endingBalances6mo: [0], endingBalances12mo: [-500, 100, 1300, 2000, 2500]))
         }

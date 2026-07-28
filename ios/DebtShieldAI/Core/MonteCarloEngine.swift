@@ -125,9 +125,27 @@ enum MonteCarloEngine {
             if dippedBy12 { wentNegative12 += 1 }
         }
 
+        // Record the assumptions actually used, for transparency.
+        var categories = [CategoryAssumption(name: "Income", mean: incomeDist.mean, sd: incomeDist.sd)]
+        if let d = housingDist { categories.append(CategoryAssumption(name: EssentialKind.housing.label, mean: d.mean, sd: d.sd)) }
+        if let d = foodDist { categories.append(CategoryAssumption(name: EssentialKind.food.label, mean: d.mean, sd: d.sd)) }
+        if let d = energyDist { categories.append(CategoryAssumption(name: EssentialKind.energy.label, mean: d.mean, sd: d.sd)) }
+        if let d = debtDist { categories.append(CategoryAssumption(name: EssentialKind.debt.label, mean: d.mean, sd: d.sd)) }
+
+        let assumptions = MonteCarloAssumptions(
+            mode: mode,
+            runs: runs,
+            startingBalance: startingBalance,
+            categories: categories,
+            surpriseApplied: allowSurprise,
+            surpriseChancePerMonth: surpriseChancePerMonth,
+            surpriseMean: surpriseMean
+        )
+
         return MonteCarloResult(
             mode: mode,
             runs: runs,
+            assumptions: assumptions,
             probNegativeWithin6mo: Double(wentNegative6) / Double(runs),
             probNegativeWithin12mo: Double(wentNegative12) / Double(runs),
             endingBalances6mo: ending6.sorted(),
@@ -263,11 +281,36 @@ struct ConfidenceInterval: Sendable, Equatable {
     var margin: Double { (high - low) / 2 }
 }
 
+/// One category's modelled spread — the mean and month-to-month standard
+/// deviation the simulation actually used. Lets the app show its working.
+struct CategoryAssumption: Sendable, Equatable, Identifiable {
+    let name: String
+    let mean: Double
+    let sd: Double
+    var id: String { name }
+}
+
+/// The full set of assumptions behind a result — everything needed to explain,
+/// honestly, how the odds were reached.
+struct MonteCarloAssumptions: Sendable, Equatable {
+    let mode: VariabilityMode
+    let runs: Int
+    let startingBalance: Double
+    /// Income first, then each essential the person pays, with the mean and
+    /// standard deviation used to draw it each month.
+    let categories: [CategoryAssumption]
+    let surpriseApplied: Bool
+    let surpriseChancePerMonth: Double
+    let surpriseMean: Double
+}
+
 /// The raw simulation output — probabilities and ending-balance distributions.
 /// No formatting; percentile helpers are computation, not presentation.
 struct MonteCarloResult: Sendable, Equatable {
     let mode: VariabilityMode
     let runs: Int
+    /// How the numbers were reached — for a "show your working" disclosure.
+    let assumptions: MonteCarloAssumptions
 
     /// Share of runs (0…1) where the running balance went negative at any point
     /// within the first 6 / 12 months.
@@ -419,6 +462,15 @@ extension MonteCarloEngine {
             out += String(format: "baseline 6-mo debt prob = %.0f%%\n", s.baselineProbability6mo * 100)
             for l in s.levers {
                 out += String(format: "   %-22@ → %2.0f%%  (−%.1f pts)\n", l.label, l.newProbability6mo * 100, l.reduction * 100)
+            }
+        }
+
+        out += "\n── Transparency (assumptions used for TIGHT user) ──\n"
+        if let r = simulate(plan: tight, history: [], runs: 500, seed: 42) {
+            let a = r.assumptions
+            out += "mode: \(a.mode.rawValue)   runs: \(a.runs)   start: \(money(a.startingBalance))   surprises: \(a.surpriseApplied)\n"
+            for c in a.categories {
+                out += String(format: "   %-18@ mean %@  ± %@ /mo\n", c.name, money(c.mean), money(c.sd))
             }
         }
 
