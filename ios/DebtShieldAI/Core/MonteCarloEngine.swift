@@ -183,6 +183,15 @@ enum VariabilityMode: String, Sendable, Equatable {
     case nationalDefault
 }
 
+/// A probability range — how much the estimate itself could wobble, given it
+/// comes from a finite number of simulated runs rather than infinite ones.
+struct ConfidenceInterval: Sendable, Equatable {
+    let low: Double
+    let high: Double
+    /// Half the width — the "give or take" figure.
+    var margin: Double { (high - low) / 2 }
+}
+
 /// The raw simulation output — probabilities and ending-balance distributions.
 /// No formatting; percentile helpers are computation, not presentation.
 struct MonteCarloResult: Sendable, Equatable {
@@ -205,11 +214,28 @@ struct MonteCarloResult: Sendable, Equatable {
     func percentile6mo(_ p: Double) -> Double { Self.percentile(endingBalances6mo, p) }
 
     var p10_12mo: Double { percentile12mo(10) }
+    var p25_12mo: Double { percentile12mo(25) }
     var p50_12mo: Double { percentile12mo(50) }
+    var p75_12mo: Double { percentile12mo(75) }
     var p90_12mo: Double { percentile12mo(90) }
     var p10_6mo: Double { percentile6mo(10) }
     var p50_6mo: Double { percentile6mo(50) }
     var p90_6mo: Double { percentile6mo(90) }
+
+    /// 95% confidence interval on the debt probability — how far the estimate
+    /// could move if we ran infinitely many simulations instead of `runs`.
+    /// Uses the Wilson score interval, which behaves well near 0% and 100%.
+    var probNegative6moCI: ConfidenceInterval { Self.wilson(p: probNegativeWithin6mo, n: runs) }
+    var probNegative12moCI: ConfidenceInterval { Self.wilson(p: probNegativeWithin12mo, n: runs) }
+
+    private static func wilson(p: Double, n: Int, z: Double = 1.96) -> ConfidenceInterval {
+        guard n > 0 else { return ConfidenceInterval(low: p, high: p) }
+        let nD = Double(n)
+        let denom = 1 + z * z / nD
+        let center = (p + z * z / (2 * nD)) / denom
+        let margin = z * (p * (1 - p) / nD + z * z / (4 * nD * nD)).squareRoot() / denom
+        return ConfidenceInterval(low: Swift.max(0, center - margin), high: Swift.min(1, center + margin))
+    }
 
     /// Linear-interpolated percentile of a sorted array.
     private static func percentile(_ sorted: [Double], _ p: Double) -> Double {
@@ -255,7 +281,9 @@ extension MonteCarloEngine {
             out += "[\(label)]  mode: \(r.mode.rawValue)\n"
             out += String(format: "   P(into debt within 6 mo) = %2.0f%%   within 12 mo = %2.0f%%\n",
                           r.probNegativeWithin6mo * 100, r.probNegativeWithin12mo * 100)
-            out += "   12-mo ending balance:  p10 \(money(r.p10_12mo))   p50 \(money(r.p50_12mo))   p90 \(money(r.p90_12mo))\n\n"
+            out += String(format: "   6-mo 95%% CI: %.0f%%–%.0f%% (±%.1f pts)\n",
+                          r.probNegative6moCI.low * 100, r.probNegative6moCI.high * 100, r.probNegative6moCI.margin * 100)
+            out += "   12-mo ending balance:  p10 \(money(r.p10_12mo))  p25 \(money(r.p25_12mo))  p50 \(money(r.p50_12mo))  p75 \(money(r.p75_12mo))  p90 \(money(r.p90_12mo))\n\n"
         }
 
         run("COMFORTABLE (no history)",
