@@ -17,6 +17,9 @@ struct SafeLineView: View {
 
     @AppStorage("debtshield.userName") private var userName = ""
     @State private var isEditing = false
+    /// Cached Monte Carlo result — recomputed only when the numbers change, so
+    /// the 500-run simulation doesn't run on every render.
+    @State private var outlook: MonteCarloResult?
 
     private var firstName: String {
         userName.split(separator: " ").first.map(String.init) ?? userName
@@ -40,6 +43,7 @@ struct SafeLineView: View {
                 if plan.isComplete {
                     resultCard
                     situationCard
+                    outlookCard
                     nextStepCard
                     moveCard
                     monthsCard
@@ -74,6 +78,18 @@ struct SafeLineView: View {
         }
         .sheet(isPresented: $isEditing) {
             MyNumbersView(store: store)
+        }
+        .task(id: store.plan) {
+            outlook = MonteCarloEngine.simulate(plan: store.plan, history: store.history, seed: 42)
+        }
+    }
+
+    // MARK: - The year ahead (Monte Carlo odds)
+
+    @ViewBuilder
+    private var outlookCard: some View {
+        if let outlook {
+            OutlookCard(result: outlook)
         }
     }
 

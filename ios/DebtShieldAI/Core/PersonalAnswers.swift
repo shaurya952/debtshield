@@ -39,6 +39,9 @@ enum PersonalChatEngine {
         // Advice territory is turned away before anything else.
         if let redirect = adviceRedirect(q) { return redirect }
 
+        // "What are the odds I go into debt" — the Monte Carlo simulation.
+        if let odds = oddsAnswer(q, plan: plan, months: months) { return odds }
+
         // "Where is this heading / am I going into debt" — the synthesized
         // verdict. Checked before "what if" so "will I be short next month"
         // reads as a situation question, not a hypothetical.
@@ -90,11 +93,11 @@ enum PersonalChatEngine {
         guard plan.isComplete else {
             return ["What's the safe line?", "What can this tell me?"]
         }
-        var prompts = ["Why is it tight?", "How does my rent compare?", "What's my fastest fix?"]
+        var prompts = ["Why is it tight?", "What are my odds of going into debt?", "How does my rent compare?"]
         if let biggest = biggestSegment(plan) {
             prompts.append("What if \(biggest.label.lowercased()) dropped $100?")
         }
-        prompts.append("How do all my costs compare?")
+        prompts.append("What's my fastest fix?")
         return prompts
     }
 
@@ -108,6 +111,39 @@ enum PersonalChatEngine {
         return ChatAnswer(
             text: "Once you add your numbers on the home screen, I can explain your month in plain dollars. I can still tell you how the safe line works in the meantime.",
             followUps: quickPrompts(for: plan)
+        )
+    }
+
+    // MARK: - Odds (the Monte Carlo simulation)
+
+    /// "What are the odds / how likely am I to go into debt" — answered with the
+    /// probability from `MonteCarloEngine`. `months` includes the current month,
+    /// so the real history is everything but the last.
+    private static func oddsAnswer(_ q: String, plan: MoneyPlan, months: [MonthRecord]) -> ChatAnswer? {
+        let markers = ["odds", "chance", "chances", "likely", "likelihood", "probability",
+                       "how often", "percent chance", "% chance", "what are the odds",
+                       "how safe am i", "risk of debt", "risk of going"]
+        guard has(q, markers) else { return nil }
+
+        let history = months.isEmpty ? [] : Array(months.dropLast())
+        guard let r = MonteCarloEngine.simulate(plan: plan, history: history, runs: 500, seed: 42) else {
+            return needNumbers()
+        }
+        let p6 = Int((r.probNegativeWithin6mo * 100).rounded())
+        let p12 = Int((r.probNegativeWithin12mo * 100).rounded())
+        let basis = r.mode == .personalHistory ? "your own recent months" : "typical month-to-month ups and downs"
+
+        var text = "I ran your numbers across \(r.runs) possible versions of the year — based on \(basis). "
+        if p6 == 0 && p12 == 0 {
+            text += "Almost none dipped into the red — you're on steady ground. "
+        } else {
+            text += "About **\(p6)%** dipped into the red within 6 months, and **\(p12)%** within 12. "
+        }
+        text += "By this time next year you'd most likely land around \(money(r.p50_12mo)), somewhere between \(money(r.p10_12mo)) and \(money(r.p90_12mo))."
+        return ChatAnswer(
+            text: text,
+            provenance: "Simulation of your numbers, on this device",
+            followUps: ["What's my fastest fix?", "Am I heading toward debt?"]
         )
     }
 
