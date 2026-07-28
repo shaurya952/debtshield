@@ -400,6 +400,16 @@ struct SensitivityResult: Sendable, Equatable {
     var topLever: SensitivityLever? {
         levers.first { $0.reduction > 0 } ?? levers.first
     }
+
+    /// The most effective change worth *suggesting* — skips rent/mortgage,
+    /// which is real but rarely something you can trim this month, matching the
+    /// app's "start with a movable cost" wisdom. Falls back to the top lever.
+    var topActionableLever: SensitivityLever? {
+        levers.first { lever in
+            if case .essential(.housing) = lever.input { return false }
+            return lever.reduction > 0
+        } ?? topLever
+    }
 }
 
 // MARK: - Seeded RNG

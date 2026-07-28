@@ -17,9 +17,11 @@ struct SafeLineView: View {
 
     @AppStorage("debtshield.userName") private var userName = ""
     @State private var isEditing = false
-    /// Cached Monte Carlo result — recomputed only when the numbers change, so
-    /// the 500-run simulation doesn't run on every render.
+    /// Cached Monte Carlo result and sensitivity — recomputed only when the
+    /// numbers change, off the main thread, so the simulation never touches a
+    /// render or blocks a frame.
     @State private var outlook: MonteCarloResult?
+    @State private var sensitivity: SensitivityResult?
 
     private var firstName: String {
         userName.split(separator: " ").first.map(String.init) ?? userName
@@ -80,7 +82,14 @@ struct SafeLineView: View {
             MyNumbersView(store: store)
         }
         .task(id: store.plan) {
-            outlook = MonteCarloEngine.simulate(plan: store.plan, history: store.history, seed: 42)
+            let plan = store.plan
+            let history = store.history
+            let computed = await Task.detached(priority: .userInitiated) {
+                (MonteCarloEngine.simulate(plan: plan, history: history, seed: 42),
+                 MonteCarloEngine.sensitivity(plan: plan, history: history, seed: 42))
+            }.value
+            outlook = computed.0
+            sensitivity = computed.1
         }
     }
 
@@ -89,7 +98,7 @@ struct SafeLineView: View {
     @ViewBuilder
     private var outlookCard: some View {
         if let outlook {
-            OutlookCard(result: outlook)
+            OutlookCard(result: outlook, topLever: sensitivity?.topActionableLever)
         }
     }
 
