@@ -135,6 +135,77 @@ enum MonteCarloEngine {
         )
     }
 
+    // MARK: - Sensitivity
+
+    /// Which change to the plan moves the debt odds most. For each input it
+    /// re-runs the simulation with that input improved by `delta` — more income,
+    /// or less of an essential — and measures how far the 6-month debt
+    /// probability drops. Every run shares the same seed (common random
+    /// numbers), so the differences reflect the change, not simulation noise —
+    /// which is what lets it separate a volatile cost (trimming it also calms
+    /// the swings) from a steady one.
+    static func sensitivity(
+        plan: MoneyPlan,
+        history: [MonthRecord],
+        delta: Double = 100,
+        runs: Int = defaultRuns,
+        seed: UInt64 = 0xB1A5
+    ) -> SensitivityResult? {
+        guard let base = simulate(plan: plan, history: history, runs: runs, seed: seed) else { return nil }
+        let baseline = base.probNegativeWithin6mo
+
+        var levers: [SensitivityLever] = []
+
+        if let income = plan.monthlyIncome {
+            var m = plan
+            m.monthlyIncome = income + delta
+            if let r = simulate(plan: m, history: history, runs: runs, seed: seed) {
+                levers.append(SensitivityLever(
+                    input: .income, label: "Earn \(dollars(delta)) more",
+                    newProbability6mo: r.probNegativeWithin6mo,
+                    reduction: baseline - r.probNegativeWithin6mo))
+            }
+        }
+
+        for kind in EssentialKind.allCases {
+            guard let current = value(of: kind, in: plan), current > 0 else { continue }
+            let cut = Swift.min(delta, current)
+            var m = plan
+            set(kind, to: Swift.max(1, current - delta), in: &m)
+            if let r = simulate(plan: m, history: history, runs: runs, seed: seed) {
+                levers.append(SensitivityLever(
+                    input: .essential(kind), label: "Cut \(kind.label.lowercased()) \(dollars(cut))",
+                    newProbability6mo: r.probNegativeWithin6mo,
+                    reduction: baseline - r.probNegativeWithin6mo))
+            }
+        }
+
+        levers.sort { $0.reduction > $1.reduction }
+        return SensitivityResult(baselineProbability6mo: baseline, delta: delta, levers: levers)
+    }
+
+    private static func value(of kind: EssentialKind, in plan: MoneyPlan) -> Double? {
+        switch kind {
+        case .housing: return plan.housing
+        case .food: return plan.food
+        case .energy: return plan.energy
+        case .debt: return plan.debtPayments
+        }
+    }
+
+    private static func set(_ kind: EssentialKind, to value: Double, in plan: inout MoneyPlan) {
+        switch kind {
+        case .housing: plan.housing = value
+        case .food: plan.food = value
+        case .energy: plan.energy = value
+        case .debt: plan.debtPayments = value
+        }
+    }
+
+    private static func dollars(_ value: Double) -> String {
+        "$" + value.formatted(.number.precision(.fractionLength(0)))
+    }
+
     // MARK: - Distributions
 
     /// One category's spread. In personal mode it's measured from the stored
@@ -249,6 +320,45 @@ struct MonteCarloResult: Sendable, Equatable {
     }
 }
 
+// MARK: - Sensitivity result
+
+/// One change the person could make, and what it does to the debt odds.
+struct SensitivityLever: Sendable, Equatable, Identifiable {
+    enum Input: Sendable, Equatable {
+        case income
+        case essential(EssentialKind)
+    }
+
+    let input: Input
+    /// Plain label, e.g. "Cut energy $100".
+    let label: String
+    /// The 6-month debt probability after this change (0…1).
+    let newProbability6mo: Double
+    /// How much the probability drops versus the baseline (0…1; higher = bigger
+    /// lever). Can be slightly negative if a change happens to help variance
+    /// less than noise — clamp in the UI if needed.
+    let reduction: Double
+
+    var id: String {
+        switch input {
+        case .income: return "income"
+        case .essential(let k): return k.id
+        }
+    }
+}
+
+/// The baseline odds plus every lever, ranked by impact (biggest first).
+struct SensitivityResult: Sendable, Equatable {
+    let baselineProbability6mo: Double
+    let delta: Double
+    let levers: [SensitivityLever]
+
+    /// The single most effective change, if any moves the needle at all.
+    var topLever: SensitivityLever? {
+        levers.first { $0.reduction > 0 } ?? levers.first
+    }
+}
+
 // MARK: - Seeded RNG
 
 /// A small, fast, seedable generator (SplitMix64) so simulations are
@@ -302,6 +412,15 @@ extension MonteCarloEngine {
         ]
         run("WITH 3 MONTHS HISTORY (personal)",
             MoneyPlan(monthlyIncome: 3000, housing: 1400, food: 450, energy: 230, debtPayments: 300), history: history)
+
+        out += "── Sensitivity (TIGHT user, $100 levers, ranked) ──\n"
+        let tight = MoneyPlan(monthlyIncome: 3000, housing: 1500, food: 550, energy: 300, debtPayments: 500)
+        if let s = sensitivity(plan: tight, history: [], delta: 100) {
+            out += String(format: "baseline 6-mo debt prob = %.0f%%\n", s.baselineProbability6mo * 100)
+            for l in s.levers {
+                out += String(format: "   %-22@ → %2.0f%%  (−%.1f pts)\n", l.label, l.newProbability6mo * 100, l.reduction * 100)
+            }
+        }
 
         return out
     }
