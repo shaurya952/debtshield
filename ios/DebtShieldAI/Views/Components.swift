@@ -55,6 +55,76 @@ struct ActionRowLabel: View {
     }
 }
 
+// MARK: - Plain-language explainer
+
+/// A quiet, consistent "what does this mean?" expander.
+///
+/// The app's more capable cards — the verdict, the odds — carry a little more
+/// under the hood than a first-time reader can guess at. Rather than crowd the
+/// card with explanation, this tucks a plain-English answer one tap away, in a
+/// voice that's calm and jargon-free. Collapsed by default; the prompt is a soft
+/// brand-tinted line, not a heavy control.
+struct ExplainerDisclosure<Content: View>: View {
+    /// The tappable prompt, e.g. "How this works" or "Why?".
+    let label: String
+    var systemImage: String = "questionmark.circle"
+    @ViewBuilder var content: Content
+
+    @State private var expanded = false
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $expanded) {
+            content
+                .font(Theme.Typography.subheadline)
+                .foregroundStyle(Theme.secondaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, Theme.Spacing.tight)
+        } label: {
+            Label(label, systemImage: systemImage)
+                .font(Theme.Typography.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.brand)
+        }
+        .tint(Theme.brand)
+        .accessibilityHint(expanded ? "Collapses the explanation" : "Explains this in plain words")
+    }
+}
+
+// MARK: - Status chip
+
+/// A small, glanceable pill of the month's status — the instant read that lets
+/// the eye land on "Tight" before reading a word of the card. Colour plus an SF
+/// Symbol plus a label, so the meaning never rides on colour alone.
+struct StatusChip: View {
+    let status: MoneyStatus
+
+    private var label: String {
+        switch status {
+        case .okay: return "On track"
+        case .tight: return "Tight"
+        case .over: return "Over budget"
+        }
+    }
+
+    private var symbol: String {
+        switch status {
+        case .okay: return "checkmark.circle.fill"
+        case .tight: return "equal.circle.fill"
+        case .over: return "exclamationmark.circle.fill"
+        }
+    }
+
+    var body: some View {
+        Label(label, systemImage: symbol)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(Theme.statusColor(status))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Theme.statusFill(status), in: Capsule())
+            .accessibilityLabel("Status: \(label)")
+    }
+}
+
 // MARK: - Cards
 
 /// Standard rounded surface. Everything on a screen sits in one of these so

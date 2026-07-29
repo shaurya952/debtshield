@@ -43,6 +43,21 @@ struct HowItWorksView: View {
                 }
 
                 Card {
+                    SectionHeader(
+                        title: "The year ahead",
+                        subtitle: "Where the odds on your home screen come from"
+                    )
+                    Text("Nobody can know the future, so we don't try to guess it once. Instead we play your month out hundreds of times over. In some of those runs a bill lands high or a surprise cost hits; in others everything stays calm.")
+                        .font(Theme.Typography.body)
+                        .foregroundStyle(Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("Then we count: in how many of those runs did you end up short? That share is the \"chance of going into debt\" you see. The range shows where your savings could land — from a rough stretch to a good one. Track a few months and it stops using typical U.S. swings and starts using your own.")
+                        .font(Theme.Typography.body)
+                        .foregroundStyle(Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Card {
                     SectionHeader(title: "What it can't do")
                     Text("DebtShield isn't financial or legal advice, and it can't see your full situation. It's a clear, private picture of your month — a starting point, not a decision. For real help, dialling **211** in the United States connects you to local assistance, and HUD-approved counsellors offer free money and housing guidance.")
                         .font(Theme.Typography.body)

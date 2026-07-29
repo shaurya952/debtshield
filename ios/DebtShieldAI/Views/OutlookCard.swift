@@ -12,6 +12,10 @@ struct OutlookCard: View {
     /// The most effective change, from the sensitivity analysis. Optional so the
     /// card stands alone if it hasn't been computed.
     var topLever: SensitivityLever? = nil
+    /// Whether *this month* reads as "tight" on the safe line. Lets the card
+    /// reconcile the two views — a month can be tight on share of income yet
+    /// steady on dollars ahead — so the reader never sees a bare contradiction.
+    var tightThisMonth: Bool = false
 
     @State private var showWork = false
 
@@ -19,20 +23,23 @@ struct OutlookCard: View {
 
     var body: some View {
         Card {
-            SectionHeader(title: "The year ahead", subtitle: basis)
+            SectionHeader(title: "The year ahead", subtitle: "Next 12 months · \(basis)")
 
-            HStack(alignment: .center, spacing: Theme.Spacing.regular) {
-                Image(systemName: symbol)
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .background(tint, in: Circle())
-                    .accessibilityHidden(true)
-                Text(headline)
-                    .font(Theme.Typography.title)
-                    .foregroundStyle(tint)
-                    .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .center, spacing: Theme.Spacing.comfortable) {
+                OddsDial(probability: prob6, tint: tint)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(headline)
+                        .font(Theme.Typography.title)
+                        .foregroundStyle(tint)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("chance of a shortfall in the next 6 months")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(headline). About \(pct6) percent chance of a shortfall in the next 6 months.")
 
             Text(.init(detail))
                 .font(Theme.Typography.subheadline)
@@ -78,6 +85,18 @@ struct OutlookCard: View {
     private var workDisclosure: some View {
         DisclosureGroup(isExpanded: $showWork) {
             VStack(alignment: .leading, spacing: 6) {
+                // Plain-language concept first — what a "simulation" even is —
+                // then the specific numbers underneath, for whoever wants them.
+                Text(.init(plainConcept))
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.bottom, Theme.Spacing.tight)
+
+                Text("The numbers behind it")
+                    .font(Theme.Typography.caption.weight(.semibold))
+                    .foregroundStyle(.primary)
+
                 Text("\(result.assumptions.runs) simulated months, \(basisLong). Starting from \(money(result.assumptions.startingBalance)) saved.")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.secondaryText)
@@ -104,35 +123,48 @@ struct OutlookCard: View {
             }
             .padding(.top, Theme.Spacing.tight)
         } label: {
-            Text("How we worked this out")
+            Label("How this works", systemImage: "questionmark.circle")
                 .font(Theme.Typography.subheadline.weight(.semibold))
                 .foregroundStyle(Theme.brand)
         }
         .tint(Theme.brand)
     }
 
+    /// The Monte Carlo idea in everyday words — no "Monte Carlo", no "standard
+    /// deviation". Just: we can't know the future, so we play the month out many
+    /// times and count how often it goes wrong.
+    private var plainConcept: String {
+        let n = result.assumptions.runs
+        let base = "Nobody can know the future, so instead of one guess we play your month out **\(n) times over**. In some of those months a bill runs high or a surprise cost lands; in others everything stays calm. Then we simply count how many ended in the red — that share is your chance of going into debt."
+        switch result.mode {
+        case .personalHistory:
+            return base + " The ups and downs come from **your own recent months**, so this sharpens the longer you track."
+        case .nationalDefault:
+            return base + " Since you've tracked fewer than 3 months, the ups and downs are **typical U.S. swings** for now — track a few months and it starts using your own."
+        }
+    }
+
     // MARK: - Wording
 
     private func pct(_ v: Double) -> Int { Int((v * 100).rounded()) }
     private var pct6: Int { pct(prob6) }
-    private var ciMargin: Int { Int((result.probNegative6moCI.margin * 100).rounded()) }
 
     private var headline: String {
         switch prob6 {
-        case ..<0.05: return "You're on steady ground"
+        case ..<0.05: return "Steady year ahead"
         case ..<0.25: return "Mostly steady ahead"
         case ..<0.60: return "A real chance of debt ahead"
         default: return "Debt is likely ahead"
         }
     }
 
-    private var symbol: String {
-        switch prob6 {
-        case ..<0.05: return "checkmark.seal.fill"
-        case ..<0.25: return "hand.thumbsup.fill"
-        case ..<0.60: return "exclamationmark.triangle.fill"
-        default: return "exclamationmark.octagon.fill"
-        }
+    /// The bridge between this card and the verdict above it. When the month is
+    /// tight on share of income but the year still looks steady on dollars, spell
+    /// that out — otherwise the two cards read as a contradiction. Kept to one
+    /// line; the fuller "why" lives in the situation card's own explainer.
+    private var reconcile: String {
+        guard tightThisMonth, prob6 < 0.25 else { return "" }
+        return " Tight now, but steady ahead — enough is left over each month that debt stays unlikely."
     }
 
     private var tint: Color {
@@ -145,22 +177,21 @@ struct OutlookCard: View {
     }
 
     private var detail: String {
-        let base = "We ran your numbers across \(result.runs) possible versions of the next 6 months. "
         switch prob6 {
         case ..<0.05:
-            return base + "Almost none slipped into the red — you've got a solid margin."
+            return "Almost none of those months slipped into the red." + reconcile
         case ..<0.25:
-            return base + "About **\(pct6)%** (give or take \(ciMargin)) dipped into the red at some point — worth a light watch."
+            return "A few slipped into the red — worth a light watch." + reconcile
         case ..<0.60:
-            return base + "About **\(pct6)%** (give or take \(ciMargin)) dipped into the red. Now's the time to act."
+            return "A real share slipped into the red. Now's the good time to act."
         default:
-            return base + "Most of them — about **\(pct6)%** — ended in the red. This needs attention, and there's free help: dialling **211** reaches local support."
+            return "Most ended in the red. This needs attention — and there's free help: dial **211**."
         }
     }
 
     private var rangeCaption: String {
-        let inRed = result.p10_12mo < 0 ? " Part of that range is in the red." : ""
-        return "By this time next year you'd most likely be around \(money(result.p50_12mo)), somewhere between \(money(result.p10_12mo)) and \(money(result.p90_12mo)).\(inRed)"
+        let inRed = result.p10_12mo < 0 ? ", some of it in the red" : ""
+        return "A year out: most likely around \(money(result.p50_12mo)) (\(money(result.p10_12mo)) to \(money(result.p90_12mo))\(inRed))."
     }
 
     private var basis: String {
@@ -180,6 +211,38 @@ struct OutlookCard: View {
     private func money(_ value: Double) -> String {
         let sign = value < 0 ? "−" : ""
         return sign + abs(value).formatted(.currency(code: "USD").precision(.fractionLength(0)))
+    }
+}
+
+// MARK: - Odds dial
+
+/// The headline odds as a ring — the number the whole card is about, made big
+/// and glanceable. The arc fills with the probability; the percentage sits in
+/// the middle in the same tint as the verdict. Decorative (the header carries a
+/// full spoken label), so it's hidden from VoiceOver.
+private struct OddsDial: View {
+    let probability: Double
+    let tint: Color
+
+    @ScaledMetric(relativeTo: .title2) private var size: CGFloat = 76
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(Color(uiColor: .tertiarySystemFill), lineWidth: 9)
+            Circle()
+                .trim(from: 0, to: max(0.008, min(1, probability)))
+                .stroke(tint, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Text("\(Int((probability * 100).rounded()))%")
+                .font(.system(.title3, design: .rounded).weight(.bold))
+                .foregroundStyle(tint)
+                .contentTransition(.numericText())
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
     }
 }
 

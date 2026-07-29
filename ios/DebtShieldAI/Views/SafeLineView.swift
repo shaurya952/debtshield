@@ -47,6 +47,7 @@ struct SafeLineView: View {
                     situationCard
                     outlookCard
                     nextStepCard
+                    buildRoomCard
                     moveCard
                     monthsCard
                     breakdownCard
@@ -98,7 +99,11 @@ struct SafeLineView: View {
     @ViewBuilder
     private var outlookCard: some View {
         if let outlook {
-            OutlookCard(result: outlook, topLever: sensitivity?.topActionableLever)
+            OutlookCard(
+                result: outlook,
+                topLever: sensitivity?.topActionableLever,
+                tightThisMonth: plan.status == .tight
+            )
         }
     }
 
@@ -108,6 +113,8 @@ struct SafeLineView: View {
     private var resultCard: some View {
         let status = plan.status ?? .okay
         VStack(alignment: .leading, spacing: Theme.Spacing.comfortable) {
+            StatusChip(status: status)
+
             if let left = plan.moneyLeft {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(headlineAmount(left))
@@ -221,22 +228,38 @@ struct SafeLineView: View {
             let color = situationColor(read.situation)
             let heavy = read.situation.severity >= Situation.headingToDebt.severity
             VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
-                HStack(alignment: .center, spacing: Theme.Spacing.regular) {
-                    Image(systemName: read.situation.symbol)
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(color, in: Circle())
-                        .accessibilityHidden(true)
-                    Text(read.headline)
-                        .font(Theme.Typography.title)
-                        .foregroundStyle(color)
+                // Verdict + plain read, spoken as one for VoiceOver.
+                VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
+                    HStack(alignment: .center, spacing: Theme.Spacing.regular) {
+                        Image(systemName: read.situation.symbol)
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .background(color, in: Circle())
+                            .accessibilityHidden(true)
+                        Text(read.headline)
+                            .font(Theme.Typography.title)
+                            .foregroundStyle(color)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Text(.init(read.detail))
+                        .font(Theme.Typography.subheadline)
+                        .foregroundStyle(Theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Text(.init(read.detail))
-                    .font(Theme.Typography.subheadline)
-                    .foregroundStyle(Theme.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
+                .accessibilityElement(children: .combine)
+
+                // Where this sits on the road from clear to debt — orientation
+                // at a glance. Decorative; the verdict text already says it.
+                SituationScale(situation: read.situation, color: color)
+                    .padding(.top, 2)
+
+                // The plain arithmetic behind the verdict, one tap away.
+                if let why = situationWhy {
+                    ExplainerDisclosure(label: "Why?") {
+                        Text(.init(why))
+                    }
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(Theme.Spacing.comfortable)
@@ -260,7 +283,36 @@ struct SafeLineView: View {
                     .shadow(color: heavy ? color.opacity(0.18) : Theme.cardShadow,
                             radius: heavy ? 14 : 10, x: 0, y: heavy ? 7 : 4)
             }
-            .accessibilityElement(children: .combine)
+        }
+    }
+
+    /// The plain arithmetic behind the verdict — the same numbers the reader
+    /// entered, put back in a sentence so "it's tight" never feels like a black
+    /// box. Everything here is already on screen; this just connects the dots.
+    private var situationWhy: String? {
+        guard let income = plan.monthlyIncome, income > 0,
+              let share = plan.essentialsShare,
+              let safeLine = plan.safeLineAmount,
+              let left = plan.moneyLeft else { return nil }
+        let essentials = plan.essentialsTotal
+        let pct = Int((share * 100).rounded())
+
+        // A debt note, only when debt is a real part of the story.
+        var debtNote = ""
+        if let debt = plan.debtPayments, debt > 0 {
+            let debtPct = Int(((debt / income) * 100).rounded())
+            if debtPct >= 20 {
+                debtNote = " Of that, debt payments alone take about **\(debtPct)%** of your income — the usual comfortable ceiling is 20%."
+            }
+        }
+
+        if left < 0 {
+            return "Your basics add up to **\(money(essentials))** a month, but you bring in **\(money(income))**. That's **\(money(-left))** more going out than coming in — which is why the month doesn't cover itself.\(debtNote)"
+        } else if share > MoneyPlan.safeLineShare {
+            let over = max(0, essentials - safeLine)
+            return "Your basics add up to **\(money(essentials))** — about **\(pct)%** of the **\(money(income))** you bring in. The comfortable line is 55% (**\(money(safeLine))**), so you're roughly **\(money(over))** above it. You're still covered, but there's not much slack.\(debtNote)"
+        } else {
+            return "Your basics add up to **\(money(essentials))** — about **\(pct)%** of the **\(money(income))** you bring in, under the 55% comfortable line (**\(money(safeLine))**). That's the room you're seeing.\(debtNote)"
         }
     }
 
@@ -339,6 +391,24 @@ struct SafeLineView: View {
             .buttonStyle(PressableCardStyle())
             .accessibilityHint("Opens the move affordability check")
         }
+    }
+
+    // MARK: - Ways to build room
+
+    /// A calm entry into general ideas and legitimate free help — never advice,
+    /// and personalised only by the person's own movable-cost figure.
+    private var buildRoomCard: some View {
+        NavigationLink {
+            BuildRoomView(store: store)
+        } label: {
+            ActionRowLabel(
+                systemImage: "sparkles",
+                title: "Ways to build room",
+                subtitle: "Simple ideas — and free help — to give your month more breathing space"
+            )
+        }
+        .buttonStyle(PressableCardStyle())
+        .accessibilityHint("Opens ideas and free resources")
     }
 
     // MARK: - Where to start
@@ -467,6 +537,60 @@ struct SafeLineView: View {
 
     private func money(_ value: Double) -> String {
         value.formatted(.currency(code: "USD").precision(.fractionLength(0)))
+    }
+}
+
+// MARK: - Situation scale
+
+/// A small "where you stand" track for the verdict card — a calm gradient from
+/// clear (green) through tight (amber) to debt (red), with a marker at the
+/// current situation. Pure orientation: it shows the reader that this is a
+/// spectrum and where they sit on it. Decorative, so it's hidden from VoiceOver
+/// (the verdict text and its "Why?" already carry the meaning).
+private struct SituationScale: View {
+    let situation: Situation
+    let color: Color
+
+    private var fraction: CGFloat {
+        let steps = max(1, Situation.allCases.count - 1)
+        return CGFloat(situation.severity) / CGFloat(steps)
+    }
+
+    var body: some View {
+        VStack(spacing: 6) {
+            GeometryReader { geo in
+                let w = geo.size.width
+                let dot: CGFloat = 16
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(LinearGradient(
+                            colors: [
+                                Theme.statusColor(.okay).opacity(0.30),
+                                Theme.statusColor(.tight).opacity(0.30),
+                                Theme.statusColor(.over).opacity(0.30)
+                            ],
+                            startPoint: .leading, endPoint: .trailing))
+                        .frame(height: 8)
+
+                    Circle()
+                        .fill(color)
+                        .frame(width: dot, height: dot)
+                        .overlay(Circle().strokeBorder(Color(uiColor: .systemBackground), lineWidth: 2))
+                        .offset(x: min(max(0, fraction * w - dot / 2), w - dot))
+                }
+                .frame(height: dot)
+            }
+            .frame(height: 16)
+
+            HStack {
+                Text("Clear").font(.caption2).foregroundStyle(Theme.secondaryText)
+                Spacer()
+                Text("Tight").font(.caption2).foregroundStyle(Theme.secondaryText)
+                Spacer()
+                Text("In debt").font(.caption2).foregroundStyle(Theme.secondaryText)
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
 
