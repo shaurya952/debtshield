@@ -126,6 +126,17 @@ extension MoneyPlan {
     /// lenient, change only this number.
     static let safeLineShare: Double = 0.55
 
+    /// The one place the app weighs real dollars, not just the ratio.
+    ///
+    /// Essentials over the safe-line *share* usually mean a tight month — but not
+    /// always. Someone who earns well can spend a little over 55% on basics and
+    /// still keep a large cushion; calling that "tight" would be wrong, and it
+    /// would contradict the calmer read the year-ahead odds give the same person.
+    /// So a month only counts as `tight` when it clears the share *and* the
+    /// dollars left fall below this comfortable cushion. Below it, an
+    /// over-the-line share genuinely does read as tight.
+    static let comfortableCushion: Double = 1_500
+
     /// The essentials that were actually entered, in bar order. A blank or zero
     /// category is left out entirely rather than drawn as an empty sliver.
     var segments: [EssentialSegment] {
@@ -196,14 +207,18 @@ extension MoneyPlan {
     /// `nil` rather than defaulting to `.okay` is the whole honesty guarantee:
     /// an empty or half-filled plan can never render as a reassuring green.
     ///
-    /// Bands (all driven by `safeLineShare`):
-    /// - `okay`  — essentials at or below the safe line
-    /// - `tight` — above the safe line but still within income
+    /// Bands (share and dollars together):
+    /// - `okay`  — essentials at or below the safe line, *or* above it but with a
+    ///             comfortable dollar cushion still left (see `comfortableCushion`)
+    /// - `tight` — above the safe line *and* the dollars left are thin
     /// - `over`  — essentials exceed income (bar overflows, money left is negative)
+    ///
+    /// The dollar test is the one place share isn't the whole story: it stops a
+    /// well-paid month that runs a little over 55% from being mislabelled tight.
     var status: MoneyStatus? {
-        guard let share = essentialsShare, !segments.isEmpty else { return nil }
+        guard let share = essentialsShare, let left = moneyLeft, !segments.isEmpty else { return nil }
         if share > 1.0 { return .over }
-        if share > Self.safeLineShare { return .tight }
+        if share > Self.safeLineShare, left < Self.comfortableCushion { return .tight }
         return .okay
     }
 
@@ -236,6 +251,17 @@ extension MoneyPlan {
         food: 300,
         energy: 150,
         debtPayments: 100
+    )
+
+    /// Over the safe line on share, but comfortable in dollars: $6,000 income,
+    /// $3,600 essentials (60%), $2,400 left. Expect `.okay` — the dollar cushion
+    /// keeps a well-paid, slightly-over-line month from reading as tight.
+    static let sampleComfortableOverLine = MoneyPlan(
+        monthlyIncome: 6_000,
+        housing: 2_400,
+        food: 700,
+        energy: 250,
+        debtPayments: 250
     )
 
     /// Spending more than the month brings in: $2,500 income, $2,750 essentials

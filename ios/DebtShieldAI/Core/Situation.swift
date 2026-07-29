@@ -110,7 +110,7 @@ enum SituationEngine {
         } else {
             situation = .good
             headline = "You're in good shape"
-            detail = "Your basics sit well under what you earn, and nothing's trending the wrong way. A little of what's left over could start becoming a cushion."
+            detail = "Your basics are comfortably covered, and nothing's trending the wrong way. A little of what's left over could start becoming a cushion."
         }
 
         // Before there's a trend, promise the early-warning.

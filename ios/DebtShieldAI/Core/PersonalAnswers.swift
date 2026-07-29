@@ -298,7 +298,11 @@ enum PersonalChatEngine {
         case .tight:
             text = "Your essentials add up to \(money(essentials)) — that's \(sharePct) of your \(money(income)) income, a bit past the safe line of \(percent(MoneyPlan.safeLineShare)). You've got \(money(left)) left, so it works, but there isn't much slack. The biggest piece is **\(biggest.label.lowercased())** at \(money(biggest.amount))."
         case .okay:
-            text = "You're okay this month. Essentials are \(money(essentials)) — \(sharePct) of your \(money(income)) income, under the safe line — leaving you \(money(left)). Your biggest cost is **\(biggest.label.lowercased())** at \(money(biggest.amount))."
+            if share > MoneyPlan.safeLineShare {
+                text = "You're okay this month. Essentials are \(money(essentials)) — \(sharePct) of your \(money(income)) income, a little past the safe line, but the \(money(left)) left over is a comfortable cushion. Your biggest cost is **\(biggest.label.lowercased())** at \(money(biggest.amount))."
+            } else {
+                text = "You're okay this month. Essentials are \(money(essentials)) — \(sharePct) of your \(money(income)) income, under the safe line — leaving you \(money(left)). Your biggest cost is **\(biggest.label.lowercased())** at \(money(biggest.amount))."
+            }
         }
         return ChatAnswer(
             text: text,
@@ -369,13 +373,17 @@ enum PersonalChatEngine {
 
     private static func safeLineExplanation(_ plan: MoneyPlan) -> ChatAnswer {
         let linePct = percent(MoneyPlan.safeLineShare)
-        var text = "The safe line is a simple guide: try to keep your essentials — rent, food, energy, debt payments — under \(linePct) of what comes in. Below it, you've usually got room for everything else and a bit to save. Past it, the month gets tight fast."
+        var text = "The safe line is a simple guide: try to keep your essentials — rent, food, energy, debt payments — under \(linePct) of what comes in. Below it, you've usually got room for everything else and a bit to save. Past it, there's less room to spare — though what really matters is how many dollars you keep."
         if let income = plan.monthlyIncome, let safe = plan.safeLineAmount, income > 0 {
             text += "\n\nFor your \(money(income)) income, that line sits at about \(money(safe)) of essentials."
             if let share = plan.essentialsShare {
-                text += share <= MoneyPlan.safeLineShare
-                    ? " You're under it — nice."
-                    : " Right now you're a little over it, at \(percent(share))."
+                if share <= MoneyPlan.safeLineShare {
+                    text += " You're under it — nice."
+                } else if plan.status == .okay, let left = plan.moneyLeft {
+                    text += " You're a little over it, at \(percent(share)), but the \(money(left)) you keep each month is a comfortable cushion."
+                } else {
+                    text += " Right now you're a little over it, at \(percent(share))."
+                }
             }
         }
         return ChatAnswer(

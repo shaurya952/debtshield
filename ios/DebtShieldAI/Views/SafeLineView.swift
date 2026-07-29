@@ -171,10 +171,13 @@ struct SafeLineView: View {
         let pct = Int((share * 100).rounded())
         switch status {
         case .okay:
+            if share > MoneyPlan.safeLineShare, let left = plan.moneyLeft {
+                return "Your basics are \(pct)% of your income — a little past the safe line — but with \(money(left)) left over, you've got a comfortable cushion."
+            }
             return "You're spending \(pct)% of what you earn on the basics — under your safe line. You've got room."
         case .tight:
             let over = (plan.safeLineAmount.map { plan.essentialsTotal - $0 }) ?? 0
-            return "You're spending \(pct)% on the basics — a little over the safe line. About \(money(max(0, over))) less would put you back under."
+            return "You're spending \(pct)% on the basics — a little over the safe line, and not much is left to spare. About \(money(max(0, over))) less would put you back under."
         case .over:
             let short = plan.moneyLeft.map { -$0 } ?? 0
             return "The basics cost more than you bring in — about \(money(short)) more. Ask below for the fastest way to free up room."
@@ -293,7 +296,8 @@ struct SafeLineView: View {
         guard let income = plan.monthlyIncome, income > 0,
               let share = plan.essentialsShare,
               let safeLine = plan.safeLineAmount,
-              let left = plan.moneyLeft else { return nil }
+              let left = plan.moneyLeft,
+              let status = plan.status else { return nil }
         let essentials = plan.essentialsTotal
         let pct = Int((share * 100).rounded())
 
@@ -306,12 +310,16 @@ struct SafeLineView: View {
             }
         }
 
-        if left < 0 {
+        switch status {
+        case .over:
             return "Your basics add up to **\(money(essentials))** a month, but you bring in **\(money(income))**. That's **\(money(-left))** more going out than coming in — which is why the month doesn't cover itself.\(debtNote)"
-        } else if share > MoneyPlan.safeLineShare {
+        case .tight:
             let over = max(0, essentials - safeLine)
-            return "Your basics add up to **\(money(essentials))** — about **\(pct)%** of the **\(money(income))** you bring in. The comfortable line is 55% (**\(money(safeLine))**), so you're roughly **\(money(over))** above it. You're still covered, but there's not much slack.\(debtNote)"
-        } else {
+            return "Your basics add up to **\(money(essentials))** — about **\(pct)%** of the **\(money(income))** you bring in. The comfortable line is 55% (**\(money(safeLine))**), so you're roughly **\(money(over))** above it, and only **\(money(left))** is left to absorb a surprise. That's what makes it tight.\(debtNote)"
+        case .okay:
+            if share > MoneyPlan.safeLineShare {
+                return "Your basics are **\(money(essentials))** — about **\(pct)%** of your **\(money(income))**, a little past the 55% line. But **\(money(left))** is left over each month, a comfortable cushion, so the month isn't tight.\(debtNote)"
+            }
             return "Your basics add up to **\(money(essentials))** — about **\(pct)%** of the **\(money(income))** you bring in, under the 55% comfortable line (**\(money(safeLine))**). That's the room you're seeing.\(debtNote)"
         }
     }
