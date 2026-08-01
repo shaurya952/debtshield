@@ -21,6 +21,9 @@ import SwiftUI
 struct SafeLineBar: View {
     let plan: MoneyPlan
     var barHeight: CGFloat = 64
+    /// The "safe line" caption under the bar. Hidden on the compact home hero,
+    /// where space is tight and the insight line already names the safe line.
+    var showsCaption: Bool = true
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -114,13 +117,15 @@ struct SafeLineBar: View {
 
             // The "safe line" caption sits under the bar so it never crowds the
             // segments.
-            HStack(spacing: 4) {
-                Image(systemName: "arrow.up")
-                    .font(.caption2.weight(.bold))
-                Text("safe line — keep the basics under \(Int((MoneyPlan.safeLineShare * 100).rounded()))% of your income")
-                    .font(Theme.Typography.caption)
+            if showsCaption {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.up")
+                        .font(.caption2.weight(.bold))
+                    Text("safe line — keep the basics under \(Int((MoneyPlan.safeLineShare * 100).rounded()))% of your income")
+                        .font(Theme.Typography.caption)
+                }
+                .foregroundStyle(Theme.secondaryText)
             }
-            .foregroundStyle(Theme.secondaryText)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilitySummary)

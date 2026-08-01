@@ -15,6 +15,33 @@ struct PressableCardStyle: ButtonStyle {
     }
 }
 
+// MARK: - App-icon badge
+
+/// A small rounded-square icon in the style of an iOS home-screen app icon: a
+/// tinted gradient fill with a white glyph and a soft drop shadow. It's the one
+/// icon treatment used across every screen — the home tiles, the action rows,
+/// the stat cards, the navigation rows — so the whole app reads as one polished
+/// set rather than a mix of flat wells and gradients.
+struct AppIconBadge: View {
+    let systemImage: String
+    var tint: Color = Theme.brand
+    var size: CGFloat = 38
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.system(size: size * 0.46, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: size, height: size)
+            .background(
+                LinearGradient(colors: [tint, tint.opacity(0.78)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing),
+                in: RoundedRectangle(cornerRadius: size * 0.29, style: .continuous)
+            )
+            .shadow(color: tint.opacity(0.32), radius: 5, x: 0, y: 3)
+            .accessibilityHidden(true)
+    }
+}
+
 // MARK: - Action row
 
 /// A tappable card row: a tinted icon, a title and subtitle, and a chevron.
@@ -28,12 +55,7 @@ struct ActionRowLabel: View {
 
     var body: some View {
         HStack(spacing: Theme.Spacing.regular) {
-            Image(systemName: systemImage)
-                .font(.title3)
-                .foregroundStyle(Theme.brand)
-                .frame(width: 38, height: 38)
-                .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                .accessibilityHidden(true)
+            AppIconBadge(systemImage: systemImage, size: 38)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(Theme.Typography.body.weight(.semibold))
@@ -125,6 +147,80 @@ struct StatusChip: View {
     }
 }
 
+// MARK: - Feature tile
+
+/// A compact, glanceable tile for the home dashboard grid: a tinted icon, a
+/// short title, and one supporting line. Two of these sit side by side, so the
+/// home screen reads as a small set of clear doors rather than a long scroll.
+/// Wrap it in a `NavigationLink`; it carries its own press feedback and a
+/// combined VoiceOver label.
+struct FeatureTile: View {
+    let systemImage: String
+    let title: String
+    let subtitle: String
+    var tint: Color = Theme.brand
+    /// A short status word shown as a pill (e.g. an odds read). Optional.
+    var badge: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
+            HStack {
+                Image(systemName: systemImage)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 46, height: 46)
+                    .background(
+                        LinearGradient(colors: [tint, tint.opacity(0.78)],
+                                       startPoint: .topLeading, endPoint: .bottomTrailing),
+                        in: RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    )
+                    .shadow(color: tint.opacity(0.35), radius: 6, x: 0, y: 3)
+                    .accessibilityHidden(true)
+                Spacer(minLength: 0)
+                if let badge {
+                    Text(badge)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 9).padding(.vertical, 4)
+                        .background(tint, in: Capsule())
+                        .accessibilityHidden(true)
+                }
+            }
+
+            Spacer(minLength: Theme.Spacing.tight)
+
+            Text(title)
+                .font(Theme.Typography.body.weight(.bold))
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+            Text(subtitle)
+                .font(Theme.Typography.caption)
+                .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, minHeight: 104, alignment: .leading)
+        .padding(Theme.Spacing.comfortable)
+        .background {
+            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                .fill(Theme.cardBackground)
+                .overlay {
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                        .fill(tint.opacity(0.06))
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                        .strokeBorder(tint.opacity(0.12), lineWidth: 1)
+                }
+                .shadow(color: Theme.cardShadow, radius: 10, x: 0, y: 5)
+        }
+        .contentShape(RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(badge.map { "\($0). \(subtitle)" } ?? subtitle)
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
 // MARK: - Cards
 
 /// Standard rounded surface. Everything on a screen sits in one of these so
@@ -160,12 +256,7 @@ struct StatCard: View {
     var body: some View {
         Card {
             layout {
-                Image(systemName: systemImage)
-                    .font(.title3)
-                    .foregroundStyle(tint)
-                    .frame(width: 38, height: 38)
-                    .background(Theme.iconWell(tint), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                    .accessibilityHidden(true)
+                AppIconBadge(systemImage: systemImage, tint: tint, size: 38)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(label)
@@ -217,12 +308,7 @@ struct DetailNavigationRow: View {
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: Theme.Spacing.tight))
             : AnyLayout(HStackLayout(spacing: Theme.Spacing.tight))
         return layout {
-            Image(systemName: systemImage)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(Theme.brand)
-                .frame(width: 30, height: 30)
-                .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                .accessibilityHidden(true)
+            AppIconBadge(systemImage: systemImage, size: 34)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

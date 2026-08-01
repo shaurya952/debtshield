@@ -2,16 +2,17 @@ import SwiftUI
 
 /// The home screen — the personal heart of the app.
 ///
-/// It answers one question in dollars — *how does this month stand?* — with the
-/// Safe Line bar, a single headline figure, a plain-language read of where you
-/// are, and a clear way into the comparison. No score, no grade, no jargon.
+/// It answers one question in dollars — *how does this month stand?* — then lays
+/// out the rest of the app as a small grid of clear tiles. The essentials fit on
+/// one screen; everything deeper is one tap away. No score, no grade, no jargon,
+/// no endless scroll.
 ///
 /// It depends only on `MoneyPlanStore`, never on the county data. A person's
 /// budget must never wait on — or fail with — anything else.
 struct SafeLineView: View {
     let store: MoneyPlanStore
-    /// For the "could you afford a move?" feature. Optional so the screen still
-    /// renders (without that card) if the county data hasn't loaded.
+    /// For the "could you afford a move?" tile. Optional so the screen still
+    /// renders (without that tile) if the county data hasn't loaded.
     var dataStore: DataStore? = nil
     var benchmarks: Benchmarks? = nil
 
@@ -28,13 +29,13 @@ struct SafeLineView: View {
     }
 
     /// The big money figure — larger than any Theme style, scales with type.
-    @ScaledMetric(relativeTo: .largeTitle) private var heroSize: CGFloat = 46
+    @ScaledMetric(relativeTo: .largeTitle) private var heroSize: CGFloat = 40
 
     private var plan: MoneyPlan { store.plan }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Theme.Spacing.section) {
+            VStack(alignment: .leading, spacing: Theme.Spacing.comfortable) {
                 if !firstName.isEmpty {
                     Text("Hi, \(firstName)")
                         .font(Theme.Typography.headline)
@@ -43,15 +44,9 @@ struct SafeLineView: View {
                 }
 
                 if plan.isComplete {
-                    resultCard
-                    situationCard
-                    outlookCard
-                    nextStepCard
-                    buildRoomCard
-                    moveCard
-                    monthsCard
-                    breakdownCard
-                    editButton
+                    heroCard
+                    verdictBanner
+                    featureGrid
                 } else {
                     emptyState
                 }
@@ -62,6 +57,7 @@ struct SafeLineView: View {
         }
         .background(Theme.screenBackground)
         .navigationTitle("Your month")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 BrandMark(size: 28)
@@ -94,25 +90,11 @@ struct SafeLineView: View {
         }
     }
 
-    // MARK: - The year ahead (Monte Carlo odds)
+    // MARK: - Hero (the money answer)
 
-    @ViewBuilder
-    private var outlookCard: some View {
-        if let outlook {
-            OutlookCard(
-                result: outlook,
-                topLever: sensitivity?.topActionableLever,
-                tightThisMonth: plan.status == .tight
-            )
-        }
-    }
-
-    // MARK: - Result (hero)
-
-    @ViewBuilder
-    private var resultCard: some View {
+    private var heroCard: some View {
         let status = plan.status ?? .okay
-        VStack(alignment: .leading, spacing: Theme.Spacing.comfortable) {
+        return VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
             StatusChip(status: status)
 
             if let left = plan.moneyLeft {
@@ -131,26 +113,13 @@ struct SafeLineView: View {
                 .accessibilityLabel(spokenMoneyLeft(left))
             }
 
-            SafeLineBar(plan: plan)
-                .padding(.top, Theme.Spacing.tight)
+            SafeLineBar(plan: plan, barHeight: 50, showsCaption: false)
+                .padding(.top, 2)
 
             Text(insight)
                 .font(Theme.Typography.subheadline)
                 .foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
-
-            if let trend = trendLine {
-                Divider()
-                Label {
-                    Text(trend.text)
-                        .font(Theme.Typography.subheadline)
-                } icon: {
-                    Image(systemName: trend.up ? "arrow.up.right" : "arrow.down.right")
-                        .font(.caption.weight(.bold))
-                }
-                .foregroundStyle(trend.up ? Theme.statusColor(.okay) : Theme.secondaryText)
-                .accessibilityElement(children: .combine)
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Theme.Spacing.comfortable)
@@ -165,24 +134,196 @@ struct SafeLineView: View {
         }
     }
 
-    /// A plain, kind read of the month — concrete numbers, no jargon.
+    /// One plain, kind line about the month — concrete, short, no jargon.
     private var insight: String {
         guard let share = plan.essentialsShare, let status = plan.status else { return "" }
         let pct = Int((share * 100).rounded())
         switch status {
         case .okay:
             if share > MoneyPlan.safeLineShare, let left = plan.moneyLeft {
-                return "Your basics are \(pct)% of your income — a little past the safe line — but with \(money(left)) left over, you've got a comfortable cushion."
+                return "Basics take \(pct)% of income — a bit over the line, but \(money(left)) left over is a comfy cushion."
             }
-            return "You're spending \(pct)% of what you earn on the basics — under your safe line. You've got room."
+            return "Basics take \(pct)% of income — under the safe line. You've got room."
         case .tight:
             let over = (plan.safeLineAmount.map { plan.essentialsTotal - $0 }) ?? 0
-            return "You're spending \(pct)% on the basics — a little over the safe line, and not much is left to spare. About \(money(max(0, over))) less would put you back under."
+            return "Basics take \(pct)% of income. About \(money(max(0, over))) less would put you back under the line."
         case .over:
             let short = plan.moneyLeft.map { -$0 } ?? 0
-            return "The basics cost more than you bring in — about \(money(short)) more. Ask below for the fastest way to free up room."
+            return "Basics cost about \(money(short)) more than you earn. The tiles below show where to start."
         }
     }
+
+    // MARK: - Verdict banner (one line → full detail)
+
+    @ViewBuilder
+    private var verdictBanner: some View {
+        if let read = situationRead {
+            let color = HomeDetailStyle.color(read.situation)
+            NavigationLink {
+                SituationDetailView(store: store)
+            } label: {
+                HStack(spacing: Theme.Spacing.regular) {
+                    Image(systemName: read.situation.symbol)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(color, in: Circle())
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(read.headline)
+                            .font(Theme.Typography.body.weight(.bold))
+                            .foregroundStyle(color)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("See what this means")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.secondaryText)
+                    }
+                    Spacer(minLength: Theme.Spacing.tight)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Theme.secondaryText)
+                        .accessibilityHidden(true)
+                }
+                .padding(Theme.Spacing.comfortable)
+                .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+                .background {
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                        .fill(Theme.cardBackground)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                                .fill(color.opacity(0.08))
+                        }
+                        .shadow(color: Theme.cardShadow, radius: 10, x: 0, y: 4)
+                }
+            }
+            .buttonStyle(PressableCardStyle())
+            .accessibilityLabel(read.headline)
+            .accessibilityHint("Opens the full read of where you stand")
+        }
+    }
+
+    // MARK: - Feature grid (everything, one tap deep)
+
+    private var featureGrid: some View {
+        LazyVGrid(
+            columns: [GridItem(.flexible(), spacing: Theme.Spacing.regular),
+                      GridItem(.flexible(), spacing: Theme.Spacing.regular)],
+            spacing: Theme.Spacing.regular
+        ) {
+            yearAheadTile
+            breakdownTile
+            buildRoomTile
+            moveTile
+        }
+    }
+
+    private var yearAheadTile: some View {
+        NavigationLink {
+            OutlookDetailView(
+                result: outlook,
+                topLever: sensitivity?.topActionableLever,
+                tightThisMonth: plan.status == .tight,
+                months: recentMonths
+            )
+        } label: {
+            FeatureTile(
+                systemImage: "chart.line.uptrend.xyaxis",
+                title: "The year ahead",
+                subtitle: riskSubtitle,
+                tint: riskTint,
+                badge: riskPct.map { "\($0)%" }
+            )
+        }
+        .buttonStyle(PressableCardStyle())
+    }
+
+    private var breakdownTile: some View {
+        NavigationLink {
+            BreakdownDetailView(store: store)
+        } label: {
+            FeatureTile(
+                systemImage: "chart.pie.fill",
+                title: "Your spending",
+                subtitle: "Where each dollar goes",
+                tint: Theme.essentialColor(.food)
+            )
+        }
+        .buttonStyle(PressableCardStyle())
+    }
+
+    private var buildRoomTile: some View {
+        NavigationLink {
+            BuildRoomView(store: store)
+        } label: {
+            FeatureTile(
+                systemImage: "sparkles",
+                title: "Save & earn more",
+                subtitle: "Ideas & free help",
+                tint: Theme.accentWarm
+            )
+        }
+        .buttonStyle(PressableCardStyle())
+    }
+
+    @ViewBuilder
+    private var moveTile: some View {
+        if let dataStore, let benchmarks {
+            NavigationLink {
+                MoveView(store: store, dataStore: dataStore, benchmarks: benchmarks)
+            } label: {
+                FeatureTile(
+                    systemImage: "map.fill",
+                    title: "Could you move?",
+                    subtitle: "Afford a new place",
+                    tint: Theme.essentialColor(.debt)
+                )
+            }
+            .buttonStyle(PressableCardStyle())
+        }
+    }
+
+    // The odds read, phrased for the tile.
+    private var riskPct: Int? {
+        outlook.map { Int(($0.probNegativeWithin6mo * 100).rounded()) }
+    }
+
+    private var riskSubtitle: String {
+        guard let prob = outlook?.probNegativeWithin6mo else { return "Working it out…" }
+        switch prob {
+        case ..<0.05: return "On steady ground"
+        case ..<0.25: return "Mostly steady"
+        case ..<0.60: return "Worth watching"
+        default: return "Needs attention"
+        }
+    }
+
+    private var riskTint: Color {
+        guard let prob = outlook?.probNegativeWithin6mo else { return Theme.brand }
+        switch prob {
+        case ..<0.05: return Theme.statusColor(.okay)
+        case ..<0.25: return Theme.brand
+        case ..<0.60: return Theme.statusColor(.tight)
+        default: return Theme.statusColor(.over)
+        }
+    }
+
+    // MARK: - Shared reads
+
+    private var allMonths: [MonthRecord] {
+        var months = store.history.reversed().map { $0 }
+        if plan.isComplete, !store.month.isEmpty {
+            months.append(MonthRecord(monthKey: store.month, plan: plan))
+        }
+        return months
+    }
+
+    private var recentMonths: [MonthRecord] { Array(allMonths.suffix(6)) }
+
+    private var situationRead: SituationRead? {
+        SituationEngine.assess(plan: plan, months: allMonths)
+    }
+
+    // MARK: - Formatting
 
     private func headlineAmount(_ left: Double) -> String {
         let magnitude = left.magnitude.formatted(.currency(code: "USD").precision(.fractionLength(0)))
@@ -196,316 +337,8 @@ struct SafeLineView: View {
         return left >= 0 ? "\(amount) left this month" : "\(amount) short this month"
     }
 
-    // MARK: - Trend vs last month
-
-    private var trendLine: (text: String, up: Bool)? {
-        guard let now = plan.moneyLeft,
-              let last = store.lastMonth, let then = last.moneyLeft else { return nil }
-        let diff = now - then
-        if abs(diff) < 1 {
-            return ("About the same as \(last.label)", true)
-        }
-        let amount = money(abs(diff))
-        return ("\(amount) \(diff > 0 ? "more" : "less") than \(last.label)", diff > 0)
-    }
-
-    // MARK: - Where this is heading (the early-warning)
-
-    private var allMonths: [MonthRecord] {
-        var months = store.history.reversed().map { $0 }
-        if plan.isComplete, !store.month.isEmpty {
-            months.append(MonthRecord(monthKey: store.month, plan: plan))
-        }
-        return months
-    }
-
-    private var situationRead: SituationRead? {
-        SituationEngine.assess(plan: plan, months: allMonths)
-    }
-
-    /// The verdict card — the synthesized read of where you stand on the road to
-    /// (or out of) debt. Escalates in colour and weight with severity.
-    @ViewBuilder
-    private var situationCard: some View {
-        if let read = situationRead {
-            let color = situationColor(read.situation)
-            let heavy = read.situation.severity >= Situation.headingToDebt.severity
-            VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
-                // Verdict + plain read, spoken as one for VoiceOver.
-                VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
-                    HStack(alignment: .center, spacing: Theme.Spacing.regular) {
-                        Image(systemName: read.situation.symbol)
-                            .font(.title3.weight(.bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 44, height: 44)
-                            .background(color, in: Circle())
-                            .accessibilityHidden(true)
-                        Text(read.headline)
-                            .font(Theme.Typography.title)
-                            .foregroundStyle(color)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Text(.init(read.detail))
-                        .font(Theme.Typography.subheadline)
-                        .foregroundStyle(Theme.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .accessibilityElement(children: .combine)
-
-                // Where this sits on the road from clear to debt — orientation
-                // at a glance. Decorative; the verdict text already says it.
-                SituationScale(situation: read.situation, color: color)
-                    .padding(.top, 2)
-
-                // The plain arithmetic behind the verdict, one tap away.
-                if let why = situationWhy {
-                    ExplainerDisclosure(label: "Why?") {
-                        Text(.init(why))
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Theme.Spacing.comfortable)
-            .background {
-                RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                    .fill(Theme.cardBackground)
-                    .overlay {
-                        if heavy {
-                            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                                .fill(color.opacity(0.10))
-                        }
-                    }
-                    .overlay(alignment: .leading) {
-                        // A colour accent down the leading edge at the serious end.
-                        if heavy {
-                            color.frame(width: 4)
-                                .clipShape(RoundedRectangle(cornerRadius: 2))
-                                .padding(.vertical, Theme.Spacing.comfortable)
-                        }
-                    }
-                    .shadow(color: heavy ? color.opacity(0.18) : Theme.cardShadow,
-                            radius: heavy ? 14 : 10, x: 0, y: heavy ? 7 : 4)
-            }
-        }
-    }
-
-    /// The plain arithmetic behind the verdict — the same numbers the reader
-    /// entered, put back in a sentence so "it's tight" never feels like a black
-    /// box. Everything here is already on screen; this just connects the dots.
-    private var situationWhy: String? {
-        guard let income = plan.monthlyIncome, income > 0,
-              let share = plan.essentialsShare,
-              let safeLine = plan.safeLineAmount,
-              let left = plan.moneyLeft,
-              let status = plan.status else { return nil }
-        let essentials = plan.essentialsTotal
-        let pct = Int((share * 100).rounded())
-
-        // A debt note, only when debt is a real part of the story.
-        var debtNote = ""
-        if let debt = plan.debtPayments, debt > 0 {
-            let debtPct = Int(((debt / income) * 100).rounded())
-            if debtPct >= 20 {
-                debtNote = " Of that, debt payments alone take about **\(debtPct)%** of your income — the usual comfortable ceiling is 20%."
-            }
-        }
-
-        switch status {
-        case .over:
-            return "Your basics add up to **\(money(essentials))** a month, but you bring in **\(money(income))**. That's **\(money(-left))** more going out than coming in — which is why the month doesn't cover itself.\(debtNote)"
-        case .tight:
-            let over = max(0, essentials - safeLine)
-            return "Your basics add up to **\(money(essentials))** — about **\(pct)%** of the **\(money(income))** you bring in. The comfortable line is 55% (**\(money(safeLine))**), so you're roughly **\(money(over))** above it, and only **\(money(left))** is left to absorb a surprise. That's what makes it tight.\(debtNote)"
-        case .okay:
-            if share > MoneyPlan.safeLineShare {
-                return "Your basics are **\(money(essentials))** — about **\(pct)%** of your **\(money(income))**, a little past the 55% line. But **\(money(left))** is left over each month, a comfortable cushion, so the month isn't tight.\(debtNote)"
-            }
-            return "Your basics add up to **\(money(essentials))** — about **\(pct)%** of the **\(money(income))** you bring in, under the 55% comfortable line (**\(money(safeLine))**). That's the room you're seeing.\(debtNote)"
-        }
-    }
-
-    private func situationColor(_ situation: Situation) -> Color {
-        switch situation {
-        case .good: return Theme.statusColor(.okay)
-        case .watch: return Theme.brand
-        case .tight: return Theme.statusColor(.tight)
-        case .headingToDebt: return Theme.statusColor(.tight)
-        case .goingIntoDebt, .deepInDebt: return Theme.statusColor(.over)
-        }
-    }
-
-    // MARK: - Your months
-
-    /// Past months (oldest first) plus this month, capped to the last six.
-    private var recentMonths: [MonthRecord] {
-        Array(allMonths.suffix(6))
-    }
-
-    @ViewBuilder
-    private var monthsCard: some View {
-        if !store.history.isEmpty, recentMonths.count >= 2 {
-            Card {
-                SectionHeader(
-                    title: "Your months",
-                    subtitle: "How much you had left, month to month"
-                )
-                MonthlyTrendView(months: recentMonths)
-                    .padding(.top, Theme.Spacing.tight)
-            }
-        }
-    }
-
-    // MARK: - Could you afford a move?
-
-    @ViewBuilder
-    private var moveCard: some View {
-        if let dataStore, let benchmarks {
-            NavigationLink {
-                MoveView(store: store, dataStore: dataStore, benchmarks: benchmarks)
-            } label: {
-                HStack(spacing: Theme.Spacing.comfortable) {
-                    Image(systemName: "map.fill")
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                        .frame(width: 48, height: 48)
-                        .background(Theme.brand, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Thinking about a move?")
-                            .font(Theme.Typography.body.weight(.bold))
-                            .foregroundStyle(.primary)
-                        Text("See if a new place keeps you out of debt — before you go")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.secondaryText)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: Theme.Spacing.tight)
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Theme.brand)
-                        .accessibilityHidden(true)
-                }
-                .padding(Theme.Spacing.comfortable)
-                .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
-                .background {
-                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                        .fill(Theme.iconWell(Theme.brand))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                                .strokeBorder(Theme.brand.opacity(0.18), lineWidth: 1)
-                        }
-                }
-            }
-            .buttonStyle(PressableCardStyle())
-            .accessibilityHint("Opens the move affordability check")
-        }
-    }
-
-    // MARK: - Ways to build room
-
-    /// A calm entry into general ideas and legitimate free help — never advice,
-    /// and personalised only by the person's own movable-cost figure.
-    private var buildRoomCard: some View {
-        NavigationLink {
-            BuildRoomView(store: store)
-        } label: {
-            ActionRowLabel(
-                systemImage: "sparkles",
-                title: "Ways to build room",
-                subtitle: "Simple ideas — and free help — to give your month more breathing space"
-            )
-        }
-        .buttonStyle(PressableCardStyle())
-        .accessibilityHint("Opens ideas and free resources")
-    }
-
-    // MARK: - Where to start
-
-    /// A gentle, immediate nudge — only when money's tight or over. Names the
-    /// biggest lever in dollars, and points at the easiest one to move.
-    @ViewBuilder
-    private var nextStepCard: some View {
-        if let status = plan.status, status != .okay, let biggest = plan.biggestEssential {
-            Card {
-                Label("Where to start", systemImage: "arrow.up.forward.circle.fill")
-                    .font(Theme.Typography.headline)
-                    .foregroundStyle(Theme.brand)
-                Text(nextStepText(biggest: biggest))
-                    .font(Theme.Typography.subheadline)
-                    .foregroundStyle(Theme.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    private func nextStepText(biggest: EssentialSegment) -> String {
-        var text = "Your biggest cost is \(biggest.label.lowercased()) at \(money(biggest.amount)). Trimming even a little there frees up the most — every $50 less is $50 back this month."
-        if biggest.kind == .housing, let movable = plan.biggestMovableEssential {
-            text += " Rent's the hardest to change fast, so \(movable.label.lowercased()) (\(money(movable.amount))) is often an easier place to start."
-        }
-        return text
-    }
-
-    // MARK: - Breakdown
-
-    private var breakdownCard: some View {
-        Card {
-            SectionHeader(title: "Where it goes")
-            ForEach(plan.segments) { segment in
-                HStack(spacing: Theme.Spacing.regular) {
-                    Circle()
-                        .fill(Theme.essentialColor(segment.kind))
-                        .frame(width: 12, height: 12)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(segment.label)
-                            .font(Theme.Typography.body)
-                        if let share = plan.share(of: segment) {
-                            Text("\(Int((share * 100).rounded()))% of income")
-                                .font(Theme.Typography.caption)
-                                .foregroundStyle(Theme.secondaryText)
-                        }
-                    }
-                    Spacer()
-                    Text(money(segment.amount))
-                        .font(Theme.Typography.money())
-                        .foregroundStyle(.primary)
-                }
-                .frame(minHeight: Theme.minimumTapTarget)
-                .accessibilityElement(children: .combine)
-            }
-
-            Divider()
-
-            HStack {
-                Text(leftoverLabel)
-                    .font(Theme.Typography.body.weight(.semibold))
-                Spacer()
-                if let left = plan.moneyLeft {
-                    Text(headlineAmount(left))
-                        .font(Theme.Typography.money())
-                        .foregroundStyle(Theme.statusColor(plan.status ?? .okay))
-                }
-            }
-            .frame(minHeight: 32)
-        }
-    }
-
-    private var leftoverLabel: String {
-        guard let left = plan.moneyLeft else { return "Left over" }
-        return left >= 0 ? "Left over" : "Over by"
-    }
-
-    // MARK: - Edit
-
-    private var editButton: some View {
-        Button {
-            isEditing = true
-        } label: {
-            Label("Edit your numbers", systemImage: "slider.horizontal.3")
-                .font(Theme.Typography.body.weight(.semibold))
-                .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
-        }
-        .buttonStyle(.bordered)
+    private func money(_ value: Double) -> String {
+        value.formatted(.currency(code: "USD").precision(.fractionLength(0)))
     }
 
     // MARK: - Empty state
@@ -541,64 +374,6 @@ struct SafeLineView: View {
         .padding(Theme.Spacing.section)
         .frame(maxWidth: .infinity)
         .padding(.top, Theme.Spacing.section)
-    }
-
-    private func money(_ value: Double) -> String {
-        value.formatted(.currency(code: "USD").precision(.fractionLength(0)))
-    }
-}
-
-// MARK: - Situation scale
-
-/// A small "where you stand" track for the verdict card — a calm gradient from
-/// clear (green) through tight (amber) to debt (red), with a marker at the
-/// current situation. Pure orientation: it shows the reader that this is a
-/// spectrum and where they sit on it. Decorative, so it's hidden from VoiceOver
-/// (the verdict text and its "Why?" already carry the meaning).
-private struct SituationScale: View {
-    let situation: Situation
-    let color: Color
-
-    private var fraction: CGFloat {
-        let steps = max(1, Situation.allCases.count - 1)
-        return CGFloat(situation.severity) / CGFloat(steps)
-    }
-
-    var body: some View {
-        VStack(spacing: 6) {
-            GeometryReader { geo in
-                let w = geo.size.width
-                let dot: CGFloat = 16
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(LinearGradient(
-                            colors: [
-                                Theme.statusColor(.okay).opacity(0.30),
-                                Theme.statusColor(.tight).opacity(0.30),
-                                Theme.statusColor(.over).opacity(0.30)
-                            ],
-                            startPoint: .leading, endPoint: .trailing))
-                        .frame(height: 8)
-
-                    Circle()
-                        .fill(color)
-                        .frame(width: dot, height: dot)
-                        .overlay(Circle().strokeBorder(Color(uiColor: .systemBackground), lineWidth: 2))
-                        .offset(x: min(max(0, fraction * w - dot / 2), w - dot))
-                }
-                .frame(height: dot)
-            }
-            .frame(height: 16)
-
-            HStack {
-                Text("Clear").font(.caption2).foregroundStyle(Theme.secondaryText)
-                Spacer()
-                Text("Tight").font(.caption2).foregroundStyle(Theme.secondaryText)
-                Spacer()
-                Text("In debt").font(.caption2).foregroundStyle(Theme.secondaryText)
-            }
-        }
-        .accessibilityHidden(true)
     }
 }
 

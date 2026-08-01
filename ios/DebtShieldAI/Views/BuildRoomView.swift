@@ -30,7 +30,7 @@ struct BuildRoomView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Theme.screenGradient)
-        .navigationTitle("Ways to build room")
+        .navigationTitle("Save & earn more")
         .navigationBarTitleDisplayMode(.large)
     }
 
