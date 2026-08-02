@@ -71,6 +71,17 @@ enum EssentialKind: String, CaseIterable, Identifiable, Sendable {
         case .debt: return "Debt payments"
         }
     }
+
+    /// SF Symbol for the category, so its icon reads the same everywhere it
+    /// appears (the compare cards, the breakdown, anywhere a category is shown).
+    var symbol: String {
+        switch self {
+        case .housing: return "house.fill"
+        case .food: return "fork.knife"
+        case .energy: return "bolt.fill"
+        case .debt: return "creditcard.fill"
+        }
+    }
 }
 
 /// One essential's amount for the month. The bar renders these left to right in

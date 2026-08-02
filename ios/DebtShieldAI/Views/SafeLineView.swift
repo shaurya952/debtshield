@@ -47,6 +47,7 @@ struct SafeLineView: View {
                     heroCard
                     verdictBanner
                     featureGrid
+                    editButton
                 } else {
                     emptyState
                 }
@@ -341,16 +342,25 @@ struct SafeLineView: View {
         value.formatted(.currency(code: "USD").precision(.fractionLength(0)))
     }
 
+    // MARK: - Edit
+
+    private var editButton: some View {
+        Button {
+            isEditing = true
+        } label: {
+            Label("Edit your numbers", systemImage: "slider.horizontal.3")
+                .font(Theme.Typography.body.weight(.semibold))
+                .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+        }
+        .buttonStyle(.bordered)
+        .padding(.top, Theme.Spacing.tight)
+    }
+
     // MARK: - Empty state
 
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.comfortable) {
-            Image(systemName: "chart.bar.doc.horizontal")
-                .font(.system(size: 40))
-                .foregroundStyle(Theme.brand)
-                .frame(width: 96, height: 96)
-                .background(Circle().fill(Theme.iconWell(Theme.brand)))
-                .accessibilityHidden(true)
+            AppIconBadge(systemImage: "chart.bar.doc.horizontal", size: 84)
 
             Text("See where your money stands")
                 .font(Theme.Typography.title)

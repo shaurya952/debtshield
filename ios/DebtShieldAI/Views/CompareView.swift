@@ -66,9 +66,7 @@ struct CompareView: View {
         if let name = store.homeCountyName {
             Card {
                 HStack(spacing: Theme.Spacing.regular) {
-                    Image(systemName: "mappin.and.ellipse")
-                        .foregroundStyle(Theme.brand)
-                        .accessibilityHidden(true)
+                    AppIconBadge(systemImage: "mappin.and.ellipse", size: 38)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Comparing to \(name)")
                             .font(Theme.Typography.body.weight(.semibold))
@@ -100,7 +98,8 @@ struct CompareView: View {
 
     private func comparisonCard(_ c: Comparison) -> some View {
         Card {
-            HStack {
+            HStack(spacing: Theme.Spacing.regular) {
+                AppIconBadge(systemImage: c.kind.symbol, tint: Theme.essentialColor(c.kind), size: 34)
                 Text(c.kind.label)
                     .font(Theme.Typography.headline)
                 Spacer()
@@ -190,12 +189,7 @@ struct CompareView: View {
 
     private var emptyState: some View {
         VStack(spacing: Theme.Spacing.comfortable) {
-            Image(systemName: "chart.bar.xaxis")
-                .font(.system(size: 40))
-                .foregroundStyle(Theme.brand)
-                .frame(width: 96, height: 96)
-                .background(Circle().fill(Theme.iconWell(Theme.brand)))
-                .accessibilityHidden(true)
+            AppIconBadge(systemImage: "chart.bar.xaxis", size: 84)
 
             Text("Add your numbers first")
                 .font(Theme.Typography.title)

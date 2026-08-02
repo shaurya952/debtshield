@@ -93,10 +93,15 @@ enum CostComparisons {
               let income = plan.monthlyIncome, income > 0,
               let typical = benchmarks?.food.typicalMonthly(forMonthlyIncome: income), typical > 0
         else { return nil }
-        let refs = [ComparisonRef(label: "Typical for your income", amount: typical)]
+        // Food has no local dimension in the data, so the two references are the
+        // BLS typical for this income and the all-households U.S. average.
+        var refs = [ComparisonRef(label: "Typical for your income", amount: typical)]
+        if let national = benchmarks?.nationalFood, national > 0 {
+            refs.append(ComparisonRef(label: "Across the U.S.", amount: national))
+        }
         let (standing, verdict) = read(yours, refs)
         return Comparison(kind: .food, yours: yours, refs: refs,
-                          verdict: verdict, standing: standing, source: "BLS 2024")
+                          verdict: verdict, standing: standing, source: "BLS 2023")
     }
 
     static func debt(_ plan: MoneyPlan) -> Comparison? {
@@ -130,13 +135,12 @@ enum CostComparisons {
     private static func read(_ yours: Double, _ refs: [ComparisonRef]) -> (CostStanding, String) {
         let primary = refs[0].amount
         let ratio = (yours - primary) / primary
-        let both = refs.count > 1
         if ratio > typicalBand {
-            return (.above, both ? "You spend more than most — here and across the U.S." : "You spend more than most.")
+            return (.above, "You spend more than most.")
         }
         if ratio < -typicalBand {
-            return (.below, both ? "You spend less than most — here and across the U.S." : "You spend less than most.")
+            return (.below, "You spend less than most.")
         }
-        return (.about, both ? "About the same as most, here and nationally." : "About the same as most.")
+        return (.about, "About the same as most.")
     }
 }

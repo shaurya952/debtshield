@@ -17,6 +17,10 @@ struct Benchmarks: Equatable, Sendable {
     let nationalRent: Double
     /// Average monthly electricity bill across all states (EIA).
     let nationalEnergy: Double
+    /// Average monthly food spend for all U.S. households (BLS). Food has no
+    /// county or state dimension in the data, so this national figure is the
+    /// "across the U.S." row for food, alongside the income-based typical.
+    let nationalFood: Double
 }
 
 /// Average monthly residential electricity bill, by state (EIA).
@@ -71,6 +75,12 @@ enum BenchmarksLoader {
     /// cheap, so that mean (~$938) badly understates the real national typical.
     static let officialNationalRent: Double = 1348
 
+    /// Average food spend for all U.S. consumer units — BLS Consumer Expenditure
+    /// Survey 2023 (released 2024): $9,985/year, i.e. about $832/month. An
+    /// official published all-households figure, the food analogue of
+    /// `officialNationalRent`.
+    static let officialNationalFoodMonthly: Double = 9985.0 / 12
+
     static func load(bundle: Bundle = .main) -> Benchmarks {
         let energy = loadEnergy(bundle: bundle)
         let bills = Array(energy.byState.values)
@@ -79,7 +89,8 @@ enum BenchmarksLoader {
             energy: energy,
             food: loadFood(bundle: bundle),
             nationalRent: officialNationalRent,
-            nationalEnergy: nationalEnergy
+            nationalEnergy: nationalEnergy,
+            nationalFood: officialNationalFoodMonthly
         )
     }
 
@@ -134,7 +145,8 @@ extension Benchmarks {
             .init(low: 200000, high: nil, annual: 18453)
         ]),
         nationalRent: 1300,
-        nationalEnergy: 137
+        nationalEnergy: 137,
+        nationalFood: 832
     )
 }
 #endif

@@ -174,12 +174,7 @@ struct BuildRoomView: View {
 
     private func iconHeader(_ symbol: String, _ title: String, tint: Color) -> some View {
         HStack(spacing: Theme.Spacing.regular) {
-            Image(systemName: symbol)
-                .font(.title3)
-                .foregroundStyle(tint)
-                .frame(width: 38, height: 38)
-                .background(Theme.iconWell(tint), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-                .accessibilityHidden(true)
+            AppIconBadge(systemImage: symbol, tint: tint, size: 38)
             Text(title)
                 .font(.title3.weight(.bold))
                 .fixedSize(horizontal: false, vertical: true)
@@ -209,12 +204,7 @@ struct BuildRoomView: View {
         if let url = URL(string: urlString) {
             Link(destination: url) {
                 HStack(spacing: Theme.Spacing.regular) {
-                    Image(systemName: symbol)
-                        .font(.title3)
-                        .foregroundStyle(Theme.brand)
-                        .frame(width: 34, height: 34)
-                        .background(Theme.iconWell(Theme.brand), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .accessibilityHidden(true)
+                    AppIconBadge(systemImage: symbol, size: 34)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(title)
                             .font(Theme.Typography.subheadline.weight(.semibold))
