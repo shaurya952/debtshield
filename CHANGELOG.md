@@ -19,6 +19,16 @@ phase/commit references; see Git history for exact timing.
   neutral branded screen the moment it becomes inactive, so financial figures
   are not captured in the iOS app-switcher snapshot. (`DebtShieldAIApp.swift`)
 
+### Phase 2 — Calculation validation (in progress)
+- **Engine unit-test target `DebtShieldAITests`** added to the Xcode project and
+  the shared scheme (mirrors the UI-test target; `@testable`, host = app).
+  33 tests covering MoneyPlan verdict classification (incl. the dollar-cushion
+  boundary), SituationEngine verdicts, MonteCarlo determinism / unit-range
+  probabilities / percentile ordering / no-NaN / mode selection / sensitivity
+  monotonicity, and CostComparisons (incl. food's U.S. row). **All passing.**
+- Added `scripts/test-engines.sh` (CI-ready runner).
+- `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
+
 ## Prior product work (v3, pre-program)
 See Git history `0b86e56`…`60d3436`: compact dashboard home, unified
 `AppIconBadge` visual system, dollar-aware "tight" verdict, food comparison U.S.

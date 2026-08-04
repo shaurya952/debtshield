@@ -41,6 +41,16 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "AA0000000000000000000035"
+               BuildableName = "DebtShieldAITests.xctest"
+               BlueprintName = "DebtShieldAITests"
+               ReferencedContainer = "container:DebtShieldAI.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "AA0000000000000000000016"
                BuildableName = "DebtShieldAIUITests.xctest"
                BlueprintName = "DebtShieldAIUITests"
