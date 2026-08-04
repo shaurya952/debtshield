@@ -29,6 +29,18 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 13 — Automated testing & CI (in progress)
+- **GitHub Actions CI** (`.github/workflows/ci.yml`): three gated jobs —
+  engine unit tests (macOS runner, dynamic simulator pick), dataset validation,
+  and a secret scan — with a `ci-ok` gate for branch protection.
+- **`scripts/validate_datasets.py`** — structural/sanity validation of the
+  bundled CSVs (columns, numeric, non-negative, unique FIPS, band ordering).
+  Passing locally: 3,144 counties, 51 energy rows, 9 food bands, 0 warnings.
+- **`scripts/scan_secrets.sh`** — dependency-free high-signal secret scan.
+- Governance: `SECURITY.md`, PR template, bug/feature issue templates.
+- Note: CI runs once the repo has a GitHub remote (`[HUMAN]`); every script is
+  verified locally here.
+
 ## Prior product work (v3, pre-program)
 See Git history `0b86e56`…`60d3436`: compact dashboard home, unified
 `AppIconBadge` visual system, dollar-aware "tight" verdict, food comparison U.S.

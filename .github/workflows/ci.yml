@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  datasets:
+    name: Validate datasets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 scripts/validate_datasets.py
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/scan_secrets.sh
+
+  engine-tests:
+    name: Engine unit tests (iOS)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: xcodebuild -version
+      - name: Pick an available iOS simulator
+        id: sim
+        run: |
+          NAME=$(xcrun simctl list devices available \
+            | grep -oE 'iPhone [0-9]+( Pro( Max)?)?' | head -1)
+          if [ -z "$NAME" ]; then echo "No iPhone simulator available"; exit 1; fi
+          echo "Using simulator: $NAME"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+      - name: Run engine unit tests
+        run: DEST="platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" scripts/test-engines.sh
+
+  # Gate: all core checks must pass before a merge.
+  ci-ok:
+    name: CI passed
+    needs: [datasets, secret-scan, engine-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All required checks passed."

@@ -12,7 +12,7 @@ starting a phase._
 | 0 | Repository audit + foundational docs | ✅ | This commit. Audit/architecture/roadmap/registry/status + root CLAUDE.md created; safe checkpoint tag `checkpoint/pre-phase-0`. |
 | 1 | Production hardening | ⬜ | App lock, background-snapshot masking, prominent delete-all-data, log hygiene. Engines already robust (see audit §3). |
 | 2 | Calculation & Monte Carlo validation | 🟡 | `THRESHOLD_REGISTRY.md` done. **XCTest unit-test target `DebtShieldAITests` added — 33 tests, all passing** (MoneyPlan, Situation, MonteCarlo determinism/bounds/sensitivity, CostComparisons). Runner: `scripts/test-engines.sh`. **Still needed:** methodology docs (ENGINE/MONTE_CARLO/ASSUMPTIONS). |
-| 3 | Data pipeline & benchmark trust | ⬜ | Data dictionary/sources/update-guide + validation script. |
+| 3 | Data pipeline & benchmark trust | 🟡 | **Validation script `scripts/validate_datasets.py`** added and passing (3,144 counties / 51 energy / 9 food bands, 0 warnings), wired into CI. **Still needed:** DATA_DICTIONARY / DATA_SOURCES / DATA_UPDATE_GUIDE docs. |
 | 4 | UX, accessibility & Trust Center | 🟡 | Ongoing visual/ease-of-use polish already landed (v3 dashboard, unified AppIconBadge). **Still needed:** full a11y sweep + in-app Trust Center. |
 | 5 | Monthly retention | ⬜ | Start-new-month/carry-forward/what-changed/reminders. (A month rollover exists in `MoneyPlanStore.rollOverIfNeeded`; needs the full loop + UI.) |
 | 6 | Privacy-preserving beta feedback | ⬜ | In-app feedback, never auto-includes financial data. |
@@ -22,7 +22,7 @@ starting a phase._
 | 10 | Institutional pilot portal | ⬜ | Build only when a real pilot needs it; aggregate-only. |
 | 11 | Impact study | ⬜ | `[HUMAN]` oversight; voluntary, anonymous. |
 | 12 | App Store launch system | ⬜ | Partly seeded: `ios/APPSTORE.md` exists. `[HUMAN]` submission. |
-| 13 | Automated testing & CI | 🟡 | Engine unit-test target + `scripts/test-engines.sh` in place. **Still needed:** CI workflow (run tests, dataset validation, secret scan), PR/issue templates. |
+| 13 | Automated testing & CI | 🟡 | Engine unit-test target + `scripts/test-engines.sh`. **GitHub Actions CI added** (`.github/workflows/ci.yml`): engine tests (macOS), dataset validation, secret scan, all gated by `ci-ok`. PR + issue templates, `SECURITY.md` added. Scripts verified locally. **Still needed:** `[HUMAN]` push to a GitHub remote so Actions run; optional deeper secret scanner. |
 | 14 | Startup operations docs (`/startup-docs`) | ⬜ | PRD, business model, metrics, risk register, etc. |
 | 15 | Ethical revenue infrastructure | ⬜ | Docs only until a real customer; `[HUMAN]` legal review. |
 | 16 | Scale architecture | ⬜ | Staged A→D plan. |
