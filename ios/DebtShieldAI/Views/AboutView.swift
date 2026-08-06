@@ -6,9 +6,6 @@ struct AboutView: View {
     /// Lets the reader see the introduction again.
     var replayOnboarding: () -> Void
 
-    @AppStorage("debtshield.appLockEnabled") private var appLockEnabled = false
-    @State private var showDeleteConfirm = false
-
     private var version: String {
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -20,8 +17,9 @@ struct AboutView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
                 headerCard
+                trustCenterLink
                 referenceCard
-                dataSecurityCard
+                DataSecurityCard(store: store)
                 legalCard
                 aboutCard
                 versionFooter
@@ -87,56 +85,20 @@ struct AboutView: View {
         }
     }
 
-    // MARK: - Your data & security
+    // MARK: - Trust Center entry
 
-    private var dataSecurityCard: some View {
-        Card {
-            SectionHeader(title: "Your data & security")
-
-            Toggle(isOn: $appLockEnabled) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Require Face ID to open")
-                        .font(Theme.Typography.body.weight(.semibold))
-                    Text("Lock the app with Face ID, Touch ID, or your device passcode.")
-                        .font(Theme.Typography.caption)
-                        .foregroundStyle(Theme.secondaryText)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .tint(Theme.brand)
-            .frame(minHeight: Theme.minimumTapTarget)
-            .accessibilityHint("Requires biometric or passcode unlock each time the app opens")
-
-            Divider()
-
-            Button(role: .destructive) {
-                showDeleteConfirm = true
-            } label: {
-                HStack(spacing: Theme.Spacing.regular) {
-                    AppIconBadge(systemImage: "trash.fill", tint: Theme.statusColor(.over), size: 34)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Delete my numbers")
-                            .font(Theme.Typography.body.weight(.semibold))
-                            .foregroundStyle(Theme.statusColor(.over))
-                        Text("Erases the income, essentials, saved months, and area you entered — from this phone. The app and its built-in comparison data stay.")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.secondaryText)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(minHeight: Theme.minimumTapTarget)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
+    private var trustCenterLink: some View {
+        NavigationLink {
+            TrustCenterView(store: store)
+        } label: {
+            ActionRowLabel(
+                systemImage: "checkmark.shield.fill",
+                title: "Trust Center",
+                subtitle: "What we do and don't do, your privacy, our methods and sources, and free help"
+            )
         }
-        .confirmationDialog("Delete your numbers?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-            Button("Delete my numbers", role: .destructive) { store.clear() }
-            Button("Keep them", role: .cancel) {}
-        } message: {
-            Text("This removes the income, essentials, saved months, and area you entered on this phone. It can't be undone. The app's built-in comparison data (U.S. Census, EIA, BLS) is not affected.")
-        }
+        .buttonStyle(PressableCardStyle())
+        .accessibilityHint("Opens the Trust Center")
     }
 
     private var legalCard: some View {

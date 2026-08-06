@@ -38,6 +38,15 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 4 — UX, accessibility & Trust Center (in progress)
+- **In-app Trust Center** (`TrustCenterView`, linked prominently from About):
+  an honest "what it does / never does" ledger, a privacy summary, how the
+  numbers are worked out, the data sources with vintages, an accessibility
+  statement, the data & security controls, free help (211 / HUD / Benefits.gov),
+  and an honest corrections note (no fabricated contact address).
+- Extracted the app-lock + delete controls into a shared `DataSecurityCard`
+  used by both About and the Trust Center.
+
 ### Phase 13 — Automated testing & CI (in progress)
 - **GitHub Actions CI** (`.github/workflows/ci.yml`): three gated jobs —
   engine unit tests (macOS runner, dynamic simulator pick), dataset validation,
