@@ -71,7 +71,7 @@ struct ContentView: View {
             PersonalChatView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
         case .about:
             // About is static — it doesn't depend on the county data.
-            AboutView {
+            AboutView(store: moneyStore) {
                 isShowingOnboarding = true
             }
         }

@@ -18,6 +18,15 @@ phase/commit references; see Git history for exact timing.
 - **Privacy: background-snapshot masking.** The app now covers its UI with a
   neutral branded screen the moment it becomes inactive, so financial figures
   are not captured in the iOS app-switcher snapshot. (`DebtShieldAIApp.swift`)
+- **Optional app lock.** A Face ID / Touch ID / passcode lock (LocalAuthentication,
+  `.deviceOwnerAuthentication`), off by default, toggled in About ▸ Your data &
+  security. Falls back gracefully (never locks out a device without biometrics/
+  passcode). Added `NSFaceIDUsageDescription`.
+- **"Delete my numbers".** A prominent, clearly-worded destructive control (About)
+  that calls `MoneyPlanStore.clear()` — erasing only the user's entered income,
+  essentials, saved months, and area from this device. The bundled comparison
+  data (Census/EIA/BLS) lives in the app bundle and is explicitly untouched;
+  the copy says so.
 
 ### Phase 2 — Calculation validation (in progress)
 - **Engine unit-test target `DebtShieldAITests`** added to the Xcode project and

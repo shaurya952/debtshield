@@ -2,8 +2,12 @@ import SwiftUI
 
 /// The About tab: what the app is, how it works, and the terms.
 struct AboutView: View {
+    let store: MoneyPlanStore
     /// Lets the reader see the introduction again.
     var replayOnboarding: () -> Void
+
+    @AppStorage("debtshield.appLockEnabled") private var appLockEnabled = false
+    @State private var showDeleteConfirm = false
 
     private var version: String {
         let info = Bundle.main.infoDictionary
@@ -17,6 +21,7 @@ struct AboutView: View {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
                 headerCard
                 referenceCard
+                dataSecurityCard
                 legalCard
                 aboutCard
                 versionFooter
@@ -82,6 +87,58 @@ struct AboutView: View {
         }
     }
 
+    // MARK: - Your data & security
+
+    private var dataSecurityCard: some View {
+        Card {
+            SectionHeader(title: "Your data & security")
+
+            Toggle(isOn: $appLockEnabled) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Require Face ID to open")
+                        .font(Theme.Typography.body.weight(.semibold))
+                    Text("Lock the app with Face ID, Touch ID, or your device passcode.")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .tint(Theme.brand)
+            .frame(minHeight: Theme.minimumTapTarget)
+            .accessibilityHint("Requires biometric or passcode unlock each time the app opens")
+
+            Divider()
+
+            Button(role: .destructive) {
+                showDeleteConfirm = true
+            } label: {
+                HStack(spacing: Theme.Spacing.regular) {
+                    AppIconBadge(systemImage: "trash.fill", tint: Theme.statusColor(.over), size: 34)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Delete my numbers")
+                            .font(Theme.Typography.body.weight(.semibold))
+                            .foregroundStyle(Theme.statusColor(.over))
+                        Text("Erases the income, essentials, saved months, and area you entered — from this phone. The app and its built-in comparison data stay.")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(minHeight: Theme.minimumTapTarget)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .confirmationDialog("Delete your numbers?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("Delete my numbers", role: .destructive) { store.clear() }
+            Button("Keep them", role: .cancel) {}
+        } message: {
+            Text("This removes the income, essentials, saved months, and area you entered on this phone. It can't be undone. The app's built-in comparison data (U.S. Census, EIA, BLS) is not affected.")
+        }
+    }
+
     private var legalCard: some View {
         Card {
             SectionHeader(title: "Terms and privacy")
@@ -143,6 +200,6 @@ struct AboutView: View {
 
 #if DEBUG
 #Preview {
-    NavigationStack { AboutView(replayOnboarding: {}) }
+    NavigationStack { AboutView(store: .preview(.sampleTight), replayOnboarding: {}) }
 }
 #endif

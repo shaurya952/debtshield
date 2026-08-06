@@ -10,7 +10,7 @@ starting a phase._
 | Phase | Title | Status | Notes |
 |------:|-------|:------:|-------|
 | 0 | Repository audit + foundational docs | ✅ | This commit. Audit/architecture/roadmap/registry/status + root CLAUDE.md created; safe checkpoint tag `checkpoint/pre-phase-0`. |
-| 1 | Production hardening | ⬜ | App lock, background-snapshot masking, prominent delete-all-data, log hygiene. Engines already robust (see audit §3). |
+| 1 | Production hardening | 🟡 | ✅ Background-snapshot masking. ✅ Optional Face ID/Touch ID/passcode **app lock** (About ▸ Your data & security). ✅ Prominent **"Delete my numbers"** (scoped to the user's own entries via `store.clear()`; bundled data untouched, wording makes this explicit). **Still needed:** log-hygiene audit for Release, storage-protection doc. |
 | 2 | Calculation & Monte Carlo validation | 🟡 | `THRESHOLD_REGISTRY.md` done. **XCTest unit-test target `DebtShieldAITests` added — 33 tests, all passing** (MoneyPlan, Situation, MonteCarlo determinism/bounds/sensitivity, CostComparisons). Runner: `scripts/test-engines.sh`. **Still needed:** methodology docs (ENGINE/MONTE_CARLO/ASSUMPTIONS). |
 | 3 | Data pipeline & benchmark trust | 🟡 | **Validation script `scripts/validate_datasets.py`** added and passing (3,144 counties / 51 energy / 9 food bands, 0 warnings), wired into CI. **Still needed:** DATA_DICTIONARY / DATA_SOURCES / DATA_UPDATE_GUIDE docs. |
 | 4 | UX, accessibility & Trust Center | 🟡 | Ongoing visual/ease-of-use polish already landed (v3 dashboard, unified AppIconBadge). **Still needed:** full a11y sweep + in-app Trust Center. |
