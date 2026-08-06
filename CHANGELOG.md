@@ -39,6 +39,12 @@ phase/commit references; see Git history for exact timing.
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
 ### Phase 4 — UX, accessibility & Trust Center (in progress)
+- **Accessibility audit** at the largest Dynamic Type (AX5): the screens scale
+  and scroll without clipping or overlap. Fixed the one real finding — long
+  large-style nav titles truncated ("How you compare" → "How you co…"); Compare
+  and How-it-works now use inline titles (Home and detail screens already did).
+  Documented commitments, method, per-screen status, and known gaps in
+  `ACCESSIBILITY.md` (incl. the stale v1 accessibility UI-tests to rewrite).
 - **In-app Trust Center** (`TrustCenterView`, linked prominently from About):
   an honest "what it does / never does" ledger, a privacy summary, how the
   numbers are worked out, the data sources with vintages, an accessibility

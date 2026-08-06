@@ -69,7 +69,7 @@ struct HowItWorksView: View {
         }
         .background(Theme.screenGradient)
         .navigationTitle("How it works")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func sourceRow(_ title: String, _ body: String) -> some View {
