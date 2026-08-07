@@ -19,6 +19,7 @@ struct AboutView: View {
                 headerCard
                 trustCenterLink
                 referenceCard
+                MonthlyCheckInCard()
                 DataSecurityCard(store: store)
                 legalCard
                 aboutCard

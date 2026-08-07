@@ -42,6 +42,7 @@ struct CompareView: View {
         .background(Theme.screenBackground)
         .navigationTitle("How you compare")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { UserDefaults.standard.set(true, forKey: "debtshield.opened.comparison") }
         .sheet(isPresented: $isChoosingArea) {
             if let searchIndex = dataStore.searchIndex {
                 AreaPickerView(searchIndex: searchIndex) { county in

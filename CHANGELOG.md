@@ -38,6 +38,19 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 5 — Monthly retention (in progress)
+- **"Since last month" card** on the home (`MonthChangeEngine`): the change in
+  room and the single figure that moved most, in plain, neutral words — actual
+  history, kept separate from the year-ahead projection. Shows only once there's
+  history, so the first-run home stays compact.
+- **On-device `RetentionState`** (pure, tested): months tracked, first/last
+  month, engagement stage, and which areas were opened — never transmitted.
+- **Opt-in monthly reminder** (`MonthlyReminder` + `MonthlyCheckInCard` in
+  About): a local notification, off by default, user picks the day, cancellable.
+  Plain copy, no streaks, no shame. Asks permission only when enabled.
+- Two new pure engines fully unit-tested (+12 tests → 45 total, all passing).
+- See `RETENTION.md`.
+
 ### Phase 4 — UX, accessibility & Trust Center (in progress)
 - **Accessibility audit** at the largest Dynamic Type (AX5): the screens scale
   and scroll without clipping or overlap. Fixed the one real finding — long

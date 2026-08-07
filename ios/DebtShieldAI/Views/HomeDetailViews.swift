@@ -170,6 +170,7 @@ struct OutlookDetailView: View {
         .background(Theme.screenBackground)
         .navigationTitle("The year ahead")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { UserDefaults.standard.set(true, forKey: "debtshield.opened.yearAhead") }
     }
 }
 

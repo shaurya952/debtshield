@@ -46,6 +46,7 @@ struct SafeLineView: View {
                 if plan.isComplete {
                     heroCard
                     verdictBanner
+                    whatChangedCard
                     featureGrid
                     editButton
                 } else {
@@ -201,6 +202,57 @@ struct SafeLineView: View {
             .accessibilityLabel(read.headline)
             .accessibilityHint("Opens the full read of where you stand")
         }
+    }
+
+    // MARK: - What changed since last month (actual history, not a projection)
+
+    @ViewBuilder
+    private var whatChangedCard: some View {
+        if let last = store.lastMonth,
+           let change = MonthChangeEngine.compare(current: plan, last: last) {
+            let tint = change.isFlat ? Theme.brand
+                : (change.isImprovement ? Theme.statusColor(.okay) : Theme.statusColor(.tight))
+            let symbol = change.isFlat ? "equal.circle.fill"
+                : (change.isImprovement ? "arrow.up.forward" : "arrow.down.forward")
+            Card {
+                HStack(spacing: Theme.Spacing.regular) {
+                    AppIconBadge(systemImage: symbol, tint: tint, size: 34)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Since last month")
+                            .font(Theme.Typography.caption)
+                            .foregroundStyle(Theme.secondaryText)
+                        Text(change.headline)
+                            .font(Theme.Typography.body.weight(.semibold))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+                if let driver = change.driver {
+                    Text(driver)
+                        .font(Theme.Typography.subheadline)
+                        .foregroundStyle(Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if retention.monthsTracked >= 2 {
+                    Text("You've tracked \(retention.monthsTracked) months.")
+                        .font(Theme.Typography.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                }
+            }
+            .accessibilityElement(children: .combine)
+        }
+    }
+
+    private var retention: RetentionState {
+        let d = UserDefaults.standard
+        return RetentionState.from(
+            historyKeys: store.history.map(\.monthKey),
+            currentMonthKey: store.month,
+            currentComplete: plan.isComplete,
+            openedYearAhead: d.bool(forKey: "debtshield.opened.yearAhead"),
+            openedComparison: d.bool(forKey: "debtshield.opened.comparison"),
+            savedAnAction: d.bool(forKey: "debtshield.opened.saveEarn")
+        )
     }
 
     // MARK: - Feature grid (everything, one tap deep)

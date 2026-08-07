@@ -32,6 +32,7 @@ struct BuildRoomView: View {
         .background(Theme.screenGradient)
         .navigationTitle("Save & earn more")
         .navigationBarTitleDisplayMode(.large)
+        .onAppear { UserDefaults.standard.set(true, forKey: "debtshield.opened.saveEarn") }
     }
 
     // MARK: - Intro
