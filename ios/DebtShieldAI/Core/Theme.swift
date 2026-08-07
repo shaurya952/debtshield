@@ -36,9 +36,9 @@ enum Theme {
     /// It fades to clear, so text contrast over it stays well within AA.
     static func statusWash(_ status: MoneyStatus) -> LinearGradient {
         LinearGradient(
-            colors: [statusColor(status).opacity(0.16), statusColor(status).opacity(0.0)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
+            colors: [statusColor(status).opacity(0.22), statusColor(status).opacity(0.04)],
+            startPoint: .top,
+            endPoint: .bottom
         )
     }
 
