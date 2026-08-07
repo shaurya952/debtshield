@@ -38,6 +38,18 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 6 — Privacy-preserving beta feedback
+- **In-app "Send feedback"** (`FeedbackView`, reachable from About and the Trust
+  Center): pick a type, write a note, and opt into non-sensitive diagnostics
+  (device, accessibility settings, features tried). A **live preview shows
+  exactly what will be shared**, and the action is copy-to-clipboard — nothing
+  is sent automatically. Financial data can never be attached (`FeedbackReport`
+  has no field for it).
+- Pure `FeedbackReport` builder, unit-tested (+6 tests → 51 total).
+- Beta process docs under `docs/`: BETA_TESTING_GUIDE, TESTER_RECRUITMENT_GUIDE,
+  USER_INTERVIEW_GUIDE, BETA_FEEDBACK_SCHEMA, BUG_REPORT_TEMPLATE,
+  RELEASE_CHECKLIST.
+
 ### Phase 5 — Monthly retention (in progress)
 - **"Since last month" card** on the home (`MonthChangeEngine`): the change in
   room and the single figure that moved most, in plain, neutral words — actual

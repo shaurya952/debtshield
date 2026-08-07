@@ -83,6 +83,19 @@ struct AboutView: View {
                 )
             }
             .buttonStyle(.plain)
+
+            Divider()
+
+            NavigationLink {
+                FeedbackView(store: store)
+            } label: {
+                DetailNavigationRow(
+                    title: "Send feedback",
+                    subtitle: "Report a bug or a confusing result — privately",
+                    systemImage: "bubble.left.and.text.bubble.right"
+                )
+            }
+            .buttonStyle(.plain)
         }
     }
 

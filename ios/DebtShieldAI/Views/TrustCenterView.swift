@@ -237,11 +237,19 @@ struct TrustCenterView: View {
 
     private var correctionsCard: some View {
         Card {
-            SectionHeader(title: "Corrections & contact")
-            Text("Spotted a benchmark that looks off, or something confusing or wrong? We want to fix it. A contact address will be listed here and on the DebtShield website once it's live.")
+            SectionHeader(title: "Corrections & feedback")
+            Text("Spotted a benchmark that looks off, or something confusing or wrong? We want to fix it.")
                 .font(Theme.Typography.subheadline)
                 .foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
+            NavigationLink {
+                FeedbackView(store: store)
+            } label: {
+                DetailNavigationRow(title: "Send feedback",
+                                    subtitle: "Private by design — you choose what to share, nothing is sent automatically",
+                                    systemImage: "bubble.left.and.text.bubble.right")
+            }
+            .buttonStyle(.plain)
         }
     }
 }
