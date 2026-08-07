@@ -46,14 +46,25 @@ non-negotiable (see `CLAUDE.md`, rule 8):
 | Move / Place detail | ✅ | ✅ | — |
 | Onboarding + tour | ✅ | ✅ headers + step count | button-driven, no forced swipe |
 
+## Automated UI-test audit (current)
+`ios/DebtShieldAIUITests/` now drives the **current** app (Home / Compare / Ask /
+About + the pushed detail screens), launched with onboarding skipped and a
+DEBUG-only seeded plan (`uitest-seed`) so the populated screens are audited:
+- `DebtShieldAIUITests` — **enforces** reachability and that each screen and its
+  key controls open (fails the build if navigation breaks), and **records** a
+  `performAccessibilityAudit` per screen as an attachment (non-failing).
+- `AccessibilityDiagnostics` — enumerates all audit findings app-wide into an
+  attachment for review.
+
+The automated audit is recorded, not gating, because Xcode's audit has known
+false positives here: **Dynamic Type** flags the hero's `ScaledMetric`-driven
+`.system(size:)` font (which does scale), **contrast** is reported for content
+scrolled under the translucent bars (filtered by viewport), and the Safe Line
+bar's inline segment label is intentionally truncated but ships a full VoiceOver
+summary. Dynamic Type and contrast are therefore verified **manually** at the
+largest size (above). The stale v1 tests were removed.
+
 ## Known gaps / follow-ups
-- **Stale accessibility UI-tests.** `ios/DebtShieldAIUITests/` (`AccessibilityDiagnostics`,
-  `ContrastHypothesis`) still drives the **removed v1 UI** ("County", "Risk
-  drivers", "Methodology"). They compile but assert against screens that no
-  longer exist, so they don't provide a real audit today. CI is unaffected — it
-  runs only `-only-testing:DebtShieldAITests`. **Next:** rewrite them to drive
-  the current tabs (Home/Compare/Ask/About) and run `performAccessibilityAudit`
-  per screen.
 - **Full VoiceOver walk-through** on a physical device (rotor, focus order under
   real gestures) is still recommended before public launch.
 - **Switch Control / keyboard** navigation is expected to work via standard

@@ -36,6 +36,15 @@ struct ContentView: View {
             await store.load()
         }
         .onAppear {
+            #if DEBUG
+            // UI-test seed: with the `uitest-seed` launch argument, start from a
+            // populated plan so accessibility audits cover the rich screens.
+            // DEBUG-only and never triggered in normal use.
+            if ProcessInfo.processInfo.arguments.contains("uitest-seed"), moneyStore.plan == .empty {
+                moneyStore.save(MoneyPlan(monthlyIncome: 5000, housing: 1400,
+                                          food: 600, energy: 250, debtPayments: 300))
+            }
+            #endif
             // Archive the finished month if the calendar has turned over.
             moneyStore.rollOverIfNeeded()
         }
