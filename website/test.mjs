@@ -70,6 +70,56 @@ async function run() {
     }
   }
 
+  // Security headers — a regression here silently weakens the deployed site.
+  // dist/_headers (Netlify/Cloudflare) is generated from the same build; its CSP
+  // adapts to FORM_ENDPOINT, so we assert accordingly. vercel.json must keep the
+  // equivalent headers so the two hosts don't drift.
+  {
+    const headersText = await readFile(join(outDir, "_headers"), "utf8");
+    const needHeaders = [
+      "Content-Security-Policy:",
+      "X-Content-Type-Options: nosniff",
+      "X-Frame-Options: DENY",
+      "Strict-Transport-Security:",
+      "Referrer-Policy:",
+      "Permissions-Policy:",
+      "Cross-Origin-Opener-Policy: same-origin",
+    ];
+    for (const n of needHeaders) if (!headersText.includes(n)) err(`[_headers] missing "${n}"`);
+
+    const needCsp = [
+      "default-src 'none'",
+      "script-src 'none'",
+      "frame-ancestors 'none'",
+      "object-src 'none'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:",
+    ];
+    for (const d of needCsp) if (!headersText.includes(d)) err(`[_headers] CSP missing "${d}"`);
+
+    const endpoint = process.env.FORM_ENDPOINT || "";
+    if (endpoint) {
+      let origin = "";
+      try { origin = new URL(endpoint).origin; } catch { /* invalid URL → treated as none */ }
+      if (!origin || !headersText.includes(`form-action 'self' ${origin}`)) {
+        err(`[_headers] CSP form-action should include the FORM_ENDPOINT origin (${origin || endpoint})`);
+      }
+    } else if (!headersText.includes("form-action 'self';")) {
+      err("[_headers] CSP form-action should be 'self' when no FORM_ENDPOINT is set");
+    }
+
+    // vercel.json parity (valid JSON + core headers present).
+    try {
+      const vercel = JSON.parse(await readFile(join(root, "vercel.json"), "utf8"));
+      const flat = JSON.stringify(vercel);
+      for (const n of ["Content-Security-Policy", "Strict-Transport-Security", "X-Frame-Options"]) {
+        if (!flat.includes(n)) err(`[vercel.json] missing "${n}" header`);
+      }
+    } catch (e) {
+      err(`[vercel.json] invalid or unreadable: ${e.message}`);
+    }
+  }
+
   if (errors.length) {
     console.error("Website checks FAILED:");
     for (const e of errors) console.error("  - " + e);

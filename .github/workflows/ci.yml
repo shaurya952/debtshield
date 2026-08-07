@@ -40,11 +40,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Build + test the site (zero dependencies)
+      - name: Build + test (default — forms not connected, CSP form-action 'self')
         working-directory: website
-        run: |
-          node build.mjs
-          node test.mjs
+        run: node test.mjs
+      - name: Build + test with a form endpoint (asserts CSP origin injection)
+        working-directory: website
+        env:
+          FORM_ENDPOINT: https://example.formprovider.test/f/ci
+        run: node test.mjs
 
   engine-tests:
     name: Engine unit tests (iOS)

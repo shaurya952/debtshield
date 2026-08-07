@@ -125,6 +125,12 @@ phase/commit references; see Git history for exact timing.
   gets the equivalent via `vercel.json`.
 - Added a branded **404 page**. README documents per-host deploy + how to verify
   headers. Build/tests pass (15 pages); `dist/` stays gitignored.
+- **CI now guards the headers:** `website/test.mjs` asserts `dist/_headers` has
+  the CSP directives + HSTS/nosniff/frame-deny/permissions/COOP, that
+  `form-action` reflects `FORM_ENDPOINT` (self, or self + injected origin), and
+  that `vercel.json` keeps parity. The CI `website` job runs it twice — once
+  default, once with a sample `FORM_ENDPOINT` — so header or origin-injection
+  regressions fail the build.
 
 ### Phase 8 — Public website (`/website`)
 - A **zero-dependency static website** (Node stdlib generator — no framework, no
