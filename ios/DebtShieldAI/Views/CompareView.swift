@@ -102,16 +102,22 @@ struct CompareView: View {
         Card {
             HStack(spacing: Theme.Spacing.regular) {
                 AppIconBadge(systemImage: c.kind.symbol, tint: Theme.essentialColor(c.kind), size: 34)
-                Text(c.kind.label)
-                    .font(Theme.Typography.headline)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(c.kind.label)
+                        .font(Theme.Typography.headline)
+                    Text("You pay")
+                        .font(.caption2)
+                        .foregroundStyle(Theme.secondaryText)
+                }
                 Spacer()
                 Text(money(c.yours))
                     .font(Theme.Typography.money(.title3))
+                    .foregroundStyle(Theme.essentialColor(c.kind))
             }
 
             VStack(spacing: Theme.Spacing.regular) {
                 bar(label: "You", value: c.yours, peak: c.peak,
-                    color: Theme.essentialColor(c.kind))
+                    color: Theme.essentialColor(c.kind), isYou: true)
                 ForEach(c.refs) { ref in
                     bar(label: ref.label, value: ref.amount, peak: c.peak,
                         color: Color(uiColor: .systemGray3))
@@ -119,10 +125,13 @@ struct CompareView: View {
             }
             .padding(.vertical, 2)
 
-            Text(c.verdict)
-                .font(Theme.Typography.subheadline.weight(.medium))
-                .foregroundStyle(verdictColor(c.standing))
-                .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .firstTextBaseline, spacing: Theme.Spacing.tight) {
+                standingPill(c.standing)
+                Text(c.verdict)
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             Text("Typical from \(c.source)")
                 .font(Theme.Typography.caption)
@@ -130,23 +139,49 @@ struct CompareView: View {
         }
     }
 
-    private func bar(label: String, value: Double, peak: Double, color: Color) -> some View {
+    /// A small, colored at-a-glance chip for a cost's standing.
+    private func standingPill(_ standing: CostStanding) -> some View {
+        let color = verdictColor(standing)
+        let (icon, word): (String, String)
+        switch standing {
+        case .above:   (icon, word) = ("arrow.up.right", "Higher")
+        case .high:    (icon, word) = ("arrow.up.right", "High")
+        case .watch:   (icon, word) = ("exclamationmark.triangle.fill", "Watch")
+        case .below:   (icon, word) = ("arrow.down.right", "Lower")
+        case .healthy: (icon, word) = ("checkmark.circle.fill", "Comfortable")
+        case .about:   (icon, word) = ("equal", "Typical")
+        }
+        return Label(word, systemImage: icon)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(color)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(color.opacity(0.14), in: Capsule())
+            .overlay(Capsule().strokeBorder(color.opacity(0.22), lineWidth: 1))
+            .fixedSize()
+            .accessibilityHidden(true)
+    }
+
+    private func bar(label: String, value: Double, peak: Double, color: Color, isYou: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(label)
-                    .font(Theme.Typography.caption)
-                    .foregroundStyle(Theme.secondaryText)
+                    .font(Theme.Typography.caption.weight(isYou ? .bold : .regular))
+                    .foregroundStyle(isYou ? color : Theme.secondaryText)
                 Spacer()
                 Text(money(value))
                     .font(Theme.Typography.caption.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(isYou ? .primary : Theme.secondaryText)
             }
             GeometryReader { geo in
                 Capsule()
                     .fill(LinearGradient(colors: [color, color.opacity(0.72)],
                                          startPoint: .top, endPoint: .bottom))
                     .frame(width: max(6, geo.size.width * value / peak))
+                    .shadow(color: isYou ? color.opacity(0.35) : .clear,
+                            radius: isYou ? 4 : 0, x: 0, y: 2)
             }
-            .frame(height: 12)
+            .frame(height: isYou ? 14 : 10)
             .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
         }
         .accessibilityElement(children: .combine)
@@ -169,7 +204,13 @@ struct CompareView: View {
             .filter { $0.standing == .above || $0.standing == .high }
             .map { $0.kind.label.lowercased() }
         return Card {
-            SectionHeader(title: "The big picture")
+            HStack(spacing: Theme.Spacing.regular) {
+                AppIconBadge(systemImage: highs.isEmpty ? "checkmark.seal.fill" : "chart.bar.xaxis",
+                             tint: highs.isEmpty ? Theme.statusColor(.okay) : Theme.brand, size: 34)
+                Text("The big picture")
+                    .font(.title3.weight(.bold))
+                    .accessibilityAddTraits(.isHeader)
+            }
             if highs.isEmpty {
                 Text("Nothing here stands out as high — your spending looks close to or below typical. That's a good place to be.")
                     .font(Theme.Typography.body)

@@ -115,6 +115,14 @@ phase/commit references; see Git history for exact timing.
   deletion, spam, consent, security, and the provider options. CI form checks
   now enforce consent + honeypot + no financial fields.
 
+### Visual polish — Compare (deeper pass)
+- Each comparison card now leads with a colored amount + "You pay" label, a bold
+  glowing **"You" bar** that stands out from the muted reference bars, and a
+  glanceable **status pill** (icon + word — Higher / Typical / Lower /
+  Comfortable / High / Watch) next to the plain-language verdict.
+- The "big picture" summary gets an app-icon badge (green seal when nothing's
+  high, chart when something is). No behavior change.
+
 ### Ask engine — new deterministic intents
 - Expanded `PersonalChatEngine` (still deterministic, on-device, no network/AI)
   with four computed-from-your-numbers question types:
