@@ -38,6 +38,17 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 7 — Analytics decision
+- `ANALYTICS_DECISION.md`: compares Option A (no analytics SDK) vs Option B
+  (strictly opt-in, minimal events). **Decision: Option A** — keep "Data Not
+  Collected"; learn from App Store Connect aggregates, voluntary surveys, and
+  in-app feedback. No analytics implemented, no app code added.
+- Option B is specified only as a ready-but-unbuilt blueprint: an abstraction
+  seam (NoOp default so a provider can be removed), exactly seven broad
+  **parameterless** events, the hard never-transmit list, an opt-in flow (no
+  ATT/IDFA), and the privacy-manifest / App Store label / policy / test changes
+  required before any event could ever be sent.
+
 ### Phase 11 — Impact study
 - Voluntary, anonymous pre/post survey design (no financial figures, ever):
   `docs/impact/` — protocol, instrument (5 Likert items + 8 self-reported
