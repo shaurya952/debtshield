@@ -115,6 +115,21 @@ phase/commit references; see Git history for exact timing.
   deletion, spam, consent, security, and the provider options. CI form checks
   now enforce consent + honeypot + no financial fields.
 
+### Ask engine — new deterministic intents
+- Expanded `PersonalChatEngine` (still deterministic, on-device, no network/AI)
+  with four computed-from-your-numbers question types:
+  - **Cushion / emergency fund** — the 3–6-month-of-essentials guideline and how
+    long the current surplus would take to build it;
+  - **Savings rate** — what you keep each month, as dollars, a share of income,
+    and an annual pace;
+  - **Debt burden** — debt payments as a share of income, with the 20% / 36%
+    rules of thumb (and 211 when heavy);
+  - **Annual projection** — this month's surplus/deficit across 12 months.
+- All framed as heuristics, not advice; advice questions still redirect to 211/HUD.
+- Surfaced "How's my cushion?" / "How much goes to debt?" as quick prompts.
+- Added `PersonalChatEngineTests` (10 tests: intents, determinism, decline
+  boundary, needs-numbers) — engine suite now 61 tests, all passing.
+
 ### Visual polish — Ask & Compare
 - **Ask:** gradient send button with a clear enabled/disabled state, brand-tinted
   suggestion chips (with press feedback), and chat bubbles with real depth

@@ -64,6 +64,12 @@ enum PersonalChatEngine {
         // Everything else needs the numbers.
         guard plan.isComplete else { return needNumbers() }
 
+        // Specific money questions, checked before the general keyword buckets.
+        if let debt = debtBurdenAnswer(q, plan: plan) { return debt }
+        if let cushion = cushionAnswer(q, plan: plan) { return cushion }
+        if let savings = savingsRateAnswer(q, plan: plan) { return savings }
+        if let annual = annualAnswer(q, plan: plan) { return annual }
+
         if has(q, ["why", "how come", "reason"]) {
             return whyExplanation(plan)
         }
@@ -94,6 +100,12 @@ enum PersonalChatEngine {
             return ["What's the safe line?", "What can this tell me?"]
         }
         var prompts = ["Why is it tight?", "What are my odds of going into debt?", "How does my rent compare?"]
+        if (plan.moneyLeft ?? 0) > 0 {
+            prompts.append("How's my cushion?")
+        }
+        if let debt = plan.debtPayments, debt > 0 {
+            prompts.append("How much goes to debt?")
+        }
         if let biggest = biggestSegment(plan) {
             prompts.append("What if \(biggest.label.lowercased()) dropped $100?")
         }
@@ -369,6 +381,105 @@ enum PersonalChatEngine {
             provenance: "Your numbers",
             followUps: ["Why is it tight?", "What's my fastest fix?"]
         )
+    }
+
+    // MARK: - Money questions (cushion, savings, debt, annual)
+
+    /// "How's my cushion / emergency fund / how long to save one" — the 3–6
+    /// month essentials guideline, and how long the current surplus would take
+    /// to build it. Educational heuristic, clearly labeled.
+    private static func cushionAnswer(_ q: String, plan: MoneyPlan) -> ChatAnswer? {
+        let markers = ["cushion", "emergency fund", "rainy day", "safety net",
+                       "buffer", "runway", "months of essentials",
+                       "how long could i last", "savings target", "save up"]
+        guard has(q, markers) else { return nil }
+        guard let left = plan.moneyLeft else { return needNumbers() }
+        let essentials = plan.essentialsTotal
+        let target3 = essentials * 3, target6 = essentials * 6
+
+        var text = "A common rule of thumb is to keep **3 to 6 months of essentials** set aside for emergencies. For you that's about **\(money(target3))** (3 months) to **\(money(target6))** (6 months)."
+        if left > 0 {
+            let months = max(1, Int((target3 / left).rounded()))
+            text += "\n\nAt the **\(money(left))** you keep each month, you'd build the 3-month cushion in roughly **\(months) month\(months == 1 ? "" : "s")** — if you set that money aside."
+        } else if left == 0 {
+            text += "\n\nRight now nothing's left over to set aside — freeing up a little each month is the place to start."
+        } else {
+            text += "\n\nRight now the month doesn't fully cover itself, so there's nothing to set aside yet — closing that gap comes first."
+        }
+        text += "\n\nThis is a general guideline, not advice; your own right number depends on your situation."
+        return ChatAnswer(text: text, provenance: "Your numbers · 3–6 month guideline",
+                          followUps: ["What's my fastest fix?", "How much do I keep each month?"])
+    }
+
+    /// "How much do I keep / save each month" — the surplus, as dollars, a share
+    /// of income, and an annual pace.
+    private static func savingsRateAnswer(_ q: String, plan: MoneyPlan) -> ChatAnswer? {
+        let markers = ["how much do i keep", "how much am i saving", "savings rate",
+                       "how much do i save", "left over each", "keep each month",
+                       "put away", "am i saving", "how much can i save",
+                       "how much is left over", "how much left over"]
+        guard has(q, markers) else { return nil }
+        guard let income = plan.monthlyIncome, income > 0, let left = plan.moneyLeft else { return needNumbers() }
+        if left > 0 {
+            let text = "After essentials you keep **\(money(left))** a month — that's **\(percent(left / income))** of your income. If this month repeated, that's about **\(money(left * 12))** over a year. Setting even part of it aside builds a cushion."
+            return ChatAnswer(text: text, provenance: "Your numbers",
+                              followUps: ["How's my cushion?", "What's my fastest fix?"])
+        }
+        let text = left == 0
+            ? "Your essentials use up just about all your income this month, so there's nothing left over to save. Freeing up a little is the place to start."
+            : "There's nothing to save this month — you're **\(money(-left)) short** after essentials. Closing that gap comes first; I can show you the biggest lever."
+        return ChatAnswer(text: text, provenance: "Your numbers",
+                          followUps: ["What's my fastest fix?", "Why is it tight?"])
+    }
+
+    /// "How much of my income goes to debt" — the debt-payment share, with the
+    /// 20% / 36% rules of thumb.
+    private static func debtBurdenAnswer(_ q: String, plan: MoneyPlan) -> ChatAnswer? {
+        let markers = ["how much goes to debt", "debt to income", "debt burden",
+                       "how much on debt", "spending on debt", "debt payments take",
+                       "how much is debt", "how much for debt", "debt take",
+                       "share of income goes to debt", "much of my income"]
+        guard has(q, markers) else { return nil }
+        guard let income = plan.monthlyIncome, income > 0 else { return needNumbers() }
+        let debt = plan.debtPayments ?? 0
+        guard debt > 0 else {
+            return ChatAnswer(
+                text: "You haven't entered any debt payments, so none of your income is going to debt right now. If that changes, add it on the home screen and I'll factor it in.",
+                provenance: "Your numbers",
+                followUps: ["How much do I keep each month?", "What's my fastest fix?"])
+        }
+        let share = debt / income
+        var text = "Your debt payments are **\(money(debt))** a month — about **\(percent(share))** of your income."
+        if share <= CostComparisons.debtHealthyShare {
+            text += " That's comfortably under the 20% often considered manageable for non-housing debt."
+        } else if share <= CostComparisons.debtHighShare {
+            text += " That's past the usual 20% comfort line but under the 36% considered heavy — worth keeping an eye on."
+        } else {
+            text += " That's past the 36% usually considered heavy. Bringing it down is the surest way to free up room — and if it's a lot to carry, dialling **211** reaches free local help."
+        }
+        text += "\n\n(These percentages are common rules of thumb, not hard rules.)"
+        return ChatAnswer(text: text, provenance: "Your numbers · 20% / 36% guideline",
+                          followUps: ["What's my fastest fix?", "Am I heading toward debt?"])
+    }
+
+    /// "Over a year / annually" — the current month's surplus or deficit,
+    /// projected across twelve months, clearly flagged as a rough pace.
+    private static func annualAnswer(_ q: String, plan: MoneyPlan) -> ChatAnswer? {
+        let markers = ["over a year", "in a year", "per year", "each year", "yearly",
+                       "annual", "12 months", "twelve months", "whole year", "a full year"]
+        guard has(q, markers) else { return nil }
+        guard let left = plan.moneyLeft else { return needNumbers() }
+        let yearly = left * 12
+        let text: String
+        if left > 0 {
+            text = "If this month repeated all year, you'd keep about **\(money(yearly))** over 12 months (\(money(left)) a month). Real life varies, so treat it as a rough pace, not a promise."
+        } else if left == 0 {
+            text = "At this month's pace you'd roughly break even over the year — essentials use up just about all your income. Freeing up a little would start building room."
+        } else {
+            text = "If this month repeated all year, you'd be about **\(money(-yearly))** short over 12 months (\(money(-left)) a month). Closing the monthly gap is what changes that."
+        }
+        return ChatAnswer(text: text, provenance: "Your numbers, projected",
+                          followUps: ["What are my odds of going into debt?", "What's my fastest fix?"])
     }
 
     private static func safeLineExplanation(_ plan: MoneyPlan) -> ChatAnswer {
