@@ -46,6 +46,16 @@ No install step is required (there are no dependencies). Node 18+.
   ```bash
   SITE_URL=https://your-domain.example npm run build
   ```
+- `FORM_ENDPOINT` — where the waitlist / pilot / reviewer forms POST. Until it's
+  set, the forms render in a clearly-labeled "not connected" state and submit
+  nowhere. Set it to a privacy-conscious provider or serverless URL:
+  ```bash
+  FORM_ENDPOINT=https://formspree.io/f/xxxx SITE_URL=https://your-domain npm run build
+  ```
+  Options and the data policy (fields, retention, deletion, spam, consent,
+  security) are documented in `../docs/WAITLIST_DATA_POLICY.md`. Whatever you
+  choose, ensure it rejects submissions where the hidden `company_website`
+  honeypot field is filled.
 
 ## Deploy
 The site is fully static — deploy `dist/` to any static host.

@@ -29,7 +29,69 @@
       <section aria-labelledby="pilot">
         <h2 id="pilot">Starting a pilot</h2>
         <p>A pilot typically includes an implementation guide, facilitator materials, a simple enrollment approach, and an optional voluntary outcome survey. Paid services (deployment support, staff training, annual data updates, aggregate reporting) fund the work — we never sell personal data.</p>
-        <h3>Talk to us</h3>
-        <p>We're setting up pilot conversations now. Email intake will be listed here shortly; in the meantime, please reach out through your existing contact at DebtShield. We'll never ask you for participants' financial details — we don't need them.</p>
+      </section>
+
+      <section aria-labelledby="pilotform">
+        <h2 id="pilotform">Start a pilot conversation</h2>
+        <p class="muted">Tell us a little about your organization and we'll follow up. We never ask for participants' financial details — we don't need them.</p>
+        <div class="form-card">
+          {{formNotice}}
+          <form action="{{formAction}}" method="{{formMethod}}" novalidate>
+            <input type="hidden" name="form" value="pilot-interest">
+            <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="company_website" tabindex="-1" autocomplete="off"></label></div>
+
+            <div class="form-grid">
+              <div>
+                <label for="org">Organization name <span class="req" aria-hidden="true">*</span></label>
+                <input id="org" name="organization" type="text" autocomplete="organization" required>
+              </div>
+              <div>
+                <label for="contact">Contact name <span class="req" aria-hidden="true">*</span></label>
+                <input id="contact" name="contact_name" type="text" autocomplete="name" required>
+              </div>
+              <div>
+                <label for="email">Work email <span class="req" aria-hidden="true">*</span></label>
+                <input id="email" name="work_email" type="email" autocomplete="email" required>
+              </div>
+              <div>
+                <label for="type">Organization type</label>
+                <select id="type" name="org_type">
+                  <option>College / university</option>
+                  <option>Nonprofit</option>
+                  <option>Workforce / job program</option>
+                  <option>Employer</option>
+                  <option>Housing organization</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div>
+                <label for="count">Approx. participants</label>
+                <input id="count" name="participant_count" type="number" inputmode="numeric" min="1" placeholder="e.g. 200">
+              </div>
+              <div>
+                <label for="interest">Pilot interest</label>
+                <select id="interest" name="pilot_interest">
+                  <option>Exploring / learning more</option>
+                  <option>Planning a pilot this term</option>
+                  <option>Ready to schedule a call</option>
+                </select>
+              </div>
+              <div class="full">
+                <label for="message">Message (optional)</label>
+                <textarea id="message" name="message" placeholder="What are you hoping to achieve?"></textarea>
+              </div>
+            </div>
+
+            <div class="consent">
+              <input id="consent" name="consent" type="checkbox" required>
+              <label for="consent">I agree to be contacted about a DebtShield pilot, and I've read the <a href="/privacy-policy.html">privacy policy</a>. <span class="req" aria-hidden="true">*</span></label>
+            </div>
+
+            <div class="form-foot">
+              <button class="btn" type="submit" {{formDisabled}}>Send pilot inquiry</button>
+            </div>
+          </form>
+        </div>
+        <p class="field-note" style="margin-top:16px">This inquiry sends us only what you enter here. Participants' financial data never touches our servers — it stays on their own devices.</p>
       </section>
     </div>

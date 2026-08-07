@@ -1,0 +1,47 @@
+    <div class="wrap">
+      <section class="hero">
+        <p class="eyebrow">Join the beta</p>
+        <h1>Be first to try DebtShield.</h1>
+        <p class="lead">Leave an email and we'll let you know when the TestFlight beta opens. That's it — no financial details, no spam, and you can unsubscribe any time.</p>
+      </section>
+
+      <section aria-labelledby="form">
+        <h2 id="form" class="center" style="margin-bottom:20px">Get on the list</h2>
+        <div class="form-card narrow" style="margin:0 auto">
+          {{formNotice}}
+          <form action="{{formAction}}" method="{{formMethod}}" novalidate>
+            <input type="hidden" name="form" value="beta-waitlist">
+            <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="company_website" tabindex="-1" autocomplete="off"></label></div>
+
+            <label for="email">Email <span class="req" aria-hidden="true">*</span></label>
+            <input id="email" name="email" type="email" autocomplete="email" required>
+
+            <label for="firstName">First name (optional)</label>
+            <input id="firstName" name="first_name" type="text" autocomplete="given-name">
+
+            <label for="category">I'm a…</label>
+            <select id="category" name="category">
+              <option>Student</option>
+              <option>Young adult</option>
+              <option>Parent / household</option>
+              <option>Community-program participant</option>
+              <option>Educator / counselor</option>
+              <option>Other</option>
+            </select>
+
+            <div class="consent">
+              <input id="consent" name="consent" type="checkbox" required>
+              <label for="consent">I agree to be emailed about the DebtShield beta, and I've read the <a href="/privacy-policy.html">privacy policy</a>. <span class="req" aria-hidden="true">*</span></label>
+            </div>
+
+            <div class="form-foot">
+              <button class="btn" type="submit" {{formDisabled}}>Join the beta list</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="callout narrow" style="margin:26px auto 0">
+          <p style="margin:0">This form sends us only what you type here (your email, and anything else you add). It is <strong>separate from the app</strong>, which keeps your financial numbers only on your device and sends nothing. See what we collect and how we handle it in the <a href="/privacy-policy.html">privacy policy</a>.</p>
+        </div>
+      </section>
+    </div>

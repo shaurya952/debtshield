@@ -17,6 +17,15 @@ const outDir = join(root, "dist");
 // Base URL is set at deploy time. Placeholder by default (documented in README).
 const SITE_URL = (process.env.SITE_URL || "https://debtshield.example").replace(/\/$/, "");
 
+// Form endpoint (a privacy-conscious provider or serverless URL) is set at
+// deploy time. Until then, forms render in a clearly-labeled "not connected"
+// state so nothing silently posts to nowhere.
+const FORM_ENDPOINT = process.env.FORM_ENDPOINT || "";
+const FORM_CONFIGURED = FORM_ENDPOINT.length > 0;
+const FORM_NOTICE = FORM_CONFIGURED
+  ? ""
+  : `<div class="callout"><p style="margin:0"><strong>This form isn't connected yet.</strong> Submissions activate once a form endpoint is configured at deploy time — see the website README. Your details are never sent anywhere until then.</p></div>`;
+
 const canonicalFor = (slug) => (slug === "index" ? "" : `${slug}.html`);
 const fileFor = (slug) => `${slug}.html`;
 
@@ -32,14 +41,20 @@ function navHtml(currentSlug) {
 }
 
 function render(layout, page, content) {
+  // Insert page content first, then resolve every token across the whole
+  // document — so tokens inside page content (e.g. form fields) resolve too.
   return layout
+    .replace("{{content}}", content)
     .replaceAll("{{title}}", page.title)
     .replaceAll("{{description}}", page.description)
     .replaceAll("{{canonical}}", canonicalFor(page.slug))
     .replaceAll("{{siteUrl}}", SITE_URL)
     .replaceAll("{{year}}", String(new Date().getFullYear()))
     .replaceAll("{{nav}}", navHtml(page.slug))
-    .replace("{{content}}", content); // content is HTML; replace once
+    .replaceAll("{{formAction}}", FORM_CONFIGURED ? FORM_ENDPOINT : "#")
+    .replaceAll("{{formMethod}}", FORM_CONFIGURED ? "post" : "get")
+    .replaceAll("{{formDisabled}}", FORM_CONFIGURED ? "" : "disabled")
+    .replaceAll("{{formNotice}}", FORM_NOTICE);
 }
 
 async function copyDir(from, to) {

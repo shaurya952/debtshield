@@ -1,0 +1,68 @@
+    <div class="wrap">
+      <section class="hero">
+        <p class="eyebrow">For professional reviewers</p>
+        <h1>Help us get it right.</h1>
+        <p class="lead">Financial educators and counselors, accessibility specialists, privacy and security experts, and researchers: we'd value your review of DebtShield's methodology, claims, and accessibility. Reviewers are named only with their permission.</p>
+      </section>
+
+      <section aria-labelledby="form">
+        <h2 id="form" style="margin-bottom:20px">Volunteer to review</h2>
+        <div class="form-card">
+          {{formNotice}}
+          <form action="{{formAction}}" method="{{formMethod}}" novalidate>
+            <input type="hidden" name="form" value="reviewer-interest">
+            <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="company_website" tabindex="-1" autocomplete="off"></label></div>
+
+            <div class="form-grid">
+              <div>
+                <label for="name">Name <span class="req" aria-hidden="true">*</span></label>
+                <input id="name" name="name" type="text" autocomplete="name" required>
+              </div>
+              <div>
+                <label for="email">Email <span class="req" aria-hidden="true">*</span></label>
+                <input id="email" name="email" type="email" autocomplete="email" required>
+              </div>
+              <div>
+                <label for="role">Professional role</label>
+                <input id="role" name="role" type="text" placeholder="e.g. financial counselor, a11y specialist">
+              </div>
+              <div>
+                <label for="org">Organization</label>
+                <input id="org" name="organization" type="text" autocomplete="organization">
+              </div>
+              <div class="full">
+                <label for="expertise">Area of expertise</label>
+                <select id="expertise" name="expertise">
+                  <option>Financial education / counseling</option>
+                  <option>Accessibility</option>
+                  <option>Privacy / security</option>
+                  <option>Data / statistics / methodology</option>
+                  <option>Housing / benefits</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="full">
+                <label for="interest">Interest type</label>
+                <select id="interest" name="interest_type">
+                  <option>Review methodology &amp; claims</option>
+                  <option>Accessibility audit</option>
+                  <option>Privacy / security review</option>
+                  <option>Advisory conversation</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="consent">
+              <input id="consent" name="consent" type="checkbox" required>
+              <label for="consent">I agree to be contacted about reviewing DebtShield, and I've read the <a href="/privacy-policy.html">privacy policy</a>. <span class="req" aria-hidden="true">*</span></label>
+            </div>
+
+            <div class="form-foot">
+              <button class="btn" type="submit" {{formDisabled}}>Offer to review</button>
+            </div>
+          </form>
+        </div>
+
+        <p class="field-note" style="margin-top:16px">This form sends us only what you enter here. It is separate from the app, which stores financial numbers only on the user's device. We will never list you publicly without your explicit permission, and we won't fabricate advisers or endorsements.</p>
+      </section>
+    </div>

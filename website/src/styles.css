@@ -189,7 +189,21 @@ tbody tr:last-child td { border-bottom: 0; }
 
 label { display: block; font-weight: 600; margin: 14px 0 6px; }
 input, textarea, select { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--text); font: inherit; }
+input:focus, textarea:focus, select:focus { outline: 3px solid var(--accent); outline-offset: 2px; border-color: var(--brand); }
 textarea { min-height: 120px; }
+
+/* Forms */
+.form-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); }
+.form-grid { display: grid; gap: 4px 20px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+.form-grid .full { grid-column: 1 / -1; }
+.req { color: var(--brand); }
+.consent { display: flex; gap: 10px; align-items: flex-start; margin: 18px 0 6px; }
+.consent input { width: auto; margin-top: 5px; }
+.consent label { margin: 0; font-weight: 500; color: var(--muted); }
+.hp { position: absolute !important; left: -9999px !important; width: 1px; height: 1px; overflow: hidden; }
+.form-foot { margin-top: 18px; }
+.field-note { color: var(--muted); font-size: 0.85rem; margin: 4px 0 8px; }
 
 /* Footer */
 .site-footer { border-top: 1px solid var(--border); background: var(--bg-soft); margin-top: 56px; }

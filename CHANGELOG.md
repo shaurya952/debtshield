@@ -38,6 +38,20 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 9 — Waitlist & pilot-interest capture
+- Three **separate**, privacy-conscious website forms:
+  **beta waitlist** (`/waitlist.html`), **institutional pilot** (on
+  `/for-organizations.html`), and **professional reviewer** (`/reviewers.html`).
+- Each has a required consent checkbox, a hidden spam honeypot, accessible
+  labels, and **no financial fields**. Forms POST to a build-time
+  `FORM_ENDPOINT`; until it's set they render a clear "not connected yet" state
+  and submit nowhere.
+- The site states plainly that these forms collect what you type — separate from
+  the app, which sends nothing.
+- `docs/WAITLIST_DATA_POLICY.md` covers fields, purpose, retention, access,
+  deletion, spam, consent, security, and the provider options. CI form checks
+  now enforce consent + honeypot + no financial fields.
+
 ### Phase 8 — Public website (`/website`)
 - A **zero-dependency static website** (Node stdlib generator — no framework, no
   trackers, no supply chain; documented rationale). 12 pages: Home, How it

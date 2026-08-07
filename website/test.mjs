@@ -52,6 +52,16 @@ async function run() {
       if (html.toLowerCase().includes(bad.toLowerCase())) err(`${where} contains "${bad}"`);
     }
 
+    // Any form must have a consent checkbox and a spam honeypot, and must not
+    // ask for financial fields.
+    if (has(html, /<form/)) {
+      if (!has(html, /name="consent"[^>]*required/)) err(`${where} form missing required consent checkbox`);
+      if (!has(html, /class="hp"/)) err(`${where} form missing spam honeypot`);
+      for (const banned of ["income", "rent", "debt", "salary", "ssn"]) {
+        if (has(html, new RegExp(`name="[^"]*${banned}`, "i"))) err(`${where} form asks for financial field "${banned}"`);
+      }
+    }
+
     // Internal links resolve to a generated file/asset.
     const hrefs = [...html.matchAll(/href="(\/[^"#?]*)(?:[#?][^"]*)?"/g)].map((m) => m[1]);
     for (const href of hrefs) {

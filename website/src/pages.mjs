@@ -25,9 +25,17 @@ export const pages = [
     title: "Accessibility",
     description: "DebtShield's accessibility commitments: Dynamic Type, VoiceOver, WCAG-AA contrast, Reduce Motion, and how to report an accessibility issue." },
 
+  { slug: "waitlist", nav: false, navLabel: "Join the beta",
+    title: "Join the beta",
+    description: "Get notified when the DebtShield TestFlight beta opens. Email and an optional first name — no financial details, ever." },
+
   { slug: "for-organizations", nav: true, navLabel: "For organizations",
     title: "For organizations",
     description: "Colleges, nonprofits, workforce, and employer financial-wellness programs can sponsor access without ever seeing anyone's individual financial data." },
+
+  { slug: "reviewers", nav: false, navLabel: "For reviewers",
+    title: "For professional reviewers",
+    description: "Financial educators, counselors, accessibility and privacy experts: help review DebtShield's methodology, claims, and accessibility." },
 
   { slug: "impact", nav: false, navLabel: "Impact",
     title: "Impact",
