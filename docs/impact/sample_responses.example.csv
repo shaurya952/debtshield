@@ -1,0 +1,13 @@
+code,phase,q_understand_position,q_understand_left,q_aware_pressure,q_confidence_plan,q_aware_help,a_reviewed_expense,a_reduced_category,a_started_cushion,a_reconsidered_payment,a_used_resource,a_contacted_counselor,a_compared_housing,a_updated_plan
+MA07,pre,2,2,3,2,1,,,,,,,,
+MA07,post,4,4,4,3,4,1,1,0,1,1,0,0,1
+JK14,pre,3,2,2,2,2,,,,,,,,
+JK14,post,4,4,3,4,3,1,0,1,0,1,0,1,1
+BR22,pre,1,1,2,1,1,,,,,,,,
+BR22,post,3,3,3,3,4,0,1,1,0,1,1,0,1
+SL03,pre,4,3,4,3,3,,,,,,,,
+SL03,post,4,4,4,4,4,1,0,0,0,0,0,1,1
+TZ08,pre,2,2,1,2,2,,,,,,,,
+TZ08,post,3,2,3,2,3,1,1,0,1,0,0,0,0
+QW11,pre,3,3,3,3,2,,,,,,,,
+QW11,post,4,3,4,4,4,1,1,1,1,1,0,1,1

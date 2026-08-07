@@ -38,6 +38,19 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 11 — Impact study
+- Voluntary, anonymous pre/post survey design (no financial figures, ever):
+  `docs/impact/` — protocol, instrument (5 Likert items + 8 self-reported
+  actions, matched by an anonymous self-generated code), consent language,
+  data-retention policy, and an honest report template.
+- `scripts/impact_summary.py` — matches pre/post by code and prints an aggregate
+  summary (improved/same/worse counts, means + Δ once n≥20, action counts) with
+  a hard causation caveat, a small-n "preliminary" guard, and a **banned-column
+  guard** that refuses any file containing financial/identifying fields.
+  Verified on a clearly-labeled synthetic sample; added to CI.
+- Framed as a voluntary product survey, not academic research (needs ethics
+  oversight first); results are self-report/correlation, never causation.
+
 ### Phase 14 — Startup operations docs (`/startup-docs`)
 - 18 founder-facing docs + an index, honest by rule (no fabricated users,
   partners, advisers, revenue, or metrics): PRD, personas, competitive
