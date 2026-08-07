@@ -58,12 +58,31 @@ No install step is required (there are no dependencies). Node 18+.
   honeypot field is filled.
 
 ## Deploy
-The site is fully static — deploy `dist/` to any static host.
+The site is fully static — deploy `dist/` to any static host. Deploy config is
+wired for the three mainstream hosts; **set the project root/base to `website`**,
+build command `node build.mjs`, output `dist`, Node 20.
 
-- **Vercel / Netlify / Cloudflare Pages:** set the project root to `website`,
-  build command `npm run build` (or `node build.mjs`), output directory `dist`,
-  and add the `SITE_URL` environment variable.
-- Or run `npm run build` and upload `dist/` anywhere.
+Set env vars on the host: `SITE_URL` (required for correct canonical/OG/sitemap)
+and, when ready, `FORM_ENDPOINT` (see Configuration above).
+
+- **Netlify** — `netlify.toml` is included. In the UI set **Base directory** =
+  `website`. Security headers + the SPA-less 404 come from the generated
+  `dist/_headers` and `dist/404.html`.
+- **Cloudflare Pages** — root directory `website`, build `node build.mjs`,
+  output `dist`. Cloudflare honors `dist/_headers` too.
+- **Vercel** — `vercel.json` is included (set the project **Root Directory** to
+  `website`). Headers are defined there (Vercel ignores `_headers`); its CSP
+  uses `form-action 'self' https:` — tighten it to your exact `FORM_ENDPOINT`
+  origin if you prefer.
+
+### Security headers
+`node build.mjs` emits `dist/_headers` (Netlify/Cloudflare) with a strict,
+JS-free **Content-Security-Policy** (`script-src 'none'`; `form-action` allows
+only `self` + the configured `FORM_ENDPOINT` origin), plus HSTS, nosniff,
+`X-Frame-Options: DENY`, a locked-down `Permissions-Policy`, and COOP. Vercel
+gets the equivalent via `vercel.json`. Verify after deploy with
+[securityheaders.com](https://securityheaders.com) or
+`curl -sI https://your-domain | grep -i content-security-policy`.
 
 ## Guarantees / non-goals
 - No database and no server code (a form, when added, will post to a

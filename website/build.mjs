@@ -99,6 +99,40 @@ export async function build() {
   const robots = `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`;
   await writeFile(join(outDir, "robots.txt"), robots, "utf8");
 
+  // Security headers for hosts that honor a `_headers` file (Netlify, Cloudflare
+  // Pages). The site ships no JS, so the CSP can be strict; `form-action` allows
+  // the configured form endpoint's origin so the waitlist/pilot/reviewer forms
+  // can POST. (Vercel uses vercel.json instead — kept in sync.)
+  let formOrigin = "";
+  try { if (FORM_CONFIGURED) formOrigin = " " + new URL(FORM_ENDPOINT).origin; } catch { /* leave as 'self' only */ }
+  const csp = [
+    "default-src 'none'",
+    "base-uri 'self'",
+    "script-src 'none'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    `form-action 'self'${formOrigin}`,
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "connect-src 'self'",
+    "manifest-src 'self'",
+    "upgrade-insecure-requests",
+  ].join("; ");
+  const headers = `/*
+  Content-Security-Policy: ${csp}
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+
+/styles.css
+  Cache-Control: public, max-age=86400
+`;
+  await writeFile(join(outDir, "_headers"), headers, "utf8");
+
   return pages.length;
 }
 

@@ -115,6 +115,17 @@ phase/commit references; see Git history for exact timing.
   deletion, spam, consent, security, and the provider options. CI form checks
   now enforce consent + honeypot + no financial fields.
 
+### Website deploy config
+- Wired one-click deploys: `website/netlify.toml`, `website/vercel.json`, and
+  Cloudflare Pages support (root=`website`, build `node build.mjs`, output `dist`).
+- The build now emits `dist/_headers` (Netlify/Cloudflare) with a strict,
+  JS-free **Content-Security-Policy** (`script-src 'none'`; `form-action` = self
+  + the injected `FORM_ENDPOINT` origin), plus HSTS, `X-Content-Type-Options`,
+  `X-Frame-Options: DENY`, a locked-down `Permissions-Policy`, and COOP; Vercel
+  gets the equivalent via `vercel.json`.
+- Added a branded **404 page**. README documents per-host deploy + how to verify
+  headers. Build/tests pass (15 pages); `dist/` stays gitignored.
+
 ### Phase 8 — Public website (`/website`)
 - A **zero-dependency static website** (Node stdlib generator — no framework, no
   trackers, no supply chain; documented rationale). 12 pages: Home, How it

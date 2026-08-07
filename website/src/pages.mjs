@@ -37,6 +37,10 @@ export const pages = [
     title: "For professional reviewers",
     description: "Financial educators, counselors, accessibility and privacy experts: help review DebtShield's methodology, claims, and accessibility." },
 
+  { slug: "404", nav: false, navLabel: "Not found",
+    title: "Page not found",
+    description: "That page doesn't exist. Head back to the DebtShield home." },
+
   { slug: "impact", nav: false, navLabel: "Impact",
     title: "Impact",
     description: "What DebtShield measures, how, and honestly — with a clear separation between self-report, correlation, and demonstrated causation. No fabricated numbers." },

@@ -1,0 +1,16 @@
+# Netlify deploy config for the DebtShield website.
+# In the Netlify UI, set the site's "Base directory" to `website` so these paths
+# resolve. Security headers come from the generated dist/_headers file.
+
+[build]
+  command = "node build.mjs"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Set SITE_URL and (optionally) FORM_ENDPOINT under
+# Site settings → Environment variables. Until FORM_ENDPOINT is set, the forms
+# render in their "not connected" state and submit nowhere.
+
+# 404s serve the generated 404.html automatically.
