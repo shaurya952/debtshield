@@ -1,0 +1,29 @@
+    <div class="wrap">
+      <section class="hero">
+        <p class="eyebrow">Data sources</p>
+        <h1>Public data, cited and bundled.</h1>
+        <p class="lead">DebtShield's comparisons use official U.S. public datasets, shipped inside the app and read-only. Here's what they are, their vintage, and what they mean.</p>
+      </section>
+
+      <section aria-labelledby="tbl">
+        <h2 id="tbl">The datasets</h2>
+        <table>
+          <thead><tr><th>What</th><th>Source</th><th>Vintage</th><th>Definition</th></tr></thead>
+          <tbody>
+            <tr><td>Rent &amp; income (by county)</td><td>U.S. Census Bureau — American Community Survey (5-year)</td><td>2019–2023</td><td>Median gross rent and median household income for ~3,144 counties.</td></tr>
+            <tr><td>Energy (by state)</td><td>U.S. Energy Information Administration (EIA)</td><td>2024</td><td>Average monthly residential electricity bill.</td></tr>
+            <tr><td>Food (by income band)</td><td>U.S. Bureau of Labor Statistics — Consumer Expenditure Survey</td><td>2023</td><td>Average annual food spending by income band; the U.S. average is ~$9,985/yr.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section aria-labelledby="notes">
+        <h2 id="notes">How we use them</h2>
+        <ul>
+          <li><strong>National rent</strong> uses the official published ACS figure ($1,348/month), not an unweighted average of county medians (which understates the real typical).</li>
+          <li><strong>Food</strong> has no county or state dimension in the data, so it's compared to a typical for your income band and to the U.S. average.</li>
+          <li>Averages and medians are exactly that — broad references. Real costs vary widely, so DebtShield treats them as context, never a target.</li>
+        </ul>
+        <p class="muted">Datasets are validated on every change (required columns, numeric ranges, unique county codes) and updated through a documented process, not manual spreadsheet edits.</p>
+      </section>
+    </div>

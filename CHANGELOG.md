@@ -38,6 +38,19 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 8 — Public website (`/website`)
+- A **zero-dependency static website** (Node stdlib generator — no framework, no
+  trackers, no supply chain; documented rationale). 12 pages: Home, How it
+  works, Methodology, Privacy, Data sources, Accessibility, For organizations,
+  Impact, Help, About, Privacy policy, Terms.
+- Responsive, light/dark, WCAG-AA, semantic HTML, skip link, visible focus.
+  SEO + Open Graph + canonical per page; generated `sitemap.xml` + `robots.txt`.
+- `node build.mjs` builds to `dist/`; `node test.mjs` validates links + meta +
+  no placeholders/secrets (all passing). `serve.mjs` for local preview.
+- Honest content: no fabricated metrics/testimonials/partners; Impact page says
+  "nothing to report yet"; contact addresses omitted until real; legal pages
+  labeled drafts pending attorney review. Deploy `dist/` anywhere (`SITE_URL` env).
+
 ### Phase 6 — Privacy-preserving beta feedback
 - **In-app "Send feedback"** (`FeedbackView`, reachable from About and the Trust
   Center): pick a type, write a note, and opt into non-sensitive diagnostics

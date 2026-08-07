@@ -1,0 +1,35 @@
+    <div class="wrap">
+      <section class="hero">
+        <p class="eyebrow">Methodology</p>
+        <h1>How the numbers are worked out.</h1>
+        <p class="lead">DebtShield is educational and transparent. Its thresholds are documented heuristics, not universal financial facts — and the app shows its assumptions on every card.</p>
+      </section>
+
+      <section aria-labelledby="safeline">
+        <h2 id="safeline">The Safe Line &amp; verdict</h2>
+        <p>The Safe Line compares your essentials to your income against a documented guideline (about 55% of income). The verdict combines that share with your remaining dollar cushion, your debt-payment load (using the common 20% watch / 36% heavy rules of thumb), and your recent trend. These are configurable heuristics — helpful guidance, not absolute truth.</p>
+      </section>
+
+      <section aria-labelledby="montecarlo">
+        <h2 id="montecarlo">The year-ahead simulation</h2>
+        <p>DebtShield runs a Monte Carlo simulation of your next 6 and 12 months:</p>
+        <ul>
+          <li><strong>Hundreds of runs.</strong> Each month, income and each cost vary around your figures, plus an occasional surprise expense.</li>
+          <li><strong>Where the spread comes from.</strong> Once you've tracked at least three months, the variation is measured from your own history; before that, it uses typical national month-to-month variation — and the app tells you which.</li>
+          <li><strong>What you get.</strong> A probability of dipping into the red, a likely range (10th–90th percentile), and the single change that reduces the odds most.</li>
+          <li><strong>Deterministic.</strong> A fixed seed means the same numbers always produce the same result. It runs off the main thread so the app stays responsive.</li>
+        </ul>
+        <div class="callout"><p style="margin:0">We never tune assumptions to make risk look more dramatic. A projection is a projection — shown with its range and its assumptions, never as a certainty.</p></div>
+      </section>
+
+      <section aria-labelledby="limits">
+        <h2 id="limits">Assumptions &amp; limitations</h2>
+        <ul class="crosses">
+          <li>It can't see your full situation — only the figures you enter.</li>
+          <li>Benchmarks are broad public averages, not your exact costs.</li>
+          <li>The simulation assumes your future roughly resembles your recent past, which real life can break.</li>
+          <li>It is not advice and does not predict or guarantee any outcome.</li>
+        </ul>
+        <p class="muted">The full threshold registry and engine methodology live in the open-source repository alongside the app's unit tests.</p>
+      </section>
+    </div>

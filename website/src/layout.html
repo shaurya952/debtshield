@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}} — DebtShield</title>
+  <meta name="description" content="{{description}}">
+  <link rel="canonical" href="{{siteUrl}}/{{canonical}}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DebtShield">
+  <meta property="og:title" content="{{title}} — DebtShield">
+  <meta property="og:description" content="{{description}}">
+  <meta property="og:url" content="{{siteUrl}}/{{canonical}}">
+  <meta name="twitter:card" content="summary">
+  <meta name="theme-color" content="#1d4ed8">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap">
+      <nav class="nav" aria-label="Primary">
+        <a class="brand" href="/">
+          <svg class="mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <path d="M32 4 8 14v16c0 15 10 26 24 30 14-4 24-15 24-30V14L32 4z" fill="#1d4ed8"/>
+            <rect x="24" y="34" width="5" height="12" rx="1.5" fill="#e0a32e"/>
+            <rect x="31" y="28" width="5" height="18" rx="1.5" fill="#e0a32e"/>
+            <rect x="38" y="22" width="5" height="24" rx="1.5" fill="#e0a32e"/>
+          </svg>
+          DebtShield
+        </a>
+        <div class="nav-links">{{nav}}</div>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+{{content}}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="footer-grid">
+        <div>
+          <h4>Product</h4>
+          <a href="/how-it-works.html">How it works</a>
+          <a href="/methodology.html">Methodology</a>
+          <a href="/data-sources.html">Data sources</a>
+          <a href="/accessibility.html">Accessibility</a>
+        </div>
+        <div>
+          <h4>Trust</h4>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/impact.html">Impact</a>
+          <a href="/help.html">Help resources</a>
+          <a href="/about.html">About</a>
+        </div>
+        <div>
+          <h4>Organizations</h4>
+          <a href="/for-organizations.html">Pilots</a>
+        </div>
+        <div>
+          <h4>Legal</h4>
+          <a href="/privacy-policy.html">Privacy policy</a>
+          <a href="/terms.html">Terms of use</a>
+          <a href="/terms.html#disclaimer">Educational disclaimer</a>
+        </div>
+      </div>
+      <div class="footer-legal">
+        <p>DebtShield is educational software, not financial, legal, tax, or housing advice.
+        It does not connect to your bank and does not guarantee any financial outcome.
+        If you're in crisis, contact local emergency services or dial 988 (US) for mental-health support.</p>
+        <p>© <span>{{year}}</span> DebtShield. Comparison data: U.S. Census Bureau, EIA, and BLS (public domain).</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

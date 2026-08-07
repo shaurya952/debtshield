@@ -1,0 +1,15 @@
+{
+  "name": "debtshield-website",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Marketing and trust website for DebtShield. Zero-dependency static site.",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node test.mjs",
+    "start": "node build.mjs && node serve.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
