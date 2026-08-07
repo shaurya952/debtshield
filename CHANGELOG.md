@@ -115,6 +115,14 @@ phase/commit references; see Git history for exact timing.
   deletion, spam, consent, security, and the provider options. CI form checks
   now enforce consent + honeypot + no financial fields.
 
+### Visual polish — Ask & Compare
+- **Ask:** gradient send button with a clear enabled/disabled state, brand-tinted
+  suggestion chips (with press feedback), and chat bubbles with real depth
+  (gradient user bubble + shadow; bordered, shadowed assistant bubble).
+- **Compare:** comparison bars now use a subtle vertical gradient and are a touch
+  taller, matching the app-icon category badges added earlier.
+- No behavior change; Ask stays deterministic and on-device.
+
 ### Website deploy config
 - Wired one-click deploys: `website/netlify.toml`, `website/vercel.json`, and
   Cloudflare Pages support (root=`website`, build `node build.mjs`, output `dist`).

@@ -142,10 +142,11 @@ struct CompareView: View {
             }
             GeometryReader { geo in
                 Capsule()
-                    .fill(color)
+                    .fill(LinearGradient(colors: [color, color.opacity(0.72)],
+                                         startPoint: .top, endPoint: .bottom))
                     .frame(width: max(6, geo.size.width * value / peak))
             }
-            .frame(height: 10)
+            .frame(height: 12)
             .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
         }
         .accessibilityElement(children: .combine)

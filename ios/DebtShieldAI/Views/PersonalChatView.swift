@@ -35,6 +35,7 @@ struct PersonalChatView: View {
         return all
     }
     private var conversationNotStarted: Bool { messages.count <= 1 }
+    private var canSend: Bool { !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     private var suggestions: [String] {
         if let last = messages.last, last.role == .assistant, !last.followUps.isEmpty {
@@ -125,13 +126,15 @@ struct PersonalChatView: View {
                         send(prompt)
                     } label: {
                         Text(prompt)
-                            .font(Theme.Typography.subheadline)
+                            .font(Theme.Typography.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.brand)
                             .fixedSize(horizontal: true, vertical: false)
-                            .padding(.horizontal, Theme.Spacing.regular)
+                            .padding(.horizontal, Theme.Spacing.comfortable)
                             .frame(minHeight: Theme.minimumTapTarget)
-                            .background(Theme.cardBackground, in: Capsule())
+                            .background(Theme.iconWell(Theme.brand), in: Capsule())
+                            .overlay(Capsule().strokeBorder(Theme.brand.opacity(0.22), lineWidth: 1))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PressableCardStyle())
                     .accessibilityLabel(prompt)
                     .accessibilityHint("Asks this question")
                 }
@@ -162,11 +165,18 @@ struct PersonalChatView: View {
             Button {
                 send(draft)
             } label: {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.title)
-                    .frame(width: Theme.minimumTapTarget, height: Theme.minimumTapTarget)
+                Image(systemName: "arrow.up")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 42, height: 42)
+                    .background(
+                        canSend ? AnyShapeStyle(Theme.brandGradient)
+                                : AnyShapeStyle(Color(uiColor: .tertiarySystemFill)),
+                        in: Circle()
+                    )
+                    .shadow(color: canSend ? Theme.brand.opacity(0.35) : .clear, radius: 6, x: 0, y: 3)
             }
-            .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .disabled(!canSend)
             .accessibilityLabel("Send")
         }
         .padding(Theme.Spacing.comfortable)
@@ -232,10 +242,17 @@ struct ChatBubble: View {
                 }
             }
             .padding(Theme.Spacing.regular)
-            .background(
-                isUser ? AnyShapeStyle(Theme.brand) : AnyShapeStyle(Theme.cardBackground),
-                in: RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-            )
+            .background {
+                let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+                if isUser {
+                    shape.fill(Theme.brandGradient)
+                        .shadow(color: Theme.brand.opacity(0.28), radius: 8, x: 0, y: 4)
+                } else {
+                    shape.fill(Theme.cardBackground)
+                        .overlay(shape.strokeBorder(Theme.separator.opacity(0.6), lineWidth: 1))
+                        .shadow(color: Theme.cardShadow, radius: 7, x: 0, y: 3)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
         .accessibilityElement(children: .ignore)
