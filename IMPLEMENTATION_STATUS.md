@@ -23,7 +23,7 @@ starting a phase._
 | 11 | Impact study | ⬜ | `[HUMAN]` oversight; voluntary, anonymous. |
 | 12 | App Store launch system | ✅ | Launch kit in `docs/appstore/`: `APP_STORE_LAUNCH` (listing copy, subtitle/keywords, versioning, known limits, contact), `APP_REVIEW_NOTES`, `PRIVACY_DISCLOSURE_WORKSHEET` (verified vs the privacy manifest → "Data Not Collected"), `SCREENSHOT_PLAN` (+ app-preview storyboard), `RELEASE_NOTES_TEMPLATE`. Complements `ios/APPSTORE.md`. **`[HUMAN]`:** own bundle id + signing team, support email, capture screenshots, submit. |
 | 13 | Automated testing & CI | 🟡 | Engine unit-test target + `scripts/test-engines.sh`. **GitHub Actions CI added** (`.github/workflows/ci.yml`): engine tests (macOS), dataset validation, secret scan, all gated by `ci-ok`. PR + issue templates, `SECURITY.md` added. Scripts verified locally. **Still needed:** `[HUMAN]` push to a GitHub remote so Actions run; optional deeper secret scanner. |
-| 14 | Startup operations docs (`/startup-docs`) | ⬜ | PRD, business model, metrics, risk register, etc. |
+| 14 | Startup operations docs (`/startup-docs`) | ✅ | 18 docs + index: PRD, personas, positioning, business model, pricing experiments, customer discovery, pilot proposal, partner one-pager, demo script, sales pipeline schema, adviser packet, trust & safety, security/accessibility checklists, risk register, incident response, **METRICS_DEFINITIONS** (no vanity metrics), **PUBLIC_CLAIMS_REGISTER** (every claim + evidence). No fabricated traction. |
 | 15 | Ethical revenue infrastructure | ⬜ | Docs only until a real customer; `[HUMAN]` legal review. |
 | 16 | Scale architecture | ⬜ | Staged A→D plan. |
 

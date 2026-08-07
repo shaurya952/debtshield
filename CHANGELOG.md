@@ -38,6 +38,20 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 14 — Startup operations docs (`/startup-docs`)
+- 18 founder-facing docs + an index, honest by rule (no fabricated users,
+  partners, advisers, revenue, or metrics): PRD, personas, competitive
+  positioning, business model, pricing experiments, customer discovery, pilot
+  proposal, partner one-pager, demo script, sales-pipeline schema, adviser
+  review packet, trust & safety, security checklist, accessibility checklist,
+  risk register, incident-response plan.
+- `METRICS_DEFINITIONS.md` — exact funnel definitions (visitor → download →
+  activated → second-month → pilot → paying → retained) with source and
+  verification status; explicitly bans vanity/inflated metrics and notes most
+  in-app behavior is unobservable by design (private/on-device).
+- `PUBLIC_CLAIMS_REGISTER.md` — every public claim mapped to its evidence, plus
+  a list of claims we must not make.
+
 ### Phase 12 — App Store launch system
 - `docs/appstore/` launch kit: `APP_STORE_LAUNCH.md` (listing name/subtitle/
   keywords/description, age rating, versioning, known limitations, contact),
