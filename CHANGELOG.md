@@ -38,6 +38,22 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 15 — Ethical revenue infrastructure (docs; payments not activated)
+- `startup-docs/`: `LICENSING_MODEL` (license sponsored access + services, never
+  data), `PRICING_TEST_PLAN` (validate price in real pilots),
+  `ORGANIZATION_REQUIREMENTS`, `CUSTOMER_DATA_BOUNDARIES` (the hard line: no
+  individual financial data or verdicts ever reach an institution — enforced by
+  architecture, not just policy), and `SAMPLE_PILOT_AGREEMENT_REQUIREMENTS`
+  (a term-sheet outline explicitly labeled a draft requiring attorney review).
+- No payments enabled; no personal-data sale; placeholders never presented as
+  real prices or customers.
+
+### Phase 16 — Scale architecture
+- `SCALE_ARCHITECTURE.md`: staged growth A→D, what to build now vs postpone,
+  explicit scaling triggers, and operational/security/cost/vendor-lock-in risks
+  with migration paths. Invariants: no backend for personal financial data ever,
+  Ask stays deterministic, and no premature microservices/databases/AI.
+
 ### Phase 7 — Analytics decision
 - `ANALYTICS_DECISION.md`: compares Option A (no analytics SDK) vs Option B
   (strictly opt-in, minimal events). **Decision: Option A** — keep "Data Not

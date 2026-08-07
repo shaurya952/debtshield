@@ -19,6 +19,13 @@ advisers, revenue, or metrics (see `../CLAUDE.md`).
 - `SALES_PIPELINE_SCHEMA.md` — CRM-agnostic pipeline.
 - `ADVISER_REVIEW_PACKET.md` — what to send expert reviewers.
 
+**Revenue (prepare, don't charge yet)**
+- `LICENSING_MODEL.md` — what's licensed (access + services, never data).
+- `PRICING_TEST_PLAN.md` — how to validate price in real pilots.
+- `ORGANIZATION_REQUIREMENTS.md` — what a partner needs / we require.
+- `CUSTOMER_DATA_BOUNDARIES.md` — the hard no-individual-data line.
+- `SAMPLE_PILOT_AGREEMENT_REQUIREMENTS.md` — term-sheet outline (draft; needs counsel).
+
 **Trust, safety, security, risk**
 - `TRUST_AND_SAFETY.md`
 - `SECURITY_CHECKLIST.md`
