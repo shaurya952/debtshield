@@ -38,6 +38,15 @@ phase/commit references; see Git history for exact timing.
 - Added `scripts/test-engines.sh` (CI-ready runner).
 - `THRESHOLD_REGISTRY.md` documents every configurable heuristic.
 
+### Phase 12 — App Store launch system
+- `docs/appstore/` launch kit: `APP_STORE_LAUNCH.md` (listing name/subtitle/
+  keywords/description, age rating, versioning, known limitations, contact),
+  `APP_REVIEW_NOTES.md`, `PRIVACY_DISCLOSURE_WORKSHEET.md` (answers verified
+  against `PrivacyInfo.xcprivacy` → "Data Not Collected"), `SCREENSHOT_PLAN.md`
+  (screenshot set, captions, sizes, capture commands, app-preview storyboard),
+  and `RELEASE_NOTES_TEMPLATE.md` (+ a v1.0 draft). Complements the existing
+  technical checklist in `ios/APPSTORE.md`. Docs only — no submission performed.
+
 ### Phase 9 — Waitlist & pilot-interest capture
 - Three **separate**, privacy-conscious website forms:
   **beta waitlist** (`/waitlist.html`), **institutional pilot** (on
