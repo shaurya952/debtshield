@@ -20,10 +20,10 @@ const outDir = join(root, "dist");
 // custom domain is set (documented in README).
 const SITE_URL = (process.env.SITE_URL || "https://debtshield-web.pages.dev").replace(/\/$/, "");
 
-// Form endpoint (a privacy-conscious provider or serverless URL) is set at
-// deploy time. Until then, forms render in a clearly-labeled "not connected"
-// state so nothing silently posts to nowhere.
-const FORM_ENDPOINT = process.env.FORM_ENDPOINT || "";
+// Form endpoint (Formspree). Defaults to the live form so the waitlist/pilot/
+// reviewer forms work out of the box; override with the FORM_ENDPOINT env var to
+// point at a different provider. Keep this in sync with the default in test.mjs.
+const FORM_ENDPOINT = process.env.FORM_ENDPOINT || "https://formspree.io/f/xwlevvgy";
 const FORM_CONFIGURED = FORM_ENDPOINT.length > 0;
 const FORM_NOTICE = FORM_CONFIGURED
   ? ""
