@@ -20,9 +20,9 @@ upload and any Apple-account changes are human steps requiring credentials._
 - **Category:** Finance (primary). Secondary: none, or Productivity.
 - **Age rating:** 4+ (no objectionable content, no gambling, no unrestricted
   web access — external help links open in Safari). Made-for-Kids: **No**.
-- **Support URL:** `https://<domain>/help.html` (deploy the website first).
-- **Marketing URL:** `https://<domain>/`
-- **Privacy Policy URL:** `https://<domain>/privacy-policy.html`
+- **Support URL:** `https://debtshield-web.pages.dev/help.html` (live on Cloudflare Pages; swap for a custom domain when one is set).
+- **Marketing URL:** `https://debtshield-web.pages.dev/`
+- **Privacy Policy URL:** `https://debtshield-web.pages.dev/privacy-policy.html`
 
 ## Description (draft — honest, no unsupported claims)
 > **Know where your money stands — privately.**
