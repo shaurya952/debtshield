@@ -21,7 +21,7 @@ month, and where is it heading?* — with **no score, no grade, no judgment**.
   at all.** Everything the user enters lives in `UserDefaults` on the device.
 - County/national comparison data is **bundled** as read-only CSVs.
 - The app builds green in **Debug and Release**; engines have a passing XCTest
-  unit-test target; CI is defined but not yet running (no GitHub remote — see §16).
+  unit-test target; CI is **live and green** on GitHub (see §16).
 
 **Functioning app features (all verified in build + simulator historically):**
 Onboarding (landing → local sign-up → skippable feature tour); Home dashboard
