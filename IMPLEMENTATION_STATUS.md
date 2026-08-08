@@ -328,16 +328,22 @@ the forms render as "not connected" and CSP `form-action` stays `'self'`.
   as the rollback point before any destructive change).
 - Other branch: **`v2-teardown`** — divergent/experimental, **do not build on it**
   (see §12).
-- **No git remotes configured.** CI won't run until `main` is pushed to GitHub.
+- Remote: **`origin` → https://github.com/shaurya952/debtshield** (public). CI runs
+  there on every push/PR.
+- **`main` is a protected branch** (ruleset "protect main"): direct pushes are
+  rejected — changes must go through a pull request that passes the `CI passed`
+  check before merging. Force-pushes and branch deletion are blocked. Work on a
+  feature branch and open a PR.
 - Charter rule: create a safe checkpoint (tag/branch) before any destructive
   change; keep the repo releasable after every phase.
 
 ## 16. CI status
 `.github/workflows/ci.yml` defines five jobs gated by `ci-ok`: `datasets`
 (validate + impact smoke test), `secret-scan`, `website` (build+test with and
-without `FORM_ENDPOINT`), `engine-tests` (macOS, auto-picks an available iPhone
-sim). **It has never run** because there is no GitHub remote. All jobs pass
-locally. Pushing to GitHub is the only thing needed to turn CI on.
+without `FORM_ENDPOINT`), `engine-tests` (macOS-15, auto-picks an available
+iPhone sim by UDID). **CI is live and green** at
+https://github.com/shaurya952/debtshield/actions — all five checks pass on
+every push to `main` and on pull requests.
 
 ---
 
