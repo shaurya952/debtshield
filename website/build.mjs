@@ -15,8 +15,10 @@ const root = dirname(fileURLToPath(import.meta.url));
 const srcDir = join(root, "src");
 const outDir = join(root, "dist");
 
-// Base URL is set at deploy time. Placeholder by default (documented in README).
-const SITE_URL = (process.env.SITE_URL || "https://debtshield.example").replace(/\/$/, "");
+// Base URL. Defaults to the live Cloudflare Pages URL so canonical/OG/sitemap
+// links are correct out of the box; override with the SITE_URL env var when a
+// custom domain is set (documented in README).
+const SITE_URL = (process.env.SITE_URL || "https://debtshield-web.pages.dev").replace(/\/$/, "");
 
 // Form endpoint (a privacy-conscious provider or serverless URL) is set at
 // deploy time. Until then, forms render in a clearly-labeled "not connected"
