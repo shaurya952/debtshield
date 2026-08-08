@@ -109,8 +109,6 @@ a:focus-visible, button:focus-visible, .btn:focus-visible { outline: 3px solid v
     linear-gradient(180deg, color-mix(in srgb, var(--ok) 14%, var(--surface)), var(--surface));
   border: 1px solid var(--border); box-shadow: var(--shadow-lg);
 }
-@media (prefers-reduced-motion: no-preference) { .app-card { animation: floaty 6s ease-in-out infinite; } }
-@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 .app-chip { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ok); background: color-mix(in srgb, var(--ok) 16%, transparent); padding: 6px 12px; border-radius: 999px; font-size: 0.85rem; }
 .app-amount { font-size: 3rem; font-weight: 800; letter-spacing: -0.03em; margin: 14px 0 2px; }
 .app-sub { color: var(--muted); margin: 0 0 16px; }

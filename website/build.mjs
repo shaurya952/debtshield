@@ -6,6 +6,7 @@
 
 import { readFile, writeFile, mkdir, readdir, copyFile, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { pages } from "./src/pages.mjs";
@@ -40,11 +41,12 @@ function navHtml(currentSlug) {
     .join("\n          ");
 }
 
-function render(layout, page, content) {
+function render(layout, page, content, stylesHref) {
   // Insert page content first, then resolve every token across the whole
   // document — so tokens inside page content (e.g. form fields) resolve too.
   return layout
     .replace("{{content}}", content)
+    .replaceAll("{{stylesHref}}", stylesHref)
     .replaceAll("{{title}}", page.title)
     .replaceAll("{{description}}", page.description)
     .replaceAll("{{canonical}}", canonicalFor(page.slug))
@@ -74,18 +76,26 @@ export async function build() {
 
   const layout = await readFile(join(srcDir, "layout.html"), "utf8");
 
+  // Cache-bust the stylesheet: name it styles.<hash>.css so every content change
+  // gets a fresh URL. Browsers then never serve a stale stylesheet, and the
+  // hashed file can be cached immutably (see _headers below).
+  const cssSource = await readFile(join(srcDir, "styles.css"), "utf8");
+  const cssHash = createHash("sha256").update(cssSource).digest("hex").slice(0, 8);
+  const cssName = `styles.${cssHash}.css`;
+  const stylesHref = `/${cssName}`;
+
   for (const page of pages) {
     const contentPath = join(srcDir, "pages", `${page.slug}.html`);
     if (!existsSync(contentPath)) {
       throw new Error(`Missing content for page "${page.slug}" (${contentPath})`);
     }
     const content = await readFile(contentPath, "utf8");
-    const html = render(layout, page, content);
+    const html = render(layout, page, content, stylesHref);
     await writeFile(join(outDir, fileFor(page.slug)), html, "utf8");
   }
 
-  // Static assets.
-  await copyFile(join(srcDir, "styles.css"), join(outDir, "styles.css"));
+  // Static assets. The stylesheet is written under its content-hashed name.
+  await writeFile(join(outDir, cssName), cssSource, "utf8");
   await copyDir(join(root, "public"), outDir);
 
   // Sitemap.
@@ -128,8 +138,8 @@ export async function build() {
   Permissions-Policy: camera=(), microphone=(), geolocation=(), browsing-topics=()
   Cross-Origin-Opener-Policy: same-origin
 
-/styles.css
-  Cache-Control: public, max-age=86400
+/styles.*.css
+  Cache-Control: public, max-age=31536000, immutable
 `;
   await writeFile(join(outDir, "_headers"), headers, "utf8");
 
