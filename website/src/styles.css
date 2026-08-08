@@ -212,3 +212,37 @@ textarea { min-height: 120px; }
 .footer-grid a { display: block; color: var(--text); text-decoration: none; padding: 5px 0; font-size: 0.97rem; }
 .footer-grid a:hover { color: var(--brand); }
 .footer-legal { padding: 18px 0 44px; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--border); }
+
+/* A theme-independent strong gradient — guarantees white-on-gradient contrast. */
+:root { --grad-strong: linear-gradient(120deg, #1d4ed8, #6d28d9 58%, #db2777); }
+
+/* Trust band (pills under the hero) */
+.trust { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 8px 0; }
+.trust span { font-size: 0.92rem; font-weight: 600; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 9px 15px; box-shadow: var(--shadow); }
+.trust b { color: var(--text); }
+
+/* Numbered steps */
+.steps { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.step { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); }
+.step-num { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; font-weight: 800; color: #fff; background: var(--grad-strong); margin-bottom: 14px; box-shadow: 0 8px 18px rgba(29,78,216,.32); }
+
+/* Two-column contrast (why it's different) */
+.contrast { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.contrast .card h3 { margin-top: 0; }
+
+/* FAQ (native <details>, no JS) */
+.faq details { border: 1px solid var(--border); border-radius: 14px; background: var(--surface); margin: 12px 0; box-shadow: var(--shadow); overflow: hidden; }
+.faq summary { cursor: pointer; padding: 18px 20px; font-weight: 700; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; font-weight: 800; color: var(--brand); font-size: 1.35rem; line-height: 1; }
+.faq details[open] summary::after { content: "\2013"; }
+.faq details[open] summary { border-bottom: 1px solid var(--border); }
+.faq .answer { padding: 16px 20px; color: var(--muted); }
+.faq .answer p { margin: 0; }
+
+/* Closing call-to-action band */
+.cta-band { background: var(--grad-strong); border-radius: 24px; padding: 46px 28px; text-align: center; color: #fff; box-shadow: var(--shadow-lg); margin: 8px 0 24px; }
+.cta-band h2 { color: #fff; margin-top: 0; }
+.cta-band p { color: rgba(255,255,255,.92); max-width: 46ch; margin: 0 auto 24px; }
+.cta-band .btn { background: #fff; color: var(--brand); box-shadow: 0 10px 26px rgba(0,0,0,.22); }
+.cta-band .btn:hover { background: #fff; transform: translateY(-2px); }
