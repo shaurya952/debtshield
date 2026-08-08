@@ -51,21 +51,30 @@ jobs:
 
   engine-tests:
     name: Engine unit tests (iOS)
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Show toolchain
-        run: xcodebuild -version
-      - name: Pick an available iOS simulator
-        id: sim
+      - name: Select the newest installed Xcode
         run: |
-          NAME=$(xcrun simctl list devices available \
-            | grep -oE 'iPhone [0-9]+( Pro( Max)?)?' | head -1)
-          if [ -z "$NAME" ]; then echo "No iPhone simulator available"; exit 1; fi
-          echo "Using simulator: $NAME"
-          echo "name=$NAME" >> "$GITHUB_OUTPUT"
-      - name: Run engine unit tests
-        run: DEST="platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" scripts/test-engines.sh
+          LATEST=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$LATEST" ]; then sudo xcode-select -s "$LATEST/Contents/Developer"; fi
+          xcodebuild -version
+      - name: Boot an available iPhone simulator and run engine tests
+        run: |
+          # Pick whatever iPhone simulator this runner actually has (by UDID, so we
+          # never depend on a specific device name/OS existing on the image).
+          xcrun simctl list devices available -j > /tmp/sims.json
+          UDID=$(python3 -c "import json; d=json.load(open('/tmp/sims.json'))['devices']; ids=[x['udid'] for rt in d for x in d[rt] if x.get('isAvailable') and 'iPhone' in x.get('name','')]; print(ids[0] if ids else '')")
+          if [ -z "$UDID" ]; then
+            echo 'No iPhone simulator available on this runner:'; xcrun simctl list devices; exit 1
+          fi
+          echo "Using simulator UDID: $UDID"
+          xcrun simctl boot "$UDID" || true
+          xcodebuild test \
+            -project ios/DebtShieldAI.xcodeproj \
+            -scheme DebtShieldAI \
+            -destination "id=$UDID" \
+            -only-testing:DebtShieldAITests
 
   # Gate: all core checks must pass before a merge.
   ci-ok:
