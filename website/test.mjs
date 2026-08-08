@@ -23,7 +23,11 @@ async function run() {
 
   const linkTargets = new Set(files.map((f) => "/" + f));
   linkTargets.add("/"); // index
-  linkTargets.add("/styles.css");
+  // The stylesheet is emitted under a content-hashed name (styles.<hash>.css);
+  // register whatever CSS files the build produced.
+  for (const f of await readdir(outDir)) {
+    if (f.endsWith(".css")) linkTargets.add("/" + f);
+  }
   linkTargets.add("/favicon.svg");
   linkTargets.add("/sitemap.xml");
   linkTargets.add("/robots.txt");
