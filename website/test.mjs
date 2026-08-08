@@ -101,7 +101,9 @@ async function run() {
     ];
     for (const d of needCsp) if (!headersText.includes(d)) err(`[_headers] CSP missing "${d}"`);
 
-    const endpoint = process.env.FORM_ENDPOINT || "";
+    // Mirror build.mjs's default so the CSP form-action origin is asserted for
+    // the live Formspree endpoint (keep this string in sync with build.mjs).
+    const endpoint = process.env.FORM_ENDPOINT || "https://formspree.io/f/xwlevvgy";
     if (endpoint) {
       let origin = "";
       try { origin = new URL(endpoint).origin; } catch { /* invalid URL → treated as none */ }
