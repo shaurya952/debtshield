@@ -49,4 +49,4 @@ works fully offline (testable in Airplane Mode).
 - No purchases, no ads, no third-party analytics SDKs.
 
 ## Contact
-Reviewer questions: <add support email before submission>.
+Reviewer questions: debtshieldsupport@gmail.com.

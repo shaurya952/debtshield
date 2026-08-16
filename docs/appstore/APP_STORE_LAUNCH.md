@@ -65,9 +65,9 @@ upload and any Apple-account changes are human steps requiring credentials._
 - Local notifications and Face ID need a real device to fully exercise.
 
 ## Contact process
-- A public support/corrections email is **not yet set** — add it to the website
-  and the in-app Trust Center before launch (`[HUMAN]`). The App Store support
-  URL must resolve to a page with a way to get help.
+- Public support/corrections email: **debtshieldsupport@gmail.com** — listed on
+  the website (Help + About + Privacy policy) and in the in-app Trust Center. The
+  App Store Support URL (`/help.html`) resolves to a page with this contact.
 
 ## Companion docs
 - `APP_REVIEW_NOTES.md` — notes for App Review.
