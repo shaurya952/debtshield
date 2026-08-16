@@ -72,7 +72,7 @@ DebtShield is educational information only; it does not provide individualized f
 
 Notes: the optional Face ID lock and monthly local notification are best exercised on a physical device. The year-ahead figure is a projection shown with a range, not a prediction.
 
-Support contact: [ADD A REAL SUPPORT EMAIL BEFORE SUBMITTING].
+Support contact: debtshieldsupport@gmail.com.
 
 ---
 
@@ -98,7 +98,7 @@ Children: the app is rated 4+ and is not directed at children, collects no data,
 
 Changes: if this policy changes, we will update it here with a new date.
 
-Contact: [ADD A REAL SUPPORT/PRIVACY EMAIL].
+Contact: debtshieldsupport@gmail.com.
 
 ---
 
@@ -109,7 +109,7 @@ DebtShield provides educational and informational content only. It is not financ
 
 ## 11. Human to-dos before you hit Submit
 - [ ] Enrol in the Apple Developer Program ($99/yr); set the signing **Team** in Xcode.
-- [ ] Add a **real support/privacy email** (replace every `[ADD ...]` above, and on the website + in-app Trust Center).
+- [x] Support/privacy email set to **debtshieldsupport@gmail.com** (in this copy, the website, and the in-app Trust Center).
 - [ ] Confirm you own/are comfortable with the bundle id `com.debtshield.DebtShieldAI`.
 - [ ] Capture the **screenshot set** (see `SCREENSHOT_PLAN.md`) at required device sizes.
 - [ ] Archive in Xcode → upload to App Store Connect → attach metadata above → submit.

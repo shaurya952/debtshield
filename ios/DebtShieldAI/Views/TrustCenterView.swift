@@ -250,6 +250,14 @@ struct TrustCenterView: View {
                                     systemImage: "bubble.left.and.text.bubble.right")
             }
             .buttonStyle(.plain)
+            if let mail = URL(string: "mailto:debtshieldsupport@gmail.com") {
+                Link(destination: mail) {
+                    Text("Or email debtshieldsupport@gmail.com")
+                        .font(Theme.Typography.subheadline)
+                        .foregroundStyle(Theme.brand)
+                }
+                .accessibilityLabel("Email DebtShield support at debtshieldsupport@gmail.com")
+            }
         }
     }
 }
