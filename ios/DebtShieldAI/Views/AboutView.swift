@@ -35,23 +35,40 @@ struct AboutView: View {
     // MARK: - Header
 
     private var headerCard: some View {
-        Card {
-            HStack(spacing: Theme.Spacing.regular) {
-                BrandMark(size: 44)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("DebtShield")
-                        .font(.title3.weight(.bold))
-                    Text("See where your money stands each month")
-                        .font(Theme.Typography.subheadline)
-                        .foregroundStyle(Theme.secondaryText)
-                }
-            }
-            .accessibilityElement(children: .combine)
+        VStack(spacing: Theme.Spacing.regular) {
+            BrandMark(size: 48)
+                .padding(14)
+                .background(Circle().fill(.white))
+                .shadow(color: .black.opacity(0.12), radius: 6, x: 0, y: 3)
 
-            Text("Your numbers stay on your phone. No account, no tracking, nothing sent anywhere.")
-                .font(Theme.Typography.footnote)
-                .foregroundStyle(Theme.secondaryText)
+            VStack(spacing: 4) {
+                Text("DebtShield")
+                    .font(.title.weight(.bold))
+                    .foregroundStyle(.white)
+                Text("See where your money stands each month")
+                    .font(Theme.Typography.subheadline)
+                    .foregroundStyle(.white.opacity(0.9))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Label("Private · on-device · no tracking", systemImage: "lock.fill")
+                .font(Theme.Typography.footnote.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(Capsule().fill(.white.opacity(0.18)))
         }
+        .frame(maxWidth: .infinity)
+        .padding(Theme.Spacing.comfortable)
+        .padding(.vertical, Theme.Spacing.regular)
+        .background {
+            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                .fill(Theme.brandGradient)
+                .shadow(color: Theme.heroShadow, radius: 14, x: 0, y: 8)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("DebtShield. See where your money stands each month. Private, on-device, no tracking.")
     }
 
     // MARK: - Sections
