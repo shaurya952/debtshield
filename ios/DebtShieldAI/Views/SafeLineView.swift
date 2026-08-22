@@ -297,7 +297,7 @@ struct SafeLineView: View {
             FeatureTile(
                 systemImage: "chart.pie.fill",
                 title: "Your spending",
-                subtitle: "Where each dollar goes",
+                subtitle: "See what takes the most",
                 tint: Theme.essentialColor(.food)
             )
         }
@@ -311,7 +311,7 @@ struct SafeLineView: View {
             FeatureTile(
                 systemImage: "sparkles",
                 title: "Save & earn more",
-                subtitle: "Ideas & free help",
+                subtitle: "Ways to free up cash",
                 tint: Theme.accentWarm
             )
         }
@@ -327,7 +327,7 @@ struct SafeLineView: View {
                 FeatureTile(
                     systemImage: "map.fill",
                     title: "Could you move?",
-                    subtitle: "Afford a new place",
+                    subtitle: "See if a move could help",
                     tint: Theme.essentialColor(.debt)
                 )
             }
