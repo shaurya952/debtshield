@@ -52,6 +52,10 @@ rationale. A future Phase-2 code task may consolidate these into a single
 |------|-------|---------|--------|
 | `officialNationalRent` | `1348` | U.S. median gross rent, monthly. | Census ACS 5-yr, 2019–2023 (official published figure). |
 | `officialNationalFoodMonthly` | `9985 / 12` (~`832`) | Avg food spend, all U.S. households. | BLS Consumer Expenditure Survey 2023 (all consumer units). |
+| `officialNationalTransportationMonthly` | `13174 / 12` (~`1098`) | Avg transportation spend, all U.S. households. | BLS CE 2023 (all consumer units). |
+| `officialNationalPersonalMonthly` | `(2041+3635+927)/12` (~`550`) | Avg personal spend (apparel + entertainment + personal care). | BLS CE 2023 (all consumer units). |
+| `officialNationalWaterMonthly` | `780 / 12` (~`65`) | Avg water & public-services bill, all U.S. households. | BLS CE 2023 (all consumer units). |
+| `officialNationalHomeUpkeepMonthly` | `(4079+3974)/12` (~`671`) | Avg home upkeep (property tax + maintenance/insurance/other) for a typical U.S. **homeowner**. | BLS CE 2023, home-owner tenure. |
 | `nationalEnergy` | mean of state bills | Avg U.S. monthly electricity bill. | Derived from EIA state file. |
 
 ## Change protocol

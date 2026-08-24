@@ -41,4 +41,47 @@ final class CostComparisonsTests: XCTestCase {
         XCTAssertGreaterThan(Benchmarks.previewSample.nationalFood, 0)
         XCTAssertGreaterThan(Benchmarks.previewSample.nationalRent, 0)
     }
+
+    func testTransportationComparesToNationalBLS() {
+        let p = MoneyPlan(monthlyIncome: 5000, transportation: 450)
+        let c = CostComparisons.transportation(p, .previewSample)
+        XCTAssertNotNil(c)
+        XCTAssertEqual(c?.standing, .below) // 450 well under the ~1,098 U.S. average
+        XCTAssertTrue(c!.refs.contains { $0.label == "Across the U.S." })
+        XCTAssertTrue(c!.source.contains("BLS"))
+    }
+
+    func testPersonalComparesToNationalBLS() {
+        let p = MoneyPlan(monthlyIncome: 5000, personal: 300)
+        let c = CostComparisons.personal(p, .previewSample)
+        XCTAssertNotNil(c)
+        XCTAssertEqual(c?.standing, .below) // 300 under the ~550 U.S. average
+        XCTAssertTrue(c!.source.contains("BLS"))
+    }
+
+    func testNewCategoryComparisonsNilWithoutEntry() {
+        let p = MoneyPlan(monthlyIncome: 5000, housing: 1400)
+        XCTAssertNil(CostComparisons.transportation(p, .previewSample))
+        XCTAssertNil(CostComparisons.personal(p, .previewSample))
+    }
+
+    func testWaterAndHomeUpkeepCompareToBLS() {
+        let p = MoneyPlan(monthlyIncome: 5000, homeUpkeep: 300, water: 40)
+        let water = CostComparisons.water(p, .previewSample)
+        let upkeep = CostComparisons.homeUpkeep(p, .previewSample)
+        XCTAssertNotNil(water)
+        XCTAssertNotNil(upkeep)
+        XCTAssertTrue(water!.source.contains("BLS"))
+        XCTAssertTrue(upkeep!.source.contains("BLS"))
+        XCTAssertEqual(water?.standing, .below)  // 40 under the ~65 U.S. average
+        XCTAssertEqual(upkeep?.standing, .below)  // 300 under the ~671 homeowner average
+    }
+
+    func testRealBLSNationalFiguresAreSane() {
+        // Real published BLS CE 2023 monthly figures.
+        XCTAssertEqual(BenchmarksLoader.officialNationalTransportationMonthly, 13174.0 / 12, accuracy: 0.01)
+        XCTAssertEqual(BenchmarksLoader.officialNationalPersonalMonthly, (2041.0 + 3635.0 + 927.0) / 12, accuracy: 0.01)
+        XCTAssertEqual(BenchmarksLoader.officialNationalWaterMonthly, 780.0 / 12, accuracy: 0.01)
+        XCTAssertEqual(BenchmarksLoader.officialNationalHomeUpkeepMonthly, (4079.0 + 3974.0) / 12, accuracy: 0.01)
+    }
 }

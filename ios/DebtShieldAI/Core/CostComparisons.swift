@@ -50,8 +50,12 @@ enum CostComparisons {
 
     static func all(plan: MoneyPlan, county: ScoredCounty?, benchmarks: Benchmarks?) -> [Comparison] {
         [housing(plan, county, benchmarks),
+         homeUpkeep(plan, benchmarks),
          energy(plan, county, benchmarks),
          food(plan, benchmarks),
+         water(plan, benchmarks),
+         transportation(plan, benchmarks),
+         personal(plan, benchmarks),
          debt(plan)]
             .compactMap { $0 }
     }
@@ -102,6 +106,46 @@ enum CostComparisons {
         let (standing, verdict) = read(yours, refs)
         return Comparison(kind: .food, yours: yours, refs: refs,
                           verdict: verdict, standing: standing, source: "BLS 2023")
+    }
+
+    static func homeUpkeep(_ plan: MoneyPlan, _ benchmarks: Benchmarks?) -> Comparison? {
+        guard let yours = plan.homeUpkeep, yours > 0,
+              let national = benchmarks?.nationalHomeUpkeep, national > 0 else { return nil }
+        let refs = [ComparisonRef(label: "Typical U.S. homeowner", amount: national)]
+        let (standing, verdict) = read(yours, refs)
+        return Comparison(kind: .homeUpkeep, yours: yours, refs: refs,
+                          verdict: verdict, standing: standing,
+                          source: "BLS CE 2023 — homeowner property tax + upkeep")
+    }
+
+    static func water(_ plan: MoneyPlan, _ benchmarks: Benchmarks?) -> Comparison? {
+        guard let yours = plan.water, yours > 0,
+              let national = benchmarks?.nationalWater, national > 0 else { return nil }
+        let refs = [ComparisonRef(label: "Across the U.S.", amount: national)]
+        let (standing, verdict) = read(yours, refs)
+        return Comparison(kind: .water, yours: yours, refs: refs,
+                          verdict: verdict, standing: standing,
+                          source: "BLS Consumer Expenditure Survey, 2023")
+    }
+
+    static func transportation(_ plan: MoneyPlan, _ benchmarks: Benchmarks?) -> Comparison? {
+        guard let yours = plan.transportation, yours > 0,
+              let national = benchmarks?.nationalTransportation, national > 0 else { return nil }
+        // No local dimension in the data — a single U.S. reference, like food's.
+        let refs = [ComparisonRef(label: "Across the U.S.", amount: national)]
+        let (standing, verdict) = read(yours, refs)
+        return Comparison(kind: .transportation, yours: yours, refs: refs,
+                          verdict: verdict, standing: standing, source: "BLS Consumer Expenditure Survey, 2023")
+    }
+
+    static func personal(_ plan: MoneyPlan, _ benchmarks: Benchmarks?) -> Comparison? {
+        guard let yours = plan.personal, yours > 0,
+              let national = benchmarks?.nationalPersonal, national > 0 else { return nil }
+        let refs = [ComparisonRef(label: "Across the U.S.", amount: national)]
+        let (standing, verdict) = read(yours, refs)
+        return Comparison(kind: .personal, yours: yours, refs: refs,
+                          verdict: verdict, standing: standing,
+                          source: "BLS CE 2023 — clothing, entertainment & personal care")
     }
 
     static func debt(_ plan: MoneyPlan) -> Comparison? {
