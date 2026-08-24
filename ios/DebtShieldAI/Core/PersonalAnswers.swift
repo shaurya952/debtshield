@@ -69,6 +69,8 @@ enum PersonalChatEngine {
         if let cushion = cushionAnswer(q, plan: plan) { return cushion }
         if let savings = savingsRateAnswer(q, plan: plan) { return savings }
         if let annual = annualAnswer(q, plan: plan) { return annual }
+        // "How much do I spend on transportation / personal / water …"
+        if let category = categorySpendAnswer(q, plan: plan) { return category }
 
         if has(q, ["why", "how come", "reason"]) {
             return whyExplanation(plan)
@@ -89,8 +91,45 @@ enum PersonalChatEngine {
             return statusSummary(plan)
         }
 
-        // Gentle default: just tell them where they stand.
-        return statusSummary(plan)
+        // Nothing matched. Rather than answer a question it didn't understand
+        // (which reads as a random reply), decline honestly and point at what it
+        // *can* answer. Stays deterministic — never invents an answer.
+        return gracefulFallback(plan)
+    }
+
+    /// A direct read of one category the person entered — "how much do I spend
+    /// on transportation / personal / water / home upkeep?"
+    private static func categorySpendAnswer(_ q: String, plan: MoneyPlan) -> ChatAnswer? {
+        guard let kind = category(in: q) else { return nil }
+        // Only when they're actually asking about that cost's size.
+        guard has(q, ["how much", "what do i", "what am i", "spend", "cost", "costs",
+                      "pay", "paying", "goes to", "go to", "my " + kind.label.lowercased()]) else { return nil }
+
+        guard let amount = value(of: kind, in: plan), amount > 0 else {
+            return ChatAnswer(
+                text: "You haven't entered anything for \(kind.label.lowercased()) yet. Add it on the home screen and I'll fold it into your month.",
+                provenance: "Your numbers",
+                isDecline: true
+            )
+        }
+        var text = "You put \(money(amount)) a month toward \(kind.label.lowercased())."
+        if let income = plan.monthlyIncome, income > 0 {
+            let pct = Int((amount / income * 100).rounded())
+            text += " That's about \(pct)% of your income."
+        }
+        text += " (\(kind.info))"
+        return ChatAnswer(text: text, provenance: "Your numbers", followUps: quickPrompts(for: plan))
+    }
+
+    /// When no intent matched: say so plainly and offer what it can do. A
+    /// decline, so it carries no figures.
+    private static func gracefulFallback(_ plan: MoneyPlan) -> ChatAnswer {
+        ChatAnswer(
+            text: "I answer only from the numbers you've entered, and I didn't quite catch that one. I can tell you where your month stands, why it's tight, where your money goes, what would free up the most, your odds for the year ahead, and how your costs compare to your area and the U.S. — try one of these:",
+            provenance: "Your numbers, on this device",
+            followUps: quickPrompts(for: plan),
+            isDecline: true
+        )
     }
 
     // MARK: - Quick prompts
@@ -573,8 +612,12 @@ enum PersonalChatEngine {
     private static func value(of kind: EssentialKind, in plan: MoneyPlan) -> Double? {
         switch kind {
         case .housing: return plan.housing
+        case .homeUpkeep: return plan.homeUpkeep
         case .food: return plan.food
         case .energy: return plan.energy
+        case .water: return plan.water
+        case .transportation: return plan.transportation
+        case .personal: return plan.personal
         case .debt: return plan.debtPayments
         }
     }
@@ -582,16 +625,24 @@ enum PersonalChatEngine {
     private static func set(_ kind: EssentialKind, to newValue: Double, in plan: inout MoneyPlan) {
         switch kind {
         case .housing: plan.housing = newValue
+        case .homeUpkeep: plan.homeUpkeep = newValue
         case .food: plan.food = newValue
         case .energy: plan.energy = newValue
+        case .water: plan.water = newValue
+        case .transportation: plan.transportation = newValue
+        case .personal: plan.personal = newValue
         case .debt: plan.debtPayments = newValue
         }
     }
 
     private static func category(in q: String) -> EssentialKind? {
         if has(q, ["rent", "mortgage", "housing", "apartment", "landlord"]) { return .housing }
+        if has(q, ["property tax", "home insurance", "homeowner", "upkeep", "maintenance", "landscap", "pest", "repairs"]) { return .homeUpkeep }
         if has(q, ["food", "grocer", "groceries", "eating", "meals"]) { return .food }
-        if has(q, ["energy", "utilit", "electric", "heating", "power bill", "gas bill", "bills"]) { return .energy }
+        if has(q, ["energy", "electric", "heating", "power bill", "gas bill"]) { return .energy }
+        if has(q, ["water", "sewer"]) { return .water }
+        if has(q, ["car", "gas", "fuel", "transport", "vehicle", "commut", "auto", "rideshare", "transit"]) { return .transportation }
+        if has(q, ["clothes", "clothing", "entertainment", "hobby", "hobbies", "subscription", "personal", "fun"]) { return .personal }
         if has(q, ["debt", "loan payment", "card payment", "minimum", "credit card payment", "payments"]) { return .debt }
         return nil
     }

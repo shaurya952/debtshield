@@ -54,10 +54,14 @@ enum Theme {
     /// is reinforcement rather than the only signal.
     static func essentialColor(_ kind: EssentialKind) -> Color {
         switch kind {
-        case .housing: return .adaptive(light: 0x1D4ED8, dark: 0x93C5FD) // blue
-        case .food:    return .adaptive(light: 0x0F766E, dark: 0x5EEAD4) // teal
-        case .energy:  return .adaptive(light: 0x7E22CE, dark: 0xD8B4FE) // purple
-        case .debt:    return .adaptive(light: 0x4338CA, dark: 0xA5B4FC) // indigo
+        case .housing:        return .adaptive(light: 0x1D4ED8, dark: 0x93C5FD) // blue
+        case .homeUpkeep:     return .adaptive(light: 0x92400E, dark: 0xFCD9A8) // amber-brown
+        case .food:           return .adaptive(light: 0x0F766E, dark: 0x5EEAD4) // teal
+        case .energy:         return .adaptive(light: 0x7E22CE, dark: 0xD8B4FE) // purple
+        case .water:          return .adaptive(light: 0x0369A1, dark: 0x7DD3FC) // sky
+        case .transportation: return .adaptive(light: 0xC2410C, dark: 0xFDBA74) // orange
+        case .personal:       return .adaptive(light: 0xBE185D, dark: 0xF9A8D4) // pink
+        case .debt:           return .adaptive(light: 0x4338CA, dark: 0xA5B4FC) // indigo
         }
     }
 

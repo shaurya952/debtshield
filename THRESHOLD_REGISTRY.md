@@ -34,8 +34,12 @@ rationale. A future Phase-2 code task may consolidate these into a single
 | horizons | `6` and `12` months | Projection windows. |
 | `incomeCV` | `0.07` | Income month-to-month coefficient of variation (national default). |
 | `housingCV` | `0.03` | Housing CV (rarely changes). |
+| `homeUpkeepCV` | `0.20` | Home-upkeep CV — steady tax/insurance, lumpy repairs. |
 | `foodCV` | `0.15` | Food CV. |
 | `energyCV` | `0.22` | Energy CV (seasonal). |
+| `waterCV` | `0.10` | Water/sewer CV (fairly steady). |
+| `transportationCV` | `0.18` | Transportation CV — gas swings, occasional repairs. |
+| `personalCV` | `0.25` | Personal/lifestyle CV — the most discretionary, so the most variable. |
 | `debtCV` | `0.05` | Debt-payment CV. |
 | `surpriseChancePerMonth` | `0.15` | Probability of a surprise cost in a given month. |
 | `surpriseMean` | `300` | Mean surprise cost (dollars). |

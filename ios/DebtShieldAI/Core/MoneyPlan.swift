@@ -30,8 +30,19 @@ struct MoneyPlan: Equatable, Sendable, Codable {
     /// Rent or mortgage. Almost always the largest single essential, which is
     /// why it is drawn first (leftmost) in the Safe Line bar.
     var housing: Double?
+    /// Ongoing costs of keeping the home itself — property tax, home insurance,
+    /// repairs, landscaping, pest control. Grouped into one figure the person
+    /// can enter at a glance; the input screen's info button lists what's inside.
+    var homeUpkeep: Double?
     var food: Double?
     var energy: Double?
+    /// Water and sewer.
+    var water: Double?
+    /// Getting around — car payment, gas, insurance, upkeep, transit/rideshare.
+    var transportation: Double?
+    /// Personal & lifestyle — clothes, entertainment, hobbies, subscriptions,
+    /// personal care. The flexible spending most within a person's control.
+    var personal: Double?
     /// Minimum debt payments due this month — cards, loans, financing. Not the
     /// total balance owed; what has to go out this month to stay current.
     var debtPayments: Double?
@@ -39,14 +50,22 @@ struct MoneyPlan: Equatable, Sendable, Codable {
     init(
         monthlyIncome: Double? = nil,
         housing: Double? = nil,
+        homeUpkeep: Double? = nil,
         food: Double? = nil,
         energy: Double? = nil,
+        water: Double? = nil,
+        transportation: Double? = nil,
+        personal: Double? = nil,
         debtPayments: Double? = nil
     ) {
         self.monthlyIncome = monthlyIncome
         self.housing = housing
+        self.homeUpkeep = homeUpkeep
         self.food = food
         self.energy = energy
+        self.water = water
+        self.transportation = transportation
+        self.personal = personal
         self.debtPayments = debtPayments
     }
 }
@@ -58,7 +77,9 @@ struct MoneyPlan: Equatable, Sendable, Codable {
 /// the "why am I short" answers, and any future screen can never disagree about
 /// what an essential is or what it's called.
 enum EssentialKind: String, CaseIterable, Identifiable, Sendable {
-    case housing, food, energy, debt
+    /// Declaration order is bar order (left → right): the home first, then the
+    /// running costs, then the flexible spending, with debt last.
+    case housing, homeUpkeep, food, energy, water, transportation, personal, debt
 
     var id: String { rawValue }
 
@@ -66,9 +87,28 @@ enum EssentialKind: String, CaseIterable, Identifiable, Sendable {
     var label: String {
         switch self {
         case .housing: return "Rent or mortgage"
+        case .homeUpkeep: return "Home upkeep"
         case .food: return "Food"
         case .energy: return "Energy"
+        case .water: return "Water"
+        case .transportation: return "Transportation"
+        case .personal: return "Personal"
         case .debt: return "Debt payments"
+        }
+    }
+
+    /// What to fold into this one number — shown behind the info (ⓘ) button on
+    /// the input screen, so a grouped category is never a guessing game.
+    var info: String {
+        switch self {
+        case .housing: return "Just your monthly rent or mortgage payment."
+        case .homeUpkeep: return "Property tax, home insurance, repairs, landscaping, and pest control."
+        case .food: return "Groceries and eating out."
+        case .energy: return "Electricity, gas, and heating."
+        case .water: return "Your monthly water and sewer bill."
+        case .transportation: return "Car payment, gas, insurance, upkeep, and transit or rideshare."
+        case .personal: return "Clothes, entertainment, hobbies, subscriptions, and personal care."
+        case .debt: return "The least you must pay this month on cards, loans, and financing — not the total you owe."
         }
     }
 
@@ -77,8 +117,12 @@ enum EssentialKind: String, CaseIterable, Identifiable, Sendable {
     var symbol: String {
         switch self {
         case .housing: return "house.fill"
+        case .homeUpkeep: return "wrench.and.screwdriver.fill"
         case .food: return "fork.knife"
         case .energy: return "bolt.fill"
+        case .water: return "drop.fill"
+        case .transportation: return "car.fill"
+        case .personal: return "bag.fill"
         case .debt: return "creditcard.fill"
         }
     }
@@ -155,8 +199,12 @@ extension MoneyPlan {
             let amount: Double? = {
                 switch kind {
                 case .housing: return housing
+                case .homeUpkeep: return homeUpkeep
                 case .food: return food
                 case .energy: return energy
+                case .water: return water
+                case .transportation: return transportation
+                case .personal: return personal
                 case .debt: return debtPayments
                 }
             }()
@@ -176,10 +224,12 @@ extension MoneyPlan {
         segments.max { $0.amount < $1.amount }
     }
 
-    /// The largest cost that usually *can* move quickly — i.e. not rent or a
-    /// mortgage, which rarely change month to month.
+    /// The largest cost that usually *can* move quickly — i.e. not the fixed
+    /// roof costs (rent/mortgage and home upkeep like tax and insurance), which
+    /// rarely change month to month.
     var biggestMovableEssential: EssentialSegment? {
-        segments.filter { $0.kind != .housing }.max { $0.amount < $1.amount }
+        let fixed: Set<EssentialKind> = [.housing, .homeUpkeep]
+        return segments.filter { !fixed.contains($0.kind) }.max { $0.amount < $1.amount }
     }
 
     /// One segment's share of income, 0…1, or nil without a usable income.

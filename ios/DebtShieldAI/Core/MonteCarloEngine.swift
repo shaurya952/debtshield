@@ -39,8 +39,12 @@ enum MonteCarloEngine {
 
     static let incomeCV: Double = 0.07
     static let housingCV: Double = 0.03
+    static let homeUpkeepCV: Double = 0.20   // steady tax/insurance, lumpy repairs
     static let foodCV: Double = 0.15
     static let energyCV: Double = 0.22
+    static let waterCV: Double = 0.10
+    static let transportationCV: Double = 0.18 // gas swings, occasional repairs
+    static let personalCV: Double = 0.25     // the most discretionary, so the most variable
     static let debtCV: Double = 0.05
 
     /// Occasional surprise costs — car repair, medical, a broken appliance.
@@ -75,8 +79,12 @@ enum MonteCarloEngine {
         guard let incomeDist = dist(income, cv: incomeCV, history: history,
                                     keyPath: \.monthlyIncome, usePersonal: usePersonal) else { return nil }
         let housingDist = dist(plan.housing, cv: housingCV, history: history, keyPath: \.housing, usePersonal: usePersonal)
+        let homeUpkeepDist = dist(plan.homeUpkeep, cv: homeUpkeepCV, history: history, keyPath: \.homeUpkeep, usePersonal: usePersonal)
         let foodDist = dist(plan.food, cv: foodCV, history: history, keyPath: \.food, usePersonal: usePersonal)
         let energyDist = dist(plan.energy, cv: energyCV, history: history, keyPath: \.energy, usePersonal: usePersonal)
+        let waterDist = dist(plan.water, cv: waterCV, history: history, keyPath: \.water, usePersonal: usePersonal)
+        let transportationDist = dist(plan.transportation, cv: transportationCV, history: history, keyPath: \.transportation, usePersonal: usePersonal)
+        let personalDist = dist(plan.personal, cv: personalCV, history: history, keyPath: \.personal, usePersonal: usePersonal)
         let debtDist = dist(plan.debtPayments, cv: debtCV, history: history, keyPath: \.debtPayments, usePersonal: usePersonal)
 
         let allowSurprise = !usePersonal
@@ -99,12 +107,16 @@ enum MonteCarloEngine {
             for month in 1...12 {
                 let drawnIncome = max(0, gaussian(incomeDist, &rng))
                 let h = housingDist.map { max(0, gaussian($0, &rng)) }
+                let hu = homeUpkeepDist.map { max(0, gaussian($0, &rng)) }
                 let f = foodDist.map { max(0, gaussian($0, &rng)) }
                 let e = energyDist.map { max(0, gaussian($0, &rng)) }
+                let w = waterDist.map { max(0, gaussian($0, &rng)) }
+                let t = transportationDist.map { max(0, gaussian($0, &rng)) }
+                let p = personalDist.map { max(0, gaussian($0, &rng)) }
                 let d = debtDist.map { max(0, gaussian($0, &rng)) }
 
                 // Apply the existing MoneyPlan math to get money-left this month.
-                let monthPlan = MoneyPlan(monthlyIncome: drawnIncome, housing: h, food: f, energy: e, debtPayments: d)
+                let monthPlan = MoneyPlan(monthlyIncome: drawnIncome, housing: h, homeUpkeep: hu, food: f, energy: e, water: w, transportation: t, personal: p, debtPayments: d)
                 var left = monthPlan.moneyLeft ?? (drawnIncome - monthPlan.essentialsTotal)
 
                 if allowSurprise, Double.random(in: 0...1, using: &rng) < surpriseChancePerMonth {
@@ -128,8 +140,12 @@ enum MonteCarloEngine {
         // Record the assumptions actually used, for transparency.
         var categories = [CategoryAssumption(name: "Income", mean: incomeDist.mean, sd: incomeDist.sd)]
         if let d = housingDist { categories.append(CategoryAssumption(name: EssentialKind.housing.label, mean: d.mean, sd: d.sd)) }
+        if let d = homeUpkeepDist { categories.append(CategoryAssumption(name: EssentialKind.homeUpkeep.label, mean: d.mean, sd: d.sd)) }
         if let d = foodDist { categories.append(CategoryAssumption(name: EssentialKind.food.label, mean: d.mean, sd: d.sd)) }
         if let d = energyDist { categories.append(CategoryAssumption(name: EssentialKind.energy.label, mean: d.mean, sd: d.sd)) }
+        if let d = waterDist { categories.append(CategoryAssumption(name: EssentialKind.water.label, mean: d.mean, sd: d.sd)) }
+        if let d = transportationDist { categories.append(CategoryAssumption(name: EssentialKind.transportation.label, mean: d.mean, sd: d.sd)) }
+        if let d = personalDist { categories.append(CategoryAssumption(name: EssentialKind.personal.label, mean: d.mean, sd: d.sd)) }
         if let d = debtDist { categories.append(CategoryAssumption(name: EssentialKind.debt.label, mean: d.mean, sd: d.sd)) }
 
         let assumptions = MonteCarloAssumptions(
@@ -205,8 +221,12 @@ enum MonteCarloEngine {
     private static func value(of kind: EssentialKind, in plan: MoneyPlan) -> Double? {
         switch kind {
         case .housing: return plan.housing
+        case .homeUpkeep: return plan.homeUpkeep
         case .food: return plan.food
         case .energy: return plan.energy
+        case .water: return plan.water
+        case .transportation: return plan.transportation
+        case .personal: return plan.personal
         case .debt: return plan.debtPayments
         }
     }
@@ -214,8 +234,12 @@ enum MonteCarloEngine {
     private static func set(_ kind: EssentialKind, to value: Double, in plan: inout MoneyPlan) {
         switch kind {
         case .housing: plan.housing = value
+        case .homeUpkeep: plan.homeUpkeep = value
         case .food: plan.food = value
         case .energy: plan.energy = value
+        case .water: plan.water = value
+        case .transportation: plan.transportation = value
+        case .personal: plan.personal = value
         case .debt: plan.debtPayments = value
         }
     }
@@ -406,7 +430,10 @@ struct SensitivityResult: Sendable, Equatable {
     /// app's "start with a movable cost" wisdom. Falls back to the top lever.
     var topActionableLever: SensitivityLever? {
         levers.first { lever in
+            // Skip the fixed roof costs (rent/mortgage and home upkeep like tax
+            // and insurance) — real, but rarely trimmable this month.
             if case .essential(.housing) = lever.input { return false }
+            if case .essential(.homeUpkeep) = lever.input { return false }
             return lever.reduction > 0
         } ?? topLever
     }

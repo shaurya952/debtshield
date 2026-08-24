@@ -11,8 +11,12 @@ struct MyNumbersView: View {
 
     @State private var income: Double?
     @State private var housing: Double?
+    @State private var homeUpkeep: Double?
     @State private var food: Double?
     @State private var energy: Double?
+    @State private var water: Double?
+    @State private var transportation: Double?
+    @State private var personal: Double?
     @State private var debt: Double?
 
     @State private var savedTrigger = 0
@@ -23,9 +27,18 @@ struct MyNumbersView: View {
         let plan = store.plan
         _income = State(initialValue: plan.monthlyIncome)
         _housing = State(initialValue: plan.housing)
+        _homeUpkeep = State(initialValue: plan.homeUpkeep)
         _food = State(initialValue: plan.food)
         _energy = State(initialValue: plan.energy)
+        _water = State(initialValue: plan.water)
+        _transportation = State(initialValue: plan.transportation)
+        _personal = State(initialValue: plan.personal)
         _debt = State(initialValue: plan.debtPayments)
+    }
+
+    /// A labelled dollar field for one category, with its ⓘ "what to include".
+    private func currencyField(_ kind: EssentialKind, _ binding: Binding<Double?>) -> some View {
+        CurrencyField(title: kind.label, info: kind.info, value: binding)
     }
 
     var body: some View {
@@ -40,14 +53,28 @@ struct MyNumbersView: View {
                 }
 
                 Section {
-                    CurrencyField(title: EssentialKind.housing.label, value: $housing)
-                    CurrencyField(title: EssentialKind.food.label, value: $food)
-                    CurrencyField(title: EssentialKind.energy.label, value: $energy)
-                    CurrencyField(title: EssentialKind.debt.label, value: $debt)
+                    currencyField(.housing, $housing)
+                    currencyField(.homeUpkeep, $homeUpkeep)
                 } header: {
-                    Text("What goes out each month")
+                    Text("Your home")
                 } footer: {
-                    Text("Rough amounts are fine. Debt payments means the least you must pay this month, not the total you owe.")
+                    Text("Tap the ⓘ next to any cost to see what to include in it. Rough amounts are fine.")
+                }
+
+                Section {
+                    currencyField(.food, $food)
+                    currencyField(.energy, $energy)
+                    currencyField(.water, $water)
+                    currencyField(.transportation, $transportation)
+                    currencyField(.personal, $personal)
+                } header: {
+                    Text("Everyday costs")
+                }
+
+                Section {
+                    currencyField(.debt, $debt)
+                } header: {
+                    Text("Debt")
                 }
 
                 Section {
@@ -78,8 +105,12 @@ struct MyNumbersView: View {
                         store.save(MoneyPlan(
                             monthlyIncome: income,
                             housing: housing,
+                            homeUpkeep: homeUpkeep,
                             food: food,
                             energy: energy,
+                            water: water,
+                            transportation: transportation,
+                            personal: personal,
                             debtPayments: debt
                         ))
                         savedTrigger += 1
@@ -109,15 +140,39 @@ struct MyNumbersView: View {
 /// way down to `MoneyPlan`.
 struct CurrencyField: View {
     let title: String
+    /// What to fold into this figure. When present, an ⓘ button shows it.
+    var info: String? = nil
     @Binding var value: Double?
 
     @State private var text: String = ""
+    @State private var showInfo = false
 
     var body: some View {
         HStack {
-            Text(title)
-                .font(Theme.Typography.body)
-            Spacer(minLength: Theme.Spacing.comfortable)
+            HStack(spacing: 6) {
+                Text(title)
+                    .font(Theme.Typography.body)
+                if let info {
+                    Button {
+                        showInfo = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.brand)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("What counts as \(title)")
+                    .popover(isPresented: $showInfo) {
+                        Text(info)
+                            .font(Theme.Typography.subheadline)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding()
+                            .frame(maxWidth: 300)
+                            .presentationCompactAdaptation(.popover)
+                    }
+                }
+            }
+            Spacer(minLength: Theme.Spacing.regular)
             HStack(spacing: 2) {
                 Text("$")
                     .foregroundStyle(Theme.secondaryText)

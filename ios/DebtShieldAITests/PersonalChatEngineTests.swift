@@ -41,6 +41,24 @@ final class PersonalChatEngineTests: XCTestCase {
         XCTAssertTrue(a.text.contains("over 12 months"))
     }
 
+    func testPerCategoryAnswerForNewCategory() {
+        let plan = MoneyPlan(monthlyIncome: 5000, housing: 1400, transportation: 450, debtPayments: 200)
+        let a = answer("how much do I spend on transportation?", plan)
+        XCTAssertFalse(a.isDecline)
+        XCTAssertTrue(a.text.contains("450"))
+        XCTAssertTrue(a.text.lowercased().contains("transportation"))
+        XCTAssertEqual(a.provenance, "Your numbers")
+    }
+
+    func testUnmatchedQuestionDeclinesInsteadOfGuessing() {
+        // A question the engine can't answer must decline honestly (and offer
+        // what it *can* do) rather than return a random figure.
+        let a = answer("what's the weather like tomorrow?", .sampleOkay)
+        XCTAssertTrue(a.isDecline)
+        XCTAssertFalse(a.followUps.isEmpty)
+        XCTAssertFalse(a.text.contains("$")) // a decline never invents a number
+    }
+
     // MARK: - Boundaries preserved
 
     func testDeclinesAdviceAndPointsTo211() {
