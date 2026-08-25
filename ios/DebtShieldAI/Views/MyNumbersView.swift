@@ -14,7 +14,6 @@ struct MyNumbersView: View {
     @State private var homeUpkeep: Double?
     @State private var food: Double?
     @State private var energy: Double?
-    @State private var water: Double?
     @State private var transportation: Double?
     @State private var personal: Double?
     @State private var debt: Double?
@@ -30,7 +29,6 @@ struct MyNumbersView: View {
         _homeUpkeep = State(initialValue: plan.homeUpkeep)
         _food = State(initialValue: plan.food)
         _energy = State(initialValue: plan.energy)
-        _water = State(initialValue: plan.water)
         _transportation = State(initialValue: plan.transportation)
         _personal = State(initialValue: plan.personal)
         _debt = State(initialValue: plan.debtPayments)
@@ -45,6 +43,11 @@ struct MyNumbersView: View {
         NavigationStack {
             Form {
                 Section {
+                    InfoTipRow()
+                }
+                .listRowBackground(Theme.brand.opacity(0.07))
+
+                Section {
                     CurrencyField(title: "Money coming in", value: $income)
                 } header: {
                     Text("Each month")
@@ -58,13 +61,12 @@ struct MyNumbersView: View {
                 } header: {
                     Text("Your home")
                 } footer: {
-                    Text("Tap the ⓘ next to any cost to see what to include in it. Rough amounts are fine.")
+                    Text("Rough amounts are fine — you can always come back and adjust.")
                 }
 
                 Section {
                     currencyField(.food, $food)
                     currencyField(.energy, $energy)
-                    currencyField(.water, $water)
                     currencyField(.transportation, $transportation)
                     currencyField(.personal, $personal)
                 } header: {
@@ -108,7 +110,6 @@ struct MyNumbersView: View {
                             homeUpkeep: homeUpkeep,
                             food: food,
                             energy: energy,
-                            water: water,
                             transportation: transportation,
                             personal: personal,
                             debtPayments: debt
@@ -130,6 +131,34 @@ struct MyNumbersView: View {
                 Text("This removes your income, essentials, and saved area from this phone. It can't be undone.")
             }
         }
+    }
+}
+
+/// A small, friendly hint that points at the ⓘ buttons — so a first-time user
+/// knows those little icons explain what belongs in each grouped cost.
+private struct InfoTipRow: View {
+    var body: some View {
+        HStack(spacing: Theme.Spacing.regular) {
+            ZStack {
+                Circle()
+                    .fill(Theme.brand.opacity(0.16))
+                    .frame(width: 34, height: 34)
+                Image(systemName: "info.circle.fill")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Theme.brand)
+            }
+            .accessibilityHidden(true)
+
+            (Text("New here? Tap ")
+             + Text(Image(systemName: "info.circle")).foregroundColor(Theme.brand)
+             + Text(" beside any cost to see exactly what to include."))
+                .font(Theme.Typography.subheadline)
+                .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Tip: tap the info button beside any cost to see what to include.")
     }
 }
 

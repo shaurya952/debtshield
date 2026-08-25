@@ -68,6 +68,41 @@ struct MoneyPlan: Equatable, Sendable, Codable {
         self.personal = personal
         self.debtPayments = debtPayments
     }
+
+    // MARK: - Codable (with a one-way migration)
+
+    private enum CodingKeys: String, CodingKey {
+        case monthlyIncome, housing, homeUpkeep, food, energy, water,
+             transportation, personal, debtPayments
+    }
+
+    /// Custom decode so an older saved plan that stored a **separate** water bill
+    /// folds into `energy` — the app now collects one "Utilities" figure
+    /// (electricity, gas, water, sewer, trash). New plans never write `water`;
+    /// this only rescues numbers a tester entered before the two were merged.
+    /// Encoding stays synthesised, so `water` is simply written as `nil` from now
+    /// on and quietly disappears on the next save.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        monthlyIncome  = try c.decodeIfPresent(Double.self, forKey: .monthlyIncome)
+        housing        = try c.decodeIfPresent(Double.self, forKey: .housing)
+        homeUpkeep     = try c.decodeIfPresent(Double.self, forKey: .homeUpkeep)
+        food           = try c.decodeIfPresent(Double.self, forKey: .food)
+        let energyRaw  = try c.decodeIfPresent(Double.self, forKey: .energy)
+        let waterRaw   = try c.decodeIfPresent(Double.self, forKey: .water)
+        energy         = MoneyPlan.merge(energyRaw, waterRaw)
+        water          = nil
+        transportation = try c.decodeIfPresent(Double.self, forKey: .transportation)
+        personal       = try c.decodeIfPresent(Double.self, forKey: .personal)
+        debtPayments   = try c.decodeIfPresent(Double.self, forKey: .debtPayments)
+    }
+
+    /// Sum two optional amounts, staying `nil` only when *both* are absent — so a
+    /// migrated water bill adds onto energy without turning a genuine blank into
+    /// a misleading zero.
+    private static func merge(_ a: Double?, _ b: Double?) -> Double? {
+        (a == nil && b == nil) ? nil : (a ?? 0) + (b ?? 0)
+    }
 }
 
 // MARK: - Essentials
@@ -88,10 +123,10 @@ enum EssentialKind: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .housing: return "Rent or mortgage"
         case .homeUpkeep: return "Home upkeep"
-        case .food: return "Food"
-        case .energy: return "Energy"
+        case .food: return "Food & groceries"
+        case .energy: return "Utilities"
         case .water: return "Water"
-        case .transportation: return "Transportation"
+        case .transportation: return "Getting around"
         case .personal: return "Personal"
         case .debt: return "Debt payments"
         }
@@ -104,7 +139,7 @@ enum EssentialKind: String, CaseIterable, Identifiable, Sendable {
         case .housing: return "Just your monthly rent or mortgage payment."
         case .homeUpkeep: return "Property tax, home insurance, repairs, landscaping, and pest control."
         case .food: return "Groceries and eating out."
-        case .energy: return "Electricity, gas, and heating."
+        case .energy: return "All your home utilities in one — electricity, natural gas, heating, water, sewer, and trash."
         case .water: return "Your monthly water and sewer bill."
         case .transportation: return "Car payment, gas, insurance, upkeep, and transit or rideshare."
         case .personal: return "Clothes, entertainment, hobbies, subscriptions, and personal care."

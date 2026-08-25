@@ -46,7 +46,8 @@ final class PersonalChatEngineTests: XCTestCase {
         let a = answer("how much do I spend on transportation?", plan)
         XCTAssertFalse(a.isDecline)
         XCTAssertTrue(a.text.contains("450"))
-        XCTAssertTrue(a.text.lowercased().contains("transportation"))
+        // "Getting around" is the friendly label for the transportation category.
+        XCTAssertTrue(a.text.lowercased().contains("getting around"))
         XCTAssertEqual(a.provenance, "Your numbers")
     }
 

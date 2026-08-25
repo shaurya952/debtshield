@@ -639,8 +639,8 @@ enum PersonalChatEngine {
         if has(q, ["rent", "mortgage", "housing", "apartment", "landlord"]) { return .housing }
         if has(q, ["property tax", "home insurance", "homeowner", "upkeep", "maintenance", "landscap", "pest", "repairs"]) { return .homeUpkeep }
         if has(q, ["food", "grocer", "groceries", "eating", "meals"]) { return .food }
-        if has(q, ["energy", "electric", "heating", "power bill", "gas bill"]) { return .energy }
-        if has(q, ["water", "sewer"]) { return .water }
+        // Utilities is one combined cost now — electricity, gas, water, trash.
+        if has(q, ["utilit", "energy", "electric", "heating", "power bill", "gas bill", "water", "sewer", "trash", "garbage"]) { return .energy }
         if has(q, ["car", "gas", "fuel", "transport", "vehicle", "commut", "auto", "rideshare", "transit"]) { return .transportation }
         if has(q, ["clothes", "clothing", "entertainment", "hobby", "hobbies", "subscription", "personal", "fun"]) { return .personal }
         if has(q, ["debt", "loan payment", "card payment", "minimum", "credit card payment", "payments"]) { return .debt }

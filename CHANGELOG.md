@@ -5,6 +5,28 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Beta feedback — spending categories, Utilities & clearer entry
+- **New everyday costs, from tester feedback.** Added home upkeep, transportation
+  ("Getting around"), and personal/lifestyle spending, each with an ⓘ button that
+  lists exactly what to include — so a grouped cost is never a guessing game.
+- **Water folded into one "Utilities" cost.** Rather than a separate water line,
+  the app now collects a single Utilities figure (electricity, gas, water, sewer,
+  trash). Housing stays on its own — lumping it into "rent" would hide where the
+  money goes and break every comparison. A plan saved before the merge folds its
+  separate water bill into utilities on load (`MoneyPlan.init(from:)`); nothing
+  is lost.
+- **Real, cited U.S. comparisons for every new category.** Transportation, personal,
+  and home upkeep compare to BLS Consumer Expenditure Survey 2023 figures; the
+  Utilities comparison is EIA electricity (state, national fallback) **plus** the
+  BLS gas + water average, so a whole bill is measured against a whole-bill typical.
+  All figures documented in `THRESHOLD_REGISTRY.md`.
+- **Friendlier entry screen.** Sectioned into "Your home" / "Everyday costs" / "Debt"
+  with a small tinted hint pointing at the ⓘ buttons. Friendlier labels
+  ("Food & groceries", "Getting around", "Utilities").
+- **Ask fix.** Utility questions (water, gas, trash, "utilities") now route to the
+  combined Utilities cost; unmatched questions decline honestly instead of
+  returning a stray status summary.
+
 ### Phase 0 — Repository audit + foundations
 - Added root `CLAUDE.md` engineering charter (privacy non-negotiables + rules).
 - Added `AUDIT_REPORT.md`, `ARCHITECTURE.md`, `STARTUP_ROADMAP.md`,

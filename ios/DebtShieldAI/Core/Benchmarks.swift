@@ -21,6 +21,19 @@ struct Benchmarks: Equatable, Sendable {
     /// county or state dimension in the data, so this national figure is the
     /// "across the U.S." row for food, alongside the income-based typical.
     let nationalFood: Double
+    /// Average monthly transportation spend for all U.S. households (BLS CE).
+    let nationalTransportation: Double
+    /// Average monthly personal/lifestyle spend for all U.S. households — BLS CE
+    /// apparel + entertainment + personal care combined.
+    let nationalPersonal: Double
+    /// The non-electric part of a typical home's monthly utilities — natural gas
+    /// plus water & public services (BLS CE). Added onto the EIA electricity
+    /// figure so a person's single "Utilities" entry compares against the whole.
+    let nationalUtilitiesAddon: Double
+    /// Average monthly home upkeep for a typical U.S. homeowner — BLS CE property
+    /// tax + maintenance/repairs/insurance/other. A homeowner figure, because
+    /// renters carry almost none of this.
+    let nationalHomeUpkeep: Double
 }
 
 /// Average monthly residential electricity bill, by state (EIA).
@@ -81,6 +94,38 @@ enum BenchmarksLoader {
     /// `officialNationalRent`.
     static let officialNationalFoodMonthly: Double = 9985.0 / 12
 
+    /// Average transportation spend for all U.S. consumer units — BLS Consumer
+    /// Expenditure Survey 2023: $13,174/year, about $1,098/month. Covers vehicle
+    /// purchase/finance, gas, insurance, maintenance, and public transit.
+    static let officialNationalTransportationMonthly: Double = 13174.0 / 12
+
+    /// Average personal/lifestyle spend for all U.S. consumer units — BLS
+    /// Consumer Expenditure Survey 2023, summing apparel & services ($2,041),
+    /// entertainment ($3,635), and personal care products & services ($927) =
+    /// $6,603/year, about $550/month.
+    static let officialNationalPersonalMonthly: Double = (2041.0 + 3635.0 + 927.0) / 12
+
+    /// Average natural-gas spend for all U.S. consumer units — BLS Consumer
+    /// Expenditure Survey 2023: $540/year, about $45/month.
+    static let officialNationalNaturalGasMonthly: Double = 540.0 / 12
+
+    /// Average water & other public-services bill for all U.S. consumer units —
+    /// BLS Consumer Expenditure Survey 2023: $780/year, about $65/month.
+    static let officialNationalWaterMonthly: Double = 780.0 / 12
+
+    /// The non-electric slice of a typical home's utilities — natural gas plus
+    /// water & public services (BLS CE 2023), about $110/month. The Utilities
+    /// comparison adds this onto the EIA electricity figure (state or national)
+    /// so a person's one combined bill is measured against a full utilities total.
+    static let officialNationalUtilitiesAddonMonthly: Double =
+        officialNationalNaturalGasMonthly + officialNationalWaterMonthly
+
+    /// Average home upkeep for a typical U.S. homeowner — BLS Consumer
+    /// Expenditure Survey 2023, home-owner tenure: property taxes ($4,079) plus
+    /// maintenance, repairs, insurance & other expenses ($3,974) = $8,053/year,
+    /// about $671/month. A homeowner figure, since renters carry almost none.
+    static let officialNationalHomeUpkeepMonthly: Double = (4079.0 + 3974.0) / 12
+
     static func load(bundle: Bundle = .main) -> Benchmarks {
         let energy = loadEnergy(bundle: bundle)
         let bills = Array(energy.byState.values)
@@ -90,7 +135,11 @@ enum BenchmarksLoader {
             food: loadFood(bundle: bundle),
             nationalRent: officialNationalRent,
             nationalEnergy: nationalEnergy,
-            nationalFood: officialNationalFoodMonthly
+            nationalFood: officialNationalFoodMonthly,
+            nationalTransportation: officialNationalTransportationMonthly,
+            nationalPersonal: officialNationalPersonalMonthly,
+            nationalUtilitiesAddon: officialNationalUtilitiesAddonMonthly,
+            nationalHomeUpkeep: officialNationalHomeUpkeepMonthly
         )
     }
 
@@ -146,7 +195,11 @@ extension Benchmarks {
         ]),
         nationalRent: 1300,
         nationalEnergy: 137,
-        nationalFood: 832
+        nationalFood: 832,
+        nationalTransportation: 1098,
+        nationalPersonal: 550,
+        nationalUtilitiesAddon: 110,
+        nationalHomeUpkeep: 671
     )
 }
 #endif
