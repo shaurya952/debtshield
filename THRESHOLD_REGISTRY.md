@@ -54,9 +54,17 @@ rationale. A future Phase-2 code task may consolidate these into a single
 | `officialNationalFoodMonthly` | `9985 / 12` (~`832`) | Avg food spend, all U.S. households. | BLS Consumer Expenditure Survey 2023 (all consumer units). |
 | `officialNationalTransportationMonthly` | `13174 / 12` (~`1098`) | Avg transportation spend, all U.S. households. | BLS CE 2023 (all consumer units). |
 | `officialNationalPersonalMonthly` | `(2041+3635+927)/12` (~`550`) | Avg personal spend (apparel + entertainment + personal care). | BLS CE 2023 (all consumer units). |
+| `officialNationalNaturalGasMonthly` | `540 / 12` (~`45`) | Avg natural-gas spend, all U.S. households. | BLS CE 2023 (all consumer units). |
 | `officialNationalWaterMonthly` | `780 / 12` (~`65`) | Avg water & public-services bill, all U.S. households. | BLS CE 2023 (all consumer units). |
+| `officialNationalUtilitiesAddonMonthly` | gas + water (~`110`) | The non-electric part of a home's utilities, added onto EIA electricity so a single "Utilities" entry compares to a whole-bill typical. | BLS CE 2023 (gas + water). |
 | `officialNationalHomeUpkeepMonthly` | `(4079+3974)/12` (~`671`) | Avg home upkeep (property tax + maintenance/insurance/other) for a typical U.S. **homeowner**. | BLS CE 2023, home-owner tenure. |
-| `nationalEnergy` | mean of state bills | Avg U.S. monthly electricity bill. | Derived from EIA state file. |
+| `nationalEnergy` | mean of state bills | Avg U.S. monthly electricity bill; the electricity part of the Utilities comparison. | Derived from EIA state file. |
+
+**Utilities is one combined cost.** The app collects a single "Utilities" figure
+(electricity + gas + water + sewer + trash). Its comparison = EIA electricity
+(state, national fallback) **+** `officialNationalUtilitiesAddonMonthly`. A plan
+saved before the merge (separate `water`) folds water into `energy` on decode
+(`MoneyPlan.init(from:)`); `water` is retired going forward.
 
 ## Change protocol
 1. Edit the `static let` at its source of truth and update this table.

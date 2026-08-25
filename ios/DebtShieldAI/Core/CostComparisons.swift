@@ -51,9 +51,8 @@ enum CostComparisons {
     static func all(plan: MoneyPlan, county: ScoredCounty?, benchmarks: Benchmarks?) -> [Comparison] {
         [housing(plan, county, benchmarks),
          homeUpkeep(plan, benchmarks),
-         energy(plan, county, benchmarks),
+         utilities(plan, county, benchmarks),
          food(plan, benchmarks),
-         water(plan, benchmarks),
          transportation(plan, benchmarks),
          personal(plan, benchmarks),
          debt(plan)]
@@ -77,19 +76,26 @@ enum CostComparisons {
                           verdict: verdict, standing: standing, source: "U.S. Census, 2019–2023")
     }
 
-    static func energy(_ plan: MoneyPlan, _ county: ScoredCounty?, _ benchmarks: Benchmarks?) -> Comparison? {
+    /// One combined "Utilities" cost — the person enters a single figure for
+    /// electricity, gas, water, sewer, and trash. Electricity is the local part
+    /// (EIA, by state, with a national fallback); gas + water & public services
+    /// are added on from the national BLS figure so the whole bill is compared to
+    /// a whole-bill typical, not just the electricity slice.
+    static func utilities(_ plan: MoneyPlan, _ county: ScoredCounty?, _ benchmarks: Benchmarks?) -> Comparison? {
         guard let yours = plan.energy, yours > 0 else { return nil }
+        let addon = benchmarks?.nationalUtilitiesAddon ?? 0
         var refs: [ComparisonRef] = []
         if let state = county?.state, let bill = benchmarks?.energy.typicalBill(inState: state), bill > 0 {
-            refs.append(ComparisonRef(label: "Your state", amount: bill))
+            refs.append(ComparisonRef(label: "Your state", amount: bill + addon))
         }
         if let national = benchmarks?.nationalEnergy, national > 0 {
-            refs.append(ComparisonRef(label: "Across the U.S.", amount: national))
+            refs.append(ComparisonRef(label: "Across the U.S.", amount: national + addon))
         }
         guard !refs.isEmpty else { return nil }
         let (standing, verdict) = read(yours, refs)
         return Comparison(kind: .energy, yours: yours, refs: refs,
-                          verdict: verdict, standing: standing, source: "EIA 2024")
+                          verdict: verdict, standing: standing,
+                          source: "EIA 2024 (electricity) + BLS CE 2023 (gas, water)")
     }
 
     static func food(_ plan: MoneyPlan, _ benchmarks: Benchmarks?) -> Comparison? {
@@ -116,16 +122,6 @@ enum CostComparisons {
         return Comparison(kind: .homeUpkeep, yours: yours, refs: refs,
                           verdict: verdict, standing: standing,
                           source: "BLS CE 2023 — homeowner property tax + upkeep")
-    }
-
-    static func water(_ plan: MoneyPlan, _ benchmarks: Benchmarks?) -> Comparison? {
-        guard let yours = plan.water, yours > 0,
-              let national = benchmarks?.nationalWater, national > 0 else { return nil }
-        let refs = [ComparisonRef(label: "Across the U.S.", amount: national)]
-        let (standing, verdict) = read(yours, refs)
-        return Comparison(kind: .water, yours: yours, refs: refs,
-                          verdict: verdict, standing: standing,
-                          source: "BLS Consumer Expenditure Survey, 2023")
     }
 
     static func transportation(_ plan: MoneyPlan, _ benchmarks: Benchmarks?) -> Comparison? {

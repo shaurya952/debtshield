@@ -72,7 +72,7 @@ struct CompareView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Comparing to \(name)")
                             .font(Theme.Typography.body.weight(.semibold))
-                        Text("Rent and energy use your local typical")
+                        Text("Rent and utilities use your local typical")
                             .font(Theme.Typography.caption)
                             .foregroundStyle(Theme.secondaryText)
                     }
@@ -89,7 +89,7 @@ struct CompareView: View {
                 ActionRowLabel(
                     systemImage: "mappin.and.ellipse",
                     title: "Add where you live",
-                    subtitle: "To compare rent and energy to your area. Food, debt, and the U.S. figures show either way."
+                    subtitle: "To compare rent and utilities to your area. Food, debt, and the U.S. figures show either way."
                 )
             }
             .buttonStyle(PressableCardStyle())

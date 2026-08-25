@@ -26,8 +26,10 @@ struct Benchmarks: Equatable, Sendable {
     /// Average monthly personal/lifestyle spend for all U.S. households — BLS CE
     /// apparel + entertainment + personal care combined.
     let nationalPersonal: Double
-    /// Average monthly water & public-services bill for all U.S. households (BLS CE).
-    let nationalWater: Double
+    /// The non-electric part of a typical home's monthly utilities — natural gas
+    /// plus water & public services (BLS CE). Added onto the EIA electricity
+    /// figure so a person's single "Utilities" entry compares against the whole.
+    let nationalUtilitiesAddon: Double
     /// Average monthly home upkeep for a typical U.S. homeowner — BLS CE property
     /// tax + maintenance/repairs/insurance/other. A homeowner figure, because
     /// renters carry almost none of this.
@@ -103,9 +105,20 @@ enum BenchmarksLoader {
     /// $6,603/year, about $550/month.
     static let officialNationalPersonalMonthly: Double = (2041.0 + 3635.0 + 927.0) / 12
 
+    /// Average natural-gas spend for all U.S. consumer units — BLS Consumer
+    /// Expenditure Survey 2023: $540/year, about $45/month.
+    static let officialNationalNaturalGasMonthly: Double = 540.0 / 12
+
     /// Average water & other public-services bill for all U.S. consumer units —
     /// BLS Consumer Expenditure Survey 2023: $780/year, about $65/month.
     static let officialNationalWaterMonthly: Double = 780.0 / 12
+
+    /// The non-electric slice of a typical home's utilities — natural gas plus
+    /// water & public services (BLS CE 2023), about $110/month. The Utilities
+    /// comparison adds this onto the EIA electricity figure (state or national)
+    /// so a person's one combined bill is measured against a full utilities total.
+    static let officialNationalUtilitiesAddonMonthly: Double =
+        officialNationalNaturalGasMonthly + officialNationalWaterMonthly
 
     /// Average home upkeep for a typical U.S. homeowner — BLS Consumer
     /// Expenditure Survey 2023, home-owner tenure: property taxes ($4,079) plus
@@ -125,7 +138,7 @@ enum BenchmarksLoader {
             nationalFood: officialNationalFoodMonthly,
             nationalTransportation: officialNationalTransportationMonthly,
             nationalPersonal: officialNationalPersonalMonthly,
-            nationalWater: officialNationalWaterMonthly,
+            nationalUtilitiesAddon: officialNationalUtilitiesAddonMonthly,
             nationalHomeUpkeep: officialNationalHomeUpkeepMonthly
         )
     }
@@ -185,7 +198,7 @@ extension Benchmarks {
         nationalFood: 832,
         nationalTransportation: 1098,
         nationalPersonal: 550,
-        nationalWater: 65,
+        nationalUtilitiesAddon: 110,
         nationalHomeUpkeep: 671
     )
 }
