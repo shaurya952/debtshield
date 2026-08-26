@@ -126,7 +126,7 @@ enum EssentialKind: String, CaseIterable, Identifiable, Sendable {
         case .food: return "Food & groceries"
         case .energy: return "Utilities"
         case .water: return "Water"
-        case .transportation: return "Getting around"
+        case .transportation: return "Transportation"
         case .personal: return "Personal"
         case .debt: return "Debt payments"
         }
