@@ -5,6 +5,20 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Relocation ranking engine (Phase 1 of the relocation pivot)
+- **`PlaceRankingEngine` (`Core/PlaceRanking.swift`).** Promotes the single-place
+  `AffordabilityEngine` into a whole-country ranking: given a plan, it runs the
+  same deterministic affordability math across every county in the `Dataset` and
+  ranks them by projected money-left-over ("breathing room"). Pure, synchronous,
+  no SwiftUI — headlessly testable like the other engines.
+- Options: `incomeOverride` (model a new salary), `minMonthlyLeft` (affordability
+  floor), `stateFilter` (region), `limit`. Counties with no rent data are skipped,
+  never guessed; order is deterministic with a FIPS tie-break.
+- Tests: `PlaceRankingEngineTests` (8) — ranking order, filters, skips, income
+  override, determinism/tie-break. Full suite 78 passing.
+- Groundwork for the "become a cost-of-living relocation tool, not a budgeting
+  app" restructure; UI (the Places screen) is a later phase.
+
 ### Beta feedback — spending categories, Utilities & clearer entry
 - **New everyday costs, from tester feedback.** Added home upkeep, transportation
   ("Getting around"), and personal/lifestyle spending, each with an ⓘ button that
