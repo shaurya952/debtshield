@@ -32,11 +32,13 @@ enum StateRankingEngine {
     static func rank(plan: MoneyPlan,
                      in dataset: Dataset,
                      energy: EnergyBenchmark,
-                     incomeOverride: Double? = nil) -> [RankedState] {
+                     incomeOverride: Double? = nil,
+                     incomeByState: [String: Double]? = nil) -> [RankedState] {
         // Rank every county (no limit) so the rollup sees the whole state.
         let places = PlaceRankingEngine.rank(
             plan: plan, in: dataset, energy: energy,
-            options: PlaceRankingEngine.Options(incomeOverride: incomeOverride, limit: .max))
+            options: PlaceRankingEngine.Options(incomeOverride: incomeOverride,
+                                                incomeByState: incomeByState, limit: .max))
 
         let byState = Dictionary(grouping: places, by: { $0.county.state })
 

@@ -78,6 +78,15 @@ The risk is the ranking's second axis: `MonteCarloEngine.simulate` run on the
 budget you'd have *living there* (`MoveOutlook.projected`), read as
 `probNegativeWithin12mo`, then banded low / watch / high.
 
+## Occupation pay — "same job, new place" (`Core/OccupationWages.swift`)
+| Name | Value | Meaning | Source |
+|------|-------|---------|--------|
+| `OccupationWages.takeHomeRatio` | `0.78` | Gross annual OEWS wage → estimated monthly take-home (÷12 × ratio). A national-ish blend of federal + FICA + typical state tax. | Named heuristic; labelled "estimated" in the UI, never an exact paycheck. |
+
+Wages themselves are **not** heuristics: `Resources/occupation_wages.csv` holds
+real BLS OEWS May 2023 state **median** wages for a curated set of occupations. A
+state where an occupation isn't reported is left out of the ranking, never guessed.
+
 ## Change protocol
 1. Edit the `static let` at its source of truth and update this table.
 2. Re-run the (Phase-2) engine unit tests — verdict-boundary and Monte Carlo

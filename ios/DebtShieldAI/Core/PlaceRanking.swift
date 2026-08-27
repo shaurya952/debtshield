@@ -30,9 +30,14 @@ enum PlaceRankingEngine {
     /// country by breathing room on my current income."
     struct Options: Equatable, Sendable {
         /// Model a different salary (e.g. a new job) applied to every place. `nil`
-        /// keeps the person's current income. A later, occupation-aware phase will
-        /// vary this *per place* from wage data; here it's one figure everywhere.
+        /// keeps the person's current income.
         var incomeOverride: Double?
+        /// The "same job, new place" income: a full state name → monthly take-home
+        /// map (an occupation's local pay). When set, each county uses its state's
+        /// figure, and a county whose state isn't in the map is skipped — the job
+        /// isn't reported there, so it isn't guessed. Takes precedence over
+        /// `incomeOverride`.
+        var incomeByState: [String: Double]?
         /// Only rank places that clear this much money left each month.
         var minMonthlyLeft: Double?
         /// Restrict to a single state (full name, matching the county file), for a
@@ -42,10 +47,12 @@ enum PlaceRankingEngine {
         var limit: Int
 
         init(incomeOverride: Double? = nil,
+             incomeByState: [String: Double]? = nil,
              minMonthlyLeft: Double? = nil,
              stateFilter: String? = nil,
              limit: Int = 25) {
             self.incomeOverride = incomeOverride
+            self.incomeByState = incomeByState
             self.minMonthlyLeft = minMonthlyLeft
             self.stateFilter = stateFilter
             self.limit = limit
@@ -62,19 +69,31 @@ enum PlaceRankingEngine {
                      in dataset: Dataset,
                      energy: EnergyBenchmark,
                      options: Options = Options()) -> [RankedPlace] {
-        guard (options.incomeOverride ?? plan.monthlyIncome).map({ $0 > 0 }) == true else { return [] }
+        // There must be *some* income source: a per-state map, a flat override, or
+        // the person's own income.
+        let hasIncome = (options.incomeByState?.isEmpty == false)
+            || (options.incomeOverride ?? plan.monthlyIncome).map({ $0 > 0 }) == true
+        guard hasIncome else { return [] }
 
         var ranked: [RankedPlace] = []
         ranked.reserveCapacity(dataset.counties.count)
 
         for county in dataset.counties {
             if let state = options.stateFilter, county.state != state { continue }
+            // Per-state occupation pay wins; a state the job doesn't report is skipped.
+            let income: Double?
+            if let byState = options.incomeByState {
+                guard let local = byState[county.state] else { continue }
+                income = local
+            } else {
+                income = options.incomeOverride
+            }
             let stateEnergy = energy.typicalBill(inState: county.state)
             guard let outlook = AffordabilityEngine.outlook(
                 current: plan,
                 place: county,
                 stateEnergy: stateEnergy,
-                incomeOverride: options.incomeOverride
+                incomeOverride: income
             ) else { continue }
             if let floor = options.minMonthlyLeft, outlook.projectedLeft < floor { continue }
             ranked.append(RankedPlace(county: county, outlook: outlook))

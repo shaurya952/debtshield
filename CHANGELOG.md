@@ -5,6 +5,22 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### "Same job, new place" + methods page (Phases 4–5 of the relocation pivot)
+- **Occupation-aware pay (Phase 4).** Pick your job and the ranking uses that
+  occupation's *local* median wage in each state (`Core/OccupationWages.swift`,
+  bundled `Resources/occupation_wages.csv` — real **BLS OEWS May 2023** state
+  medians, 24 curated occupations × 51 states) instead of one flat income —
+  answering "where would my career go furthest?" A state where the job isn't
+  reported is left out, never guessed. Gross wage → estimated take-home via a
+  single documented ratio (`takeHomeRatio` 0.78), clearly labelled an estimate.
+  The ranking engines gained an `incomeByState` option threaded through Places.
+  `OccupationWagesTests`; verified on-device (Family Physician → Nebraska #1).
+- **Methods & sources page (Phase 5).** `MethodologyView`, linked from About —
+  what Places does, where every figure comes from (Census / EIA / BLS OEWS), how
+  the ranking and Monte Carlo risk work, and, plainly, what it can't tell you.
+  The credibility layer for the pivot.
+- Full suite 92 passing.
+
 ### Place risk — the second axis (Phase 3 of the relocation pivot)
 - **Monte Carlo risk per place.** `PlaceRiskEngine` (`Core/PlaceRisk.swift`) runs
   the existing simulation on the budget you'd have *living there*

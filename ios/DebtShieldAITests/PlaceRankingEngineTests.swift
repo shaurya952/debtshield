@@ -98,4 +98,15 @@ final class PlaceRankingEngineTests: XCTestCase {
         let noIncome = MoneyPlan(housing: 1000, food: 400)
         XCTAssertTrue(PlaceRankingEngine.rank(plan: noIncome, in: data, energy: energy).isEmpty)
     }
+
+    func testIncomeByStateAppliesPerStateAndSkipsUnlisted() {
+        let (data, energy) = world()
+        // Only Alpha has a salary (an occupation's local pay); Beta/Gamma have
+        // none, so their counties are skipped — not guessed.
+        let ranked = PlaceRankingEngine.rank(plan: plan, in: data, energy: energy,
+                                             options: .init(incomeByState: ["Alpha": 6000], limit: 50))
+        XCTAssertFalse(ranked.isEmpty)
+        XCTAssertTrue(ranked.allSatisfy { $0.county.state == "Alpha" })
+        XCTAssertFalse(ranked.map(\.county.id).contains("02")) // Beta, no wage → skipped
+    }
 }

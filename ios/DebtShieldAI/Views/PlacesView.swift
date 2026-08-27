@@ -2,36 +2,44 @@ import SwiftUI
 
 /// Places — the relocation hero.
 ///
-/// Two levels, because people think in both: **States** for the big picture
-/// ("which states stretch my money"), then drill into a state's **Counties** for
-/// the specific spot. Both rank on the same on-device math (`PlaceRankingEngine`
-/// and its `StateRankingEngine` rollup): where your real numbers leave the most
-/// breathing room. Tapping any county opens the full "could you afford it here"
-/// picture.
+/// Two levels, because people think in both: **States** for the big picture,
+/// then drill into a state's **Counties** for the specific spot. Rank by your own
+/// pay, or — the "same job, new place" idea — by a **job's typical local pay** in
+/// each state (BLS wage data), which is where a move can change a life: the same
+/// career earns very differently across states, weighed against local costs.
 struct PlacesView: View {
     let store: MoneyPlanStore
     let dataStore: DataStore
     let benchmarks: Benchmarks
-    /// Jumps to Home so a person with no numbers can add them.
+    let wages: OccupationWages
     var onGoHome: () -> Void
 
-    enum Scope: String, CaseIterable, Identifiable { case states = "States", counties = "Counties"; var id: String { rawValue } }
+    @State private var planningIncome: Double?
+    /// nil = rank by the person's own pay; otherwise by this job's local pay.
+    @State private var occupation: OccupationWages.Occupation?
     @State private var scope: Scope = .states
 
-    /// The pay to plan around — defaults to current take-home; changing it re-ranks.
-    @State private var planningIncome: Double?
+    enum Scope: String, CaseIterable, Identifiable { case states = "States", counties = "Counties"; var id: String { rawValue } }
+
     private var baseIncome: Double? { store.plan.monthlyIncome }
-    private var override: Double? { planningIncome != baseIncome ? planningIncome : nil }
+
+    /// The income model to rank with — either a flat figure or a per-state map.
+    private var context: RankContext {
+        if let occupation {
+            return RankContext(override: nil, byState: wages.monthlyTakeHomeByState(occupation: occupation.code))
+        }
+        return RankContext(override: planningIncome, byState: nil)
+    }
 
     private var rankedStates: [StateRankingEngine.RankedState] {
         guard let dataset = dataStore.dataset else { return [] }
-        return StateRankingEngine.rank(plan: store.plan, in: dataset,
-                                       energy: benchmarks.energy, incomeOverride: override)
+        return StateRankingEngine.rank(plan: store.plan, in: dataset, energy: benchmarks.energy,
+                                       incomeOverride: context.override, incomeByState: context.byState)
     }
     private var rankedCounties: [PlaceRankingEngine.RankedPlace] {
         guard let dataset = dataStore.dataset else { return [] }
         return PlaceRankingEngine.rank(plan: store.plan, in: dataset, energy: benchmarks.energy,
-                                       options: .init(incomeOverride: override, limit: 30))
+                                       options: context.options(limit: 30))
     }
 
     var body: some View {
@@ -77,7 +85,7 @@ struct PlacesView: View {
                 ForEach(Array(rankedStates.enumerated()), id: \.element.id) { i, state in
                     NavigationLink {
                         StateCountiesView(state: state.state, store: store, dataStore: dataStore,
-                                          benchmarks: benchmarks, planningIncome: planningIncome)
+                                          benchmarks: benchmarks, context: context)
                     } label: { stateRowLabel(rank: i + 1, state) }
                     .buttonStyle(PressableCardStyle())
                 }
@@ -91,7 +99,7 @@ struct PlacesView: View {
             VStack(spacing: Theme.Spacing.regular) {
                 ForEach(Array(rankedCounties.enumerated()), id: \.element.id) { i, place in
                     RankedPlaceRow(rank: i + 1, place: place, store: store, dataStore: dataStore,
-                                   benchmarks: benchmarks, planningIncome: planningIncome)
+                                   benchmarks: benchmarks, income: context.income(for: place.county.state))
                 }
             }
         }
@@ -101,7 +109,7 @@ struct PlacesView: View {
         HStack(alignment: .firstTextBaseline) {
             Text(title).font(Theme.Typography.headline)
             Spacer()
-            if let now = store.plan.moneyLeft {
+            if occupation == nil, let now = store.plan.moneyLeft {
                 Text("You now: \(PlaceFormat.signed(now))/mo")
                     .font(.caption).foregroundStyle(Theme.secondaryText).monospacedDigit()
             } else if let note {
@@ -118,15 +126,12 @@ struct PlacesView: View {
             Text("\(rank)")
                 .font(.callout.weight(.semibold).monospacedDigit())
                 .foregroundStyle(Theme.secondaryText)
-                .frame(width: 26, alignment: .trailing)
-                .accessibilityHidden(true)
+                .frame(width: 26, alignment: .trailing).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 3) {
                 Text(state.state)
-                    .font(Theme.Typography.body.weight(.semibold))
-                    .foregroundStyle(.primary)
+                    .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
                 Text("Best: \(state.best.county.county) · \(state.affordableCount) of \(state.rankedCount) affordable")
-                    .font(.caption)
-                    .foregroundStyle(Theme.secondaryText)
+                    .font(.caption).foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: Theme.Spacing.tight)
@@ -137,33 +142,54 @@ struct PlacesView: View {
             }
             Image(systemName: "chevron.right")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(Theme.secondaryText.opacity(0.6))
-                .accessibilityHidden(true)
+                .foregroundStyle(Theme.secondaryText.opacity(0.6)).accessibilityHidden(true)
         }
-        .padding(.vertical, Theme.Spacing.regular)
-        .padding(.horizontal, Theme.Spacing.comfortable)
-        .frame(minHeight: Theme.minimumTapTarget)
-        .frame(maxWidth: .infinity)
+        .padding(.vertical, Theme.Spacing.regular).padding(.horizontal, Theme.Spacing.comfortable)
+        .frame(minHeight: Theme.minimumTapTarget).frame(maxWidth: .infinity)
         .background { RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous).fill(Theme.cardBackground) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(state.state), typical \(PlaceFormat.signed(state.medianMonthlyLeft)) a month, best county \(state.best.county.county)")
     }
 
-    // MARK: - Header / states / footers
+    // MARK: - Header pieces
 
     private var intro: some View {
-        Text("The same money goes further in some places than others. See which states stretch it, then drill into a county for the specifics. It's for perspective, never a nudge to move.")
-            .font(Theme.Typography.body)
-            .foregroundStyle(Theme.secondaryText)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        Text("The same money goes further in some places than others. See which states stretch it, then drill into a county. Or rank by a job's local pay — the same career pays differently by state. It's for perspective, never a nudge to move.")
+            .font(Theme.Typography.body).foregroundStyle(Theme.secondaryText)
+            .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var payCard: some View {
         Card {
-            SectionHeader(title: "The pay you're planning around",
-                          subtitle: "Keep your current take-home, or try a new job's number to see how the map changes.")
-            CurrencyField(title: "Monthly take-home", value: $planningIncome)
+            SectionHeader(title: "Rank by", subtitle: "Your own take-home, or a job's typical local pay in each state.")
+            Menu {
+                Button { occupation = nil } label: {
+                    Label("My pay", systemImage: occupation == nil ? "checkmark" : "")
+                }
+                Divider()
+                ForEach(wages.occupations) { occ in
+                    Button { occupation = occ } label: {
+                        Label(occ.name, systemImage: occupation?.code == occ.code ? "checkmark" : "")
+                    }
+                }
+            } label: {
+                HStack {
+                    Image(systemName: occupation == nil ? "person.fill" : "briefcase.fill")
+                        .foregroundStyle(Theme.brand)
+                    Text(occupation?.name ?? "My pay")
+                        .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
+                    Image(systemName: "chevron.up.chevron.down").font(.caption).foregroundStyle(Theme.secondaryText)
+                    Spacer()
+                }
+                .frame(minHeight: Theme.minimumTapTarget)
+            }
+            if occupation == nil {
+                CurrencyField(title: "Monthly take-home", value: $planningIncome)
+            } else {
+                Text("Using the typical local pay for a \(occupation!.name) in each state — estimated take-home. States where it isn't reported are left out.")
+                    .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -177,9 +203,14 @@ struct PlacesView: View {
     }
 
     private var sources: some View {
-        Text("Ranked by projected money left over: your numbers against each county's typical rent (U.S. Census) and its state energy bill (EIA). States show their typical (median) county. Typical figures, not a guarantee — a county median isn't your exact apartment.")
+        Text(sourcesText)
             .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
             .fixedSize(horizontal: false, vertical: true).padding(.top, Theme.Spacing.tight)
+    }
+    private var sourcesText: String {
+        let base = "Ranked by projected money left over: your numbers against each county's typical rent (U.S. Census) and its state energy bill (EIA). States show their typical (median) county. Typical figures, not a guarantee."
+        return occupation == nil ? base
+            : base + " Pay is the state's median wage for this job (BLS OEWS 2023), shown as an estimated take-home."
     }
 
     private var emptyState: some View {
@@ -198,27 +229,45 @@ struct PlacesView: View {
     }
 }
 
+/// The income model a ranking runs with — a flat figure, or an occupation's
+/// per-state local pay. Kept small and Equatable so it threads cleanly into
+/// child screens.
+struct RankContext: Equatable {
+    var override: Double?
+    var byState: [String: Double]?
+
+    func options(limit: Int, stateFilter: String? = nil) -> PlaceRankingEngine.Options {
+        .init(incomeOverride: override, incomeByState: byState, stateFilter: stateFilter, limit: limit)
+    }
+    /// The income used for a place in the given state.
+    func income(for state: String) -> Double? {
+        if let byState { return byState[state] }
+        return override
+    }
+}
+
 // MARK: - Shared county row
 
 /// One ranked county, as a tappable card that opens its full affordability
-/// picture. Shared by the national county list and a single state's list.
+/// picture, plus a calm year-ahead risk chip. Shared by the national county list
+/// and a single state's list.
 struct RankedPlaceRow: View {
     let rank: Int
     let place: PlaceRankingEngine.RankedPlace
     let store: MoneyPlanStore
     let dataStore: DataStore
     let benchmarks: Benchmarks
-    let planningIncome: Double?
+    /// The income used to rank this place (its state's occupation pay, or the flat
+    /// figure) — carried into the detail so it matches.
+    let income: Double?
 
-    /// The year-ahead shortfall risk living here — filled in off the main thread
-    /// once it's computed, so the list appears instantly and risk fades in.
     @State private var risk: PlaceRiskEngine.Level?
 
     var body: some View {
         let color = PlaceFormat.color(for: place.outlook.tone)
         NavigationLink {
             MoveView(store: store, dataStore: dataStore, benchmarks: benchmarks,
-                     initialFIPS: place.county.record.fips, initialIncome: planningIncome)
+                     initialFIPS: place.county.record.fips, initialIncome: income)
         } label: {
             HStack(spacing: Theme.Spacing.regular) {
                 Text("\(rank)")
@@ -251,7 +300,7 @@ struct RankedPlaceRow: View {
             .accessibilityLabel("\(place.county.displayName), \(PlaceFormat.signed(place.monthlyLeft)) left a month, \(PlaceFormat.word(place.outlook.tone))\(risk.map { ", \($0.word)" } ?? "")")
         }
         .buttonStyle(PressableCardStyle())
-        .task(id: "\(place.id)#\(Int(planningIncome ?? 0))") {
+        .task(id: "\(place.id)#\(Int(place.monthlyLeft))") {
             let projected = place.outlook.projected
             risk = await Task.detached(priority: .utility) {
                 PlaceRiskEngine.level(for: projected)
@@ -266,8 +315,7 @@ struct RiskChip: View {
     var body: some View {
         let c = color
         Text(level.word)
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(c)
+            .font(.caption2.weight(.semibold)).foregroundStyle(c)
             .padding(.horizontal, 7).padding(.vertical, 2)
             .background(c.opacity(0.14), in: Capsule())
     }
@@ -282,21 +330,17 @@ struct RiskChip: View {
 
 // MARK: - A single state's counties
 
-/// The counties inside one state, ranked — reached by tapping a state.
 struct StateCountiesView: View {
     let state: String
     let store: MoneyPlanStore
     let dataStore: DataStore
     let benchmarks: Benchmarks
-    let planningIncome: Double?
+    let context: RankContext
 
-    private var override: Double? {
-        planningIncome != store.plan.monthlyIncome ? planningIncome : nil
-    }
     private var counties: [PlaceRankingEngine.RankedPlace] {
         guard let dataset = dataStore.dataset else { return [] }
         return PlaceRankingEngine.rank(plan: store.plan, in: dataset, energy: benchmarks.energy,
-                                       options: .init(incomeOverride: override, stateFilter: state, limit: 100))
+                                       options: context.options(limit: 100, stateFilter: state))
     }
 
     var body: some View {
@@ -307,7 +351,7 @@ struct StateCountiesView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 ForEach(Array(counties.enumerated()), id: \.element.id) { i, place in
                     RankedPlaceRow(rank: i + 1, place: place, store: store, dataStore: dataStore,
-                                   benchmarks: benchmarks, planningIncome: planningIncome)
+                                   benchmarks: benchmarks, income: context.income(for: state))
                 }
             }
             .padding(Theme.Spacing.comfortable).frame(maxWidth: 560).frame(maxWidth: .infinity)
@@ -334,7 +378,6 @@ enum PlaceFormat {
         case .over: return Theme.statusColor(.over)
         }
     }
-    /// Colour a bare dollar figure (state medians have no tone of their own).
     static func color(for left: Double) -> Color {
         if left < 0 { return Theme.statusColor(.over) }
         if left < MoneyPlan.comfortableCushion { return Theme.statusColor(.tight) }
@@ -353,7 +396,7 @@ enum PlaceFormat {
 #Preview {
     NavigationStack {
         PlacesView(store: .preview(.sampleTight), dataStore: DataStore(),
-                   benchmarks: .previewSample, onGoHome: {})
+                   benchmarks: .previewSample, wages: .previewSample, onGoHome: {})
     }
 }
 #endif

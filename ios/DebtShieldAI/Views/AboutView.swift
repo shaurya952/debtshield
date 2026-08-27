@@ -90,6 +90,19 @@ struct AboutView: View {
 
             Divider()
 
+            NavigationLink {
+                MethodologyView()
+            } label: {
+                DetailNavigationRow(
+                    title: "Places: methods & sources",
+                    subtitle: "The data, the ranking, and what it can't tell you",
+                    systemImage: "map.circle"
+                )
+            }
+            .buttonStyle(.plain)
+
+            Divider()
+
             Button {
                 replayOnboarding()
             } label: {
