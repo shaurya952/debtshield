@@ -68,6 +68,12 @@ struct ContentView: View {
             // county data + benchmarks power the "afford a move?" feature and
             // are optional-by-nature.
             SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
+        case .places:
+            // The relocation hero — ranks where the person's numbers would leave
+            // the most breathing room, across every county in the bundled data.
+            PlacesView(store: moneyStore, dataStore: store, benchmarks: benchmarks) {
+                selectedTab = .safeLine
+            }
         case .compare:
             // The comparison layer. Uses the county data when it's loaded, and
             // still shows national + food + debt while it isn't.
@@ -95,6 +101,7 @@ struct ContentView: View {
 /// - **About** — how it works, privacy, and the disclaimer
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case safeLine
+    case places
     case compare
     case ask
     case about
@@ -104,6 +111,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var title: String {
         switch self {
         case .safeLine: return "Home"
+        case .places: return "Places"
         case .compare: return "Compare"
         case .ask: return "Ask"
         case .about: return "About"
@@ -113,6 +121,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var systemImage: String {
         switch self {
         case .safeLine: return "house.fill"
+        case .places: return "map.fill"
         case .compare: return "chart.bar.xaxis"
         case .ask: return "bubble.left.and.text.bubble.right.fill"
         case .about: return "info.circle"

@@ -10,6 +10,12 @@ struct MoveView: View {
     let store: MoneyPlanStore
     let dataStore: DataStore
     let benchmarks: Benchmarks
+    /// Optional place to open on — set when arriving from the Places ranking so
+    /// the screen starts on that county instead of the empty picker.
+    var initialFIPS: String? = nil
+    /// Optional pay to open on — carried from Places so the detail matches the
+    /// number the ranking used.
+    var initialIncome: Double? = nil
 
     @State private var selectedFIPS: String?
     @State private var isPicking = false
@@ -61,7 +67,8 @@ struct MoveView: View {
             }
         }
         .onAppear {
-            if incomeOverride == nil { incomeOverride = store.plan.monthlyIncome }
+            if selectedFIPS == nil { selectedFIPS = initialFIPS }
+            if incomeOverride == nil { incomeOverride = initialIncome ?? store.plan.monthlyIncome }
         }
     }
 

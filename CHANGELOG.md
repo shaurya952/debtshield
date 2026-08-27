@@ -5,6 +5,20 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Places screen — states + counties (Phase 2 of the relocation pivot)
+- **New `Places` tab**, the relocation hero: ranks where the person's real numbers
+  would leave the most breathing room. Two levels — **States** (the big picture,
+  "which states stretch my money") drilling into **Counties** (the specific spot),
+  each county opening the existing full affordability picture (`MoveView`).
+- States rank on `StateRankingEngine` (`Core/StateRanking.swift`) — a rollup that
+  groups the county results by state and ranks by the **median** county's
+  money-left (robust to one unusually cheap/pricey county), carrying each state's
+  best county and affordable-county count. Deterministic; `StateRankingEngineTests`.
+- Pay control lets the person model a different salary and re-rank the whole map.
+- `MoveView` gains `initialFIPS`/`initialIncome` so a ranked place opens straight
+  into its detail. Full suite 82 passing; verified on-device (Arkansas #1 rollup,
+  drill-in to Woodruff County).
+
 ### Relocation ranking engine (Phase 1 of the relocation pivot)
 - **`PlaceRankingEngine` (`Core/PlaceRanking.swift`).** Promotes the single-place
   `AffordabilityEngine` into a whole-country ranking: given a plan, it runs the
