@@ -210,6 +210,10 @@ struct RankedPlaceRow: View {
     let benchmarks: Benchmarks
     let planningIncome: Double?
 
+    /// The year-ahead shortfall risk living here — filled in off the main thread
+    /// once it's computed, so the list appears instantly and risk fades in.
+    @State private var risk: PlaceRiskEngine.Level?
+
     var body: some View {
         let color = PlaceFormat.color(for: place.outlook.tone)
         NavigationLink {
@@ -221,11 +225,14 @@ struct RankedPlaceRow: View {
                     .font(.callout.weight(.semibold).monospacedDigit())
                     .foregroundStyle(Theme.secondaryText)
                     .frame(width: 26, alignment: .trailing).accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(place.county.displayName)
                         .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(PlaceFormat.word(place.outlook.tone)).font(.caption).foregroundStyle(color)
+                    HStack(spacing: 6) {
+                        Text(PlaceFormat.word(place.outlook.tone)).font(.caption).foregroundStyle(color)
+                        if let risk { RiskChip(level: risk) }
+                    }
                 }
                 Spacer(minLength: Theme.Spacing.tight)
                 VStack(alignment: .trailing, spacing: 2) {
@@ -241,9 +248,35 @@ struct RankedPlaceRow: View {
             .frame(minHeight: Theme.minimumTapTarget).frame(maxWidth: .infinity)
             .background { RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous).fill(Theme.cardBackground) }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(place.county.displayName), \(PlaceFormat.signed(place.monthlyLeft)) left a month, \(PlaceFormat.word(place.outlook.tone))")
+            .accessibilityLabel("\(place.county.displayName), \(PlaceFormat.signed(place.monthlyLeft)) left a month, \(PlaceFormat.word(place.outlook.tone))\(risk.map { ", \($0.word)" } ?? "")")
         }
         .buttonStyle(PressableCardStyle())
+        .task(id: "\(place.id)#\(Int(planningIncome ?? 0))") {
+            let projected = place.outlook.projected
+            risk = await Task.detached(priority: .utility) {
+                PlaceRiskEngine.level(for: projected)
+            }.value
+        }
+    }
+}
+
+/// A small, plain risk pill — the second axis, kept calm and non-alarming.
+struct RiskChip: View {
+    let level: PlaceRiskEngine.Level
+    var body: some View {
+        let c = color
+        Text(level.word)
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(c)
+            .padding(.horizontal, 7).padding(.vertical, 2)
+            .background(c.opacity(0.14), in: Capsule())
+    }
+    private var color: Color {
+        switch level {
+        case .low: return Theme.statusColor(.okay)
+        case .watch: return Theme.statusColor(.tight)
+        case .high: return Theme.statusColor(.over)
+        }
     }
 }
 

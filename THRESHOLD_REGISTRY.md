@@ -66,6 +66,18 @@ rationale. A future Phase-2 code task may consolidate these into a single
 saved before the merge (separate `water`) folds water into `energy` on decode
 (`MoneyPlan.init(from:)`); `water` is retired going forward.
 
+## Place risk — relocation ranking (`Core/PlaceRisk.swift`)
+| Name | Value | Meaning | Source |
+|------|-------|---------|--------|
+| `PlaceRiskEngine.runs` | `300` | Monte Carlo runs per place (many places at once, so fewer than the Home forecast's 500). | Product heuristic; keeps the error band to a few points. |
+| `PlaceRiskEngine.seed` | `42` | Fixed seed so a place's risk never flickers between views. | Determinism rule. |
+| `PlaceRiskEngine.watchThreshold` | `0.15` | 12-month shortfall odds at/above which a place reads "Some risk". | Educational band, not universal truth. |
+| `PlaceRiskEngine.highThreshold` | `0.35` | Shortfall odds at/above which a place reads "Higher risk". | Educational band. |
+
+The risk is the ranking's second axis: `MonteCarloEngine.simulate` run on the
+budget you'd have *living there* (`MoveOutlook.projected`), read as
+`probNegativeWithin12mo`, then banded low / watch / high.
+
 ## Change protocol
 1. Edit the `static let` at its source of truth and update this table.
 2. Re-run the (Phase-2) engine unit tests — verdict-boundary and Monte Carlo

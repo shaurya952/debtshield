@@ -5,6 +5,17 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Place risk — the second axis (Phase 3 of the relocation pivot)
+- **Monte Carlo risk per place.** `PlaceRiskEngine` (`Core/PlaceRisk.swift`) runs
+  the existing simulation on the budget you'd have *living there*
+  (`MoveOutlook.projected`) and reads `probNegativeWithin12mo` — the odds of
+  running short over the year — banded low / watch / high. A cheap-but-fragile
+  county is now flagged, not hidden.
+- Each ranked county shows a calm risk chip alongside its money-left; computed off
+  the main thread per visible row (seeded 42, 300 runs, so it never flickers).
+- Bands documented in `THRESHOLD_REGISTRY.md`. `PlaceRiskEngineTests` (5); full
+  suite 87 passing; verified on-device.
+
 ### Places screen — states + counties (Phase 2 of the relocation pivot)
 - **New `Places` tab**, the relocation hero: ranks where the person's real numbers
   would leave the most breathing room. Two levels — **States** (the big picture,
