@@ -50,6 +50,7 @@ struct PlacesView: View {
                     emptyState
                 } else {
                     intro
+                    debtFreedomLink
                     payCard
                     Picker("View", selection: $scope) {
                         ForEach(Scope.allCases) { Text($0.rawValue).tag($0) }
@@ -206,6 +207,33 @@ struct PlacesView: View {
     }
 
     // MARK: - Header pieces
+
+    @ViewBuilder
+    private var debtFreedomLink: some View {
+        if let b = store.plan.debtBalance, b > 0 {
+            NavigationLink {
+                DebtFreedomView(store: store, dataStore: dataStore, benchmarks: benchmarks, context: context)
+            } label: {
+                HStack(spacing: Theme.Spacing.regular) {
+                    AppIconBadge(systemImage: "flag.checkered", tint: Theme.brand, size: 34)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("The fastest way out")
+                            .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
+                        Text("Where your debt could clear soonest")
+                            .font(.caption).foregroundStyle(Theme.secondaryText)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold)).foregroundStyle(Theme.secondaryText.opacity(0.6))
+                }
+                .padding(Theme.Spacing.comfortable).frame(maxWidth: .infinity)
+                .frame(minHeight: Theme.minimumTapTarget)
+                .background { RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous).fill(Theme.brand.opacity(0.10)) }
+            }
+            .buttonStyle(PressableCardStyle())
+            .accessibilityHint("Ranks where your debt would clear soonest")
+        }
+    }
 
     private var intro: some View {
         Text("The same money goes further in some places than others. See which states stretch it, then drill into a county. Or rank by a job's local pay — the same career pays differently by state. It's for perspective, never a nudge to move.")

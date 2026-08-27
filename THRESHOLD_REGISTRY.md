@@ -87,6 +87,19 @@ Wages themselves are **not** heuristics: `Resources/occupation_wages.csv` holds
 real BLS OEWS May 2023 state **median** wages for a curated set of occupations. A
 state where an occupation isn't reported is left out of the ranking, never guessed.
 
+## Debt freedom — "the fastest way out" (`Core/DebtFreedom.swift`)
+| Name | Value | Meaning | Source |
+|------|-------|---------|--------|
+| `DebtFreedomEngine.mcRuns` | `300` | Monte Carlo runs for the payoff-time range. | Product heuristic. |
+| `DebtFreedomEngine.seed` | `42` | Fixed seed so a place's payoff estimate never flickers. | Determinism rule. |
+| `DebtFreedomEngine.surplusCV` | `0.15` | Month-to-month wobble in what's actually free for debt. | Product heuristic. |
+| `DebtFreedomEngine.surpriseChance` / `surpriseMean` | `0.15` / `300` | Odds and mean of a surprise cost eating into a month's payment. | Mirrors the Monte Carlo engine. |
+
+Payoff assumes the person directs their **minimum payment + everything left over**
+at the balance (`availableToward`). Interest is counted only when an APR is
+entered; with no rate it says so rather than inventing one. A payment that can't
+overtake the interest returns "not in reach", never a fake month count.
+
 ## Change protocol
 1. Edit the `static let` at its source of truth and update this table.
 2. Re-run the (Phase-2) engine unit tests — verdict-boundary and Monte Carlo

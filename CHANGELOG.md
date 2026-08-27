@@ -5,6 +5,23 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### "The fastest way out" — debt-free-by-place (Phase 10, the capstone)
+- **The feature that fuses everything and brings it home to debt.** Enter a debt
+  balance + rate and a new screen ranks where your debt would clear **soonest** —
+  because a cheaper place (or a better-paying local job) frees up money, and every
+  spare dollar clears debt faster. Each place shows months-to-debt-free, a **Monte
+  Carlo range** on the payoff time, and how much sooner than staying put.
+- `DebtFreedomEngine` (`Core/DebtFreedom.swift`): deterministic payoff + seeded MC
+  range; interest counted only when a rate is given (else it says so); a payment
+  that can't overtake interest reads "not in reach", never a fake number. It ties
+  together the affordability engine, the mobility/occupation pay, the Monte Carlo
+  engine, and the app's original debt mission — deterministic on real data, so it's
+  something no budgeting app or chatbot can produce.
+- `MoneyPlan` gains optional `debtBalance` / `debtAPR` (graceful migration, new
+  inputs in the Debt section). Entry from a Places card shown once a balance exists.
+- `DebtFreedomEngineTests`; bands in `THRESHOLD_REGISTRY.md`. Suite 99 passing;
+  verified on-device.
+
 ### Compare two places + saved shortlist (Phases 8–9 of the relocation pivot)
 - **Side-by-side "here vs. there" (Phase 8).** `ComparePlacesView` (opened from a
   toolbar button on Places) puts two places head-to-head — money left over,
