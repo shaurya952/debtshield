@@ -236,14 +236,14 @@ struct PlacesView: View {
     }
 
     private var intro: some View {
-        Text("The same money goes further in some places than others. See which states stretch it, then drill into a county. Or rank by a job's local pay — the same career pays differently by state. It's for perspective, never a nudge to move.")
-            .font(Theme.Typography.body).foregroundStyle(Theme.secondaryText)
+        Text("Where your money would stretch furthest across the U.S. — for perspective, never a nudge to move.")
+            .font(Theme.Typography.subheadline).foregroundStyle(Theme.secondaryText)
             .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var payCard: some View {
         Card {
-            SectionHeader(title: "Rank by", subtitle: "Your own take-home, or a job's typical local pay in each state.")
+            SectionHeader(title: "Rank by")
             Menu {
                 Button { occupation = nil } label: {
                     Label("My pay", systemImage: occupation == nil ? "checkmark" : "")

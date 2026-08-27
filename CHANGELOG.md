@@ -5,6 +5,15 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Declutter — fewer tabs, calmer Places (post-pivot cleanup)
+- **Four tabs, not five.** Dropped the **Compare** tab (the generic "your categories
+  vs the U.S." view) — it clashed with **Places** and made the bar crowded. Tabs are
+  now Home · Places · Ask · About. (`CompareView` kept in the codebase, just untabbed.)
+- **Home is lighter.** Removed the "Could you move?" tile — it only duplicated the
+  Places tab.
+- **Places reads calmer.** One-line intro and a compact "Rank by" control instead of
+  the long paragraph + subtitle. UI tests updated for the new tab set.
+
 ### "The fastest way out" — debt-free-by-place (Phase 10, the capstone)
 - **The feature that fuses everything and brings it home to debt.** Enter a debt
   balance + rate and a new screen ranks where your debt would clear **soonest** —

@@ -44,7 +44,7 @@ final class AccessibilityDiagnostics: XCTestCase {
     private func back() { app.navigationBars.buttons.element(boundBy: 0).tap() }
 
     func testEnumerateAccessibilityIssuesAcrossTheApp() throws {
-        for name in ["Home", "Compare", "Ask", "About"] {
+        for name in ["Home", "Places", "Ask", "About"] {
             openTab(name)
             _ = app.staticTexts.firstMatch.waitForExistence(timeout: 5)
             audit(name)

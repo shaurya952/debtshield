@@ -266,7 +266,6 @@ struct SafeLineView: View {
             yearAheadTile
             breakdownTile
             buildRoomTile
-            moveTile
         }
     }
 
@@ -316,23 +315,6 @@ struct SafeLineView: View {
             )
         }
         .buttonStyle(PressableCardStyle())
-    }
-
-    @ViewBuilder
-    private var moveTile: some View {
-        if let dataStore, let benchmarks {
-            NavigationLink {
-                MoveView(store: store, dataStore: dataStore, benchmarks: benchmarks)
-            } label: {
-                FeatureTile(
-                    systemImage: "map.fill",
-                    title: "Could you move?",
-                    subtitle: "See if a move could help",
-                    tint: Theme.essentialColor(.debt)
-                )
-            }
-            .buttonStyle(PressableCardStyle())
-        }
     }
 
     // The odds read, phrased for the tile.

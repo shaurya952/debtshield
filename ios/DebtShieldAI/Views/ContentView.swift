@@ -77,12 +77,6 @@ struct ContentView: View {
                        wages: wages, saved: saved) {
                 selectedTab = .safeLine
             }
-        case .compare:
-            // The comparison layer. Uses the county data when it's loaded, and
-            // still shows national + food + debt while it isn't.
-            CompareView(store: moneyStore, dataStore: store, benchmarks: benchmarks) {
-                selectedTab = .safeLine
-            }
         case .ask:
             // The AI, in its own section — with the comparison data wired in so
             // it can answer "how does my rent compare".
@@ -99,13 +93,12 @@ struct ContentView: View {
 /// The tab set — a focused personal tool.
 ///
 /// - **Home** — the Safe Line: your month in plain dollars
-/// - **Compare** — your spending vs. your area and the U.S.
+/// - **Places** — where your money would stretch furthest, across the U.S.
 /// - **Ask** — the AI, in plain language, about your own numbers
 /// - **About** — how it works, privacy, and the disclaimer
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case safeLine
     case places
-    case compare
     case ask
     case about
 
@@ -115,7 +108,6 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .safeLine: return "Home"
         case .places: return "Places"
-        case .compare: return "Compare"
         case .ask: return "Ask"
         case .about: return "About"
         }
@@ -125,7 +117,6 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .safeLine: return "house.fill"
         case .places: return "map.fill"
-        case .compare: return "chart.bar.xaxis"
         case .ask: return "bubble.left.and.text.bubble.right.fill"
         case .about: return "info.circle"
         }
