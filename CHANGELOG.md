@@ -5,6 +5,18 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Compare two places + saved shortlist (Phases 8–9 of the relocation pivot)
+- **Side-by-side "here vs. there" (Phase 8).** `ComparePlacesView` (opened from a
+  toolbar button on Places) puts two places head-to-head — money left over,
+  year-ahead risk, rent, energy, and most-affordable-rent — with a plain verdict
+  ("in X you'd keep about $Y more a month"). Reuses `AffordabilityEngine` and the
+  occupation context, so it respects "same job, new place". Verified on-device
+  (LA County vs Knox County, TN → +$731/mo).
+- **Saved shortlist (Phase 9).** A ★ on any place detail saves it to a shortlist
+  (`Core/SavedPlaces.swift`, on-device in `debtshield.savedPlaces`); a new **Saved**
+  tab on Places re-scores and ranks your candidates with the current pay. Verified
+  on-device.
+
 ### "Same job, new place" + methods page (Phases 4–5 of the relocation pivot)
 - **Occupation-aware pay (Phase 4).** Pick your job and the ranking uses that
   occupation's *local* median wage in each state (`Core/OccupationWages.swift`,

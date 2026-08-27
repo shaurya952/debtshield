@@ -12,6 +12,7 @@ struct PlacesView: View {
     let dataStore: DataStore
     let benchmarks: Benchmarks
     let wages: OccupationWages
+    let saved: SavedPlacesStore
     var onGoHome: () -> Void
 
     @State private var planningIncome: Double?
@@ -19,7 +20,7 @@ struct PlacesView: View {
     @State private var occupation: OccupationWages.Occupation?
     @State private var scope: Scope = .states
 
-    enum Scope: String, CaseIterable, Identifiable { case states = "States", counties = "Counties"; var id: String { rawValue } }
+    enum Scope: String, CaseIterable, Identifiable { case states = "States", counties = "Counties", saved = "Saved"; var id: String { rawValue } }
 
     private var baseIncome: Double? { store.plan.monthlyIncome }
 
@@ -61,8 +62,9 @@ struct PlacesView: View {
                         switch scope {
                         case .states:   statesList
                         case .counties: countiesList
+                        case .saved:    savedList
                         }
-                        sources
+                        if scope != .saved { sources }
                     }
                 }
             }
@@ -73,6 +75,19 @@ struct PlacesView: View {
         .background(Theme.screenBackground)
         .navigationTitle("Where you'd have room")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if baseIncome != nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        ComparePlacesView(store: store, dataStore: dataStore,
+                                          benchmarks: benchmarks, context: context)
+                    } label: {
+                        Image(systemName: "arrow.left.arrow.right")
+                    }
+                    .accessibilityLabel("Compare two places")
+                }
+            }
+        }
         .onAppear { if planningIncome == nil { planningIncome = store.plan.monthlyIncome } }
     }
 
@@ -85,7 +100,7 @@ struct PlacesView: View {
                 ForEach(Array(rankedStates.enumerated()), id: \.element.id) { i, state in
                     NavigationLink {
                         StateCountiesView(state: state.state, store: store, dataStore: dataStore,
-                                          benchmarks: benchmarks, context: context)
+                                          benchmarks: benchmarks, context: context, saved: saved)
                     } label: { stateRowLabel(rank: i + 1, state) }
                     .buttonStyle(PressableCardStyle())
                 }
@@ -99,7 +114,46 @@ struct PlacesView: View {
             VStack(spacing: Theme.Spacing.regular) {
                 ForEach(Array(rankedCounties.enumerated()), id: \.element.id) { i, place in
                     RankedPlaceRow(rank: i + 1, place: place, store: store, dataStore: dataStore,
-                                   benchmarks: benchmarks, income: context.income(for: place.county.state))
+                                   benchmarks: benchmarks, income: context.income(for: place.county.state), saved: saved)
+                }
+            }
+        }
+    }
+
+    /// The person's saved shortlist, re-scored against the current pay and ranked.
+    private var savedPlaces: [PlaceRankingEngine.RankedPlace] {
+        guard let dataset = dataStore.dataset else { return [] }
+        return saved.fips.compactMap { fips -> PlaceRankingEngine.RankedPlace? in
+            guard let county = dataset.county(fips: fips) else { return nil }
+            let e = benchmarks.energy.typicalBill(inState: county.state)
+            guard let o = AffordabilityEngine.outlook(current: store.plan, place: county,
+                                                      stateEnergy: e, incomeOverride: context.income(for: county.state))
+            else { return nil }
+            return PlaceRankingEngine.RankedPlace(county: county, outlook: o)
+        }
+        .sorted { $0.monthlyLeft > $1.monthlyLeft }
+    }
+
+    @ViewBuilder
+    private var savedList: some View {
+        if savedPlaces.isEmpty {
+            VStack(spacing: Theme.Spacing.regular) {
+                AppIconBadge(systemImage: "star", size: 64)
+                Text("No saved places yet")
+                    .font(Theme.Typography.headline)
+                Text("Open any place and tap the ★ to add it to your shortlist. Saved places re-rank with your pay, so you can weigh your candidates in one spot.")
+                    .font(Theme.Typography.subheadline).foregroundStyle(Theme.secondaryText)
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, Theme.Spacing.section)
+        } else {
+            VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
+                listHeader(title: "Your shortlist", note: nil)
+                VStack(spacing: Theme.Spacing.regular) {
+                    ForEach(Array(savedPlaces.enumerated()), id: \.element.id) { i, place in
+                        RankedPlaceRow(rank: i + 1, place: place, store: store, dataStore: dataStore,
+                                       benchmarks: benchmarks, income: context.income(for: place.county.state), saved: saved)
+                    }
                 }
             }
         }
@@ -260,6 +314,7 @@ struct RankedPlaceRow: View {
     /// The income used to rank this place (its state's occupation pay, or the flat
     /// figure) — carried into the detail so it matches.
     let income: Double?
+    let saved: SavedPlacesStore
 
     @State private var risk: PlaceRiskEngine.Level?
 
@@ -267,7 +322,7 @@ struct RankedPlaceRow: View {
         let color = PlaceFormat.color(for: place.outlook.tone)
         NavigationLink {
             MoveView(store: store, dataStore: dataStore, benchmarks: benchmarks,
-                     initialFIPS: place.county.record.fips, initialIncome: income)
+                     initialFIPS: place.county.record.fips, initialIncome: income, saved: saved)
         } label: {
             HStack(spacing: Theme.Spacing.regular) {
                 Text("\(rank)")
@@ -336,6 +391,7 @@ struct StateCountiesView: View {
     let dataStore: DataStore
     let benchmarks: Benchmarks
     let context: RankContext
+    let saved: SavedPlacesStore
 
     private var counties: [PlaceRankingEngine.RankedPlace] {
         guard let dataset = dataStore.dataset else { return [] }
@@ -351,7 +407,7 @@ struct StateCountiesView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 ForEach(Array(counties.enumerated()), id: \.element.id) { i, place in
                     RankedPlaceRow(rank: i + 1, place: place, store: store, dataStore: dataStore,
-                                   benchmarks: benchmarks, income: context.income(for: state))
+                                   benchmarks: benchmarks, income: context.income(for: state), saved: saved)
                 }
             }
             .padding(Theme.Spacing.comfortable).frame(maxWidth: 560).frame(maxWidth: .infinity)
@@ -396,7 +452,7 @@ enum PlaceFormat {
 #Preview {
     NavigationStack {
         PlacesView(store: .preview(.sampleTight), dataStore: DataStore(),
-                   benchmarks: .previewSample, wages: .previewSample, onGoHome: {})
+                   benchmarks: .previewSample, wages: .previewSample, saved: SavedPlacesStore(), onGoHome: {})
     }
 }
 #endif

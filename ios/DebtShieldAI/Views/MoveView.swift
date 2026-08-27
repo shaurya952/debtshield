@@ -16,6 +16,8 @@ struct MoveView: View {
     /// Optional pay to open on — carried from Places so the detail matches the
     /// number the ranking used.
     var initialIncome: Double? = nil
+    /// Optional shortlist store — when present, a star saves this place.
+    var saved: SavedPlacesStore? = nil
 
     @State private var selectedFIPS: String?
     @State private var isPicking = false
@@ -59,6 +61,18 @@ struct MoveView: View {
         .background(Theme.screenBackground)
         .navigationTitle("Could you afford a move?")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let saved, let place {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        saved.toggle(place.record.fips)
+                    } label: {
+                        Image(systemName: saved.isSaved(place.record.fips) ? "star.fill" : "star")
+                    }
+                    .accessibilityLabel(saved.isSaved(place.record.fips) ? "Remove from saved" : "Save this place")
+                }
+            }
+        }
         .sheet(isPresented: $isPicking) {
             if let searchIndex = dataStore.searchIndex {
                 AreaPickerView(searchIndex: searchIndex) { county in

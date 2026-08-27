@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var moneyStore = MoneyPlanStore()
     @State private var benchmarks = BenchmarksLoader.load()
     @State private var wages = OccupationWagesLoader.load()
+    @State private var saved = SavedPlacesStore()
     @State private var selectedTab: AppTab = .safeLine
 
     /// Set once the introduction has been read. Persisted so it appears on
@@ -72,7 +73,8 @@ struct ContentView: View {
         case .places:
             // The relocation hero — ranks where the person's numbers would leave
             // the most breathing room, across every county in the bundled data.
-            PlacesView(store: moneyStore, dataStore: store, benchmarks: benchmarks, wages: wages) {
+            PlacesView(store: moneyStore, dataStore: store, benchmarks: benchmarks,
+                       wages: wages, saved: saved) {
                 selectedTab = .safeLine
             }
         case .compare:
