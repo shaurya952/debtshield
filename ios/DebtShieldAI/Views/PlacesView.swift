@@ -18,6 +18,7 @@ struct PlacesView: View {
     @State private var planningIncome: Double?
     /// nil = rank by the person's own pay; otherwise by this job's local pay.
     @State private var occupation: OccupationWages.Occupation?
+    @State private var pickingOccupation = false
     @State private var scope: Scope = .states
 
     enum Scope: String, CaseIterable, Identifiable { case states = "States", counties = "Counties", saved = "Saved"; var id: String { rawValue } }
@@ -90,6 +91,11 @@ struct PlacesView: View {
             }
         }
         .onAppear { if planningIncome == nil { planningIncome = store.plan.monthlyIncome } }
+        .sheet(isPresented: $pickingOccupation) {
+            OccupationPickerSheet(occupations: wages.occupations, selected: occupation) { picked in
+                occupation = picked
+            }
+        }
     }
 
     // MARK: - Lists
@@ -244,17 +250,7 @@ struct PlacesView: View {
     private var payCard: some View {
         Card {
             SectionHeader(title: "Rank by")
-            Menu {
-                Button { occupation = nil } label: {
-                    Label("My pay", systemImage: occupation == nil ? "checkmark" : "")
-                }
-                Divider()
-                ForEach(wages.occupations) { occ in
-                    Button { occupation = occ } label: {
-                        Label(occ.name, systemImage: occupation?.code == occ.code ? "checkmark" : "")
-                    }
-                }
-            } label: {
+            Button { pickingOccupation = true } label: {
                 HStack {
                     Image(systemName: occupation == nil ? "person.fill" : "briefcase.fill")
                         .foregroundStyle(Theme.brand)
@@ -265,6 +261,7 @@ struct PlacesView: View {
                 }
                 .frame(minHeight: Theme.minimumTapTarget)
             }
+            .buttonStyle(.plain)
             if occupation == nil {
                 CurrencyField(title: "Monthly take-home", value: $planningIncome)
             } else {
@@ -473,6 +470,76 @@ enum PlaceFormat {
         case .tight: return "Doable, but tight"
         case .over: return "Over budget here"
         }
+    }
+}
+
+/// A searchable picker for the occupations — far cleaner than a 60-item menu.
+struct OccupationPickerSheet: View {
+    let occupations: [OccupationWages.Occupation]
+    let selected: OccupationWages.Occupation?
+    var onSelect: (OccupationWages.Occupation?) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var query = ""
+
+    private var filtered: [OccupationWages.Occupation] {
+        query.isEmpty ? occupations
+            : occupations.filter { $0.name.localizedCaseInsensitiveContains(query) }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if query.isEmpty {
+                    Section {
+                        row(title: "My pay", subtitle: "Rank by your own take-home",
+                            isSelected: selected == nil, systemImage: "person.fill") {
+                            onSelect(nil); dismiss()
+                        }
+                    }
+                }
+                Section("Rank by a job's local pay") {
+                    ForEach(filtered) { occ in
+                        row(title: occ.name, subtitle: nil,
+                            isSelected: selected?.code == occ.code, systemImage: "briefcase.fill") {
+                            onSelect(occ); dismiss()
+                        }
+                    }
+                    if filtered.isEmpty {
+                        Text("No jobs match “\(query)”.")
+                            .foregroundStyle(Theme.secondaryText)
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .searchable(text: $query, prompt: "Search jobs")
+            .navigationTitle("Pay to rank by")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+            }
+        }
+    }
+
+    private func row(title: String, subtitle: String?, isSelected: Bool,
+                     systemImage: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: Theme.Spacing.regular) {
+                Image(systemName: systemImage).foregroundStyle(Theme.brand).frame(width: 26)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title).foregroundStyle(.primary)
+                    if let subtitle {
+                        Text(subtitle).font(.caption).foregroundStyle(Theme.secondaryText)
+                    }
+                }
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark").foregroundStyle(Theme.brand).fontWeight(.semibold)
+                }
+            }
+            .frame(minHeight: Theme.minimumTapTarget)
+        }
+        .buttonStyle(.plain)
     }
 }
 

@@ -5,6 +5,19 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### More jobs, per-place cost breakdown, searchable picker (polish)
+- **64 occupations** (up from 24) in "same job, new place" — a much broader, more
+  relatable set (nurse practitioner, firefighter, welder, architect, EMT, chef,
+  real-estate agent, …), still real BLS OEWS 2023 state medians.
+- **Searchable job picker.** With 60+ jobs, the menu became a sheet with search —
+  "My pay" on top, jobs below, type to filter. Cleaner than a long scroll.
+- **"Cost of living here" card** in each place's detail: how the basics compare to
+  the U.S. average — Housing (this county's rent) and Utilities (this state's) with
+  a plain "X% higher/lower than the U.S." read, plus an honest note that food /
+  getting-around / personal costs don't vary by place in the data. Brings the old
+  Compare view's spirit *into* Places, localized. The affordability card was slimmed
+  to "What you could afford" (max rent + income needed).
+
 ### Declutter — fewer tabs, calmer Places (post-pivot cleanup)
 - **Four tabs, not five.** Dropped the **Compare** tab (the generic "your categories
   vs the U.S." view) — it clashed with **Places** and made the bar crowded. Tabs are

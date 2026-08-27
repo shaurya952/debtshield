@@ -51,15 +51,28 @@ enum OccupationWagesLoader {
     /// The curated, relatable occupations we surface, SOC code → display name.
     /// Only these are read from the bundled file; the file may hold more.
     static let displayNames: [String: String] = [
-        "11-1021": "Operations Manager", "13-2011": "Accountant", "15-1252": "Software Developer",
-        "15-2051": "Data Scientist", "17-2051": "Civil Engineer", "23-1011": "Lawyer",
-        "25-2021": "Elementary School Teacher", "25-2031": "High School Teacher",
-        "29-1021": "Dentist", "29-1051": "Pharmacist", "29-1123": "Physical Therapist",
-        "29-1131": "Veterinarian", "29-1141": "Registered Nurse", "29-1215": "Family Physician",
-        "29-2061": "Licensed Practical Nurse", "31-1131": "Nursing Assistant",
-        "33-3051": "Police Officer", "35-2014": "Restaurant Cook", "41-2031": "Retail Salesperson",
-        "43-4051": "Customer Service Rep", "47-2031": "Carpenter", "47-2111": "Electrician",
-        "47-2152": "Plumber", "53-3032": "Truck Driver"
+        "11-1021": "Operations Manager", "11-2021": "Marketing Manager", "11-3031": "Financial Manager",
+        "11-9111": "Healthcare Manager", "13-1111": "Management Consultant", "13-2011": "Accountant",
+        "13-2051": "Financial Analyst", "13-2072": "Loan Officer", "15-1211": "Systems Analyst",
+        "15-1244": "Network Administrator", "15-1252": "Software Developer", "15-1254": "Web Developer",
+        "15-2011": "Actuary", "15-2051": "Data Scientist", "17-1011": "Architect",
+        "17-2051": "Civil Engineer", "17-2071": "Electrical Engineer", "17-2141": "Mechanical Engineer",
+        "19-3033": "Psychologist", "21-1021": "Social Worker", "23-1011": "Lawyer",
+        "25-2011": "Preschool Teacher", "25-2021": "Elementary School Teacher", "25-2031": "High School Teacher",
+        "25-4022": "Librarian", "27-1024": "Graphic Designer", "27-3043": "Writer",
+        "29-1021": "Dentist", "29-1031": "Dietitian", "29-1051": "Pharmacist",
+        "29-1071": "Physician Assistant", "29-1122": "Occupational Therapist", "29-1123": "Physical Therapist",
+        "29-1127": "Speech Pathologist", "29-1131": "Veterinarian", "29-1141": "Registered Nurse",
+        "29-1171": "Nurse Practitioner", "29-1215": "Family Physician", "29-1292": "Dental Hygienist",
+        "29-2034": "Radiologic Technologist", "29-2042": "EMT", "29-2061": "Licensed Practical Nurse",
+        "31-1131": "Nursing Assistant", "33-2011": "Firefighter", "33-3051": "Police Officer",
+        "35-1011": "Chef", "35-2014": "Restaurant Cook", "35-3031": "Server",
+        "37-2011": "Janitor", "39-5012": "Hairdresser", "41-2011": "Cashier",
+        "41-2031": "Retail Salesperson", "41-3021": "Insurance Agent", "41-9022": "Real Estate Agent",
+        "43-4051": "Customer Service Rep", "43-6014": "Admin Assistant", "47-2031": "Carpenter",
+        "47-2111": "Electrician", "47-2152": "Plumber", "49-3023": "Auto Mechanic",
+        "49-9021": "HVAC Technician", "51-4121": "Welder", "53-2031": "Flight Attendant",
+        "53-3032": "Truck Driver"
     ]
 
     static func load(bundle: Bundle = .main) -> OccupationWages {
