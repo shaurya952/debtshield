@@ -20,22 +20,25 @@ struct DebtFreedomView: View {
     private var baselineAvailable: Double {
         DebtFreedomEngine.availableToward(debtMin: debtMin, moneyLeft: store.plan.moneyLeft)
     }
-    private var baseline: DebtFreedomEngine.Payoff? {
-        guard let balance else { return nil }
-        return DebtFreedomEngine.payoff(balance: balance, aprPercent: apr, available: baselineAvailable)
-    }
-    private var baselineMonths: Int? { baseline?.p50 ?? baseline?.months }
 
-    private var places: [PlaceRankingEngine.RankedPlace] {
-        guard let dataset = dataStore.dataset else { return [] }
-        return PlaceRankingEngine.rank(plan: store.plan, in: dataset, energy: benchmarks.energy,
-                                       options: context.options(limit: 20))
-    }
+    /// Ranking every county and the baseline payoff are both heavy — a full-country
+    /// sort plus a Monte Carlo run — so they're computed off the main thread once on
+    /// appear and held here. The screen pushes instantly and fills in, instead of
+    /// freezing mid-navigation while the numbers crunch.
+    @State private var places: [PlaceRankingEngine.RankedPlace] = []
+    @State private var baseline: DebtFreedomEngine.Payoff?
+    @State private var isComputing = true
+
+    private var baselineMonths: Int? { baseline?.p50 ?? baseline?.months }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
-                if let balance {
+                if balance == nil {
+                    needsDebt
+                } else if isComputing {
+                    computingCard
+                } else if let balance {
                     intro
                     baselineCard(balance)
                     header
@@ -48,8 +51,6 @@ struct DebtFreedomView: View {
                         }
                     }
                     sources
-                } else {
-                    needsDebt
                 }
             }
             .padding(Theme.Spacing.comfortable).frame(maxWidth: 560).frame(maxWidth: .infinity)
@@ -57,6 +58,36 @@ struct DebtFreedomView: View {
         .background(Theme.screenBackground)
         .navigationTitle("The fastest way out")
         .navigationBarTitleDisplayMode(.inline)
+        .task { await compute() }
+    }
+
+    /// Rank the country and run the baseline payoff on a background task, then hand
+    /// the results back to the view. Runs once; the inputs don't change on screen.
+    private func compute() async {
+        guard let balance, let dataset = dataStore.dataset else { isComputing = false; return }
+        let plan = store.plan
+        let energy = benchmarks.energy
+        let opts = context.options(limit: 20)
+        let available = baselineAvailable
+        let rate = apr
+        let result = await Task.detached(priority: .userInitiated) {
+            () -> (places: [PlaceRankingEngine.RankedPlace], baseline: DebtFreedomEngine.Payoff?) in
+            let ranked = PlaceRankingEngine.rank(plan: plan, in: dataset, energy: energy, options: opts)
+            let base = DebtFreedomEngine.payoff(balance: balance, aprPercent: rate, available: available)
+            return (ranked, base)
+        }.value
+        places = result.places
+        baseline = result.baseline
+        isComputing = false
+    }
+
+    private var computingCard: some View {
+        HStack(spacing: Theme.Spacing.regular) {
+            ProgressView()
+            Text("Working out where your debt clears soonest…")
+                .font(Theme.Typography.subheadline).foregroundStyle(Theme.secondaryText)
+        }
+        .frame(maxWidth: .infinity, minHeight: 140)
     }
 
     private var intro: some View {

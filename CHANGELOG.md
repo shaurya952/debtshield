@@ -5,6 +5,16 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### State-level costs + faster "fastest way out" (polish round 3)
+- **State cost card.** Drilling into a state now opens with "Typical costs in
+  [State]" — the state's median county rent and its utilities, each vs the U.S.
+  average — before the county list, which is now clearly headed "Specific costs by
+  county." Costs live at both levels now, not only in the county detail.
+- **"The fastest way out" no longer freezes on open.** Ranking the whole country
+  and running the baseline payoff Monte Carlo now happen off the main thread with a
+  brief "working it out…" state, so the screen pushes instantly instead of hitching.
+- Shared `CostVsUSRow` so the state summary and county detail render identically.
+
 ### 116 jobs + calmer Places header (polish round 2)
 - **116 occupations** (up from 64) in "same job, new place" — from CEOs to home
   health aides, diesel mechanics, sonographers, bookkeepers, painters, and more,

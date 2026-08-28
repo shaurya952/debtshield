@@ -438,13 +438,18 @@ struct StateCountiesView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
-                Text("Counties in \(state), ranked by the room your numbers would have there.")
-                    .font(Theme.Typography.subheadline).foregroundStyle(Theme.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-                ForEach(Array(counties.enumerated()), id: \.element.id) { i, place in
-                    RankedPlaceRow(rank: i + 1, place: place, store: store, dataStore: dataStore,
-                                   benchmarks: benchmarks, income: context.income(for: state), saved: saved)
+            VStack(alignment: .leading, spacing: Theme.Spacing.section) {
+                stateCostCard
+                VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
+                    Text("Specific costs by county")
+                        .font(Theme.Typography.headline)
+                    Text("Ranked by the room your numbers would have. Tap any county for its own rent, utilities and payoff.")
+                        .font(Theme.Typography.subheadline).foregroundStyle(Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                    ForEach(Array(counties.enumerated()), id: \.element.id) { i, place in
+                        RankedPlaceRow(rank: i + 1, place: place, store: store, dataStore: dataStore,
+                                       benchmarks: benchmarks, income: context.income(for: state), saved: saved)
+                    }
                 }
             }
             .padding(Theme.Spacing.comfortable).frame(maxWidth: 560).frame(maxWidth: .infinity)
@@ -452,6 +457,68 @@ struct StateCountiesView: View {
         .background(Theme.screenBackground)
         .navigationTitle(state)
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// The state's basic figures — its typical (median) county rent and its state
+    /// utilities — each against the U.S. average, so the big picture is clear before
+    /// drilling into a single county.
+    private var stateCostCard: some View {
+        let rents = counties.compactMap { $0.county.record.medianGrossRent }.filter { $0 > 0 }.sorted()
+        let medianRent = rents.isEmpty ? nil : rents[rents.count / 2]
+        let addon = benchmarks.nationalUtilitiesAddon
+        let stateUtil = (benchmarks.energy.typicalBill(inState: state) ?? benchmarks.nationalEnergy) + addon
+        let usUtil = benchmarks.nationalEnergy + addon
+        return Card {
+            SectionHeader(title: "Typical costs in \(state)",
+                          subtitle: "The basics here vs the U.S. average")
+            if let medianRent {
+                CostVsUSRow(symbol: "house.fill", label: "Housing (rent)",
+                            here: medianRent, us: benchmarks.nationalRent, tint: Theme.essentialColor(.housing))
+                Divider()
+            }
+            CostVsUSRow(symbol: "bolt.fill", label: "Utilities",
+                        here: stateUtil, us: usUtil, tint: Theme.essentialColor(.energy))
+            Text("Typical (median) rent across \(state)'s counties (U.S. Census) and its state utilities (EIA + BLS). Food, getting-around and personal costs don't vary by place in the data, so they travel with your budget.")
+                .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+/// One cost here versus the U.S. average, with a plain "X% higher/lower" read.
+/// Shared by the state summary and the county detail so both look identical.
+struct CostVsUSRow: View {
+    let symbol: String
+    let label: String
+    let here: Double
+    let us: Double
+    var tint: Color = Theme.brand
+
+    var body: some View {
+        let diff = us > 0 ? (here - us) / us : 0
+        let pct = Int((abs(diff) * 100).rounded())
+        let higher = here >= us
+        let comparison = pct == 0 ? "about the U.S. average"
+            : "\(pct)% \(higher ? "higher" : "lower") than the U.S."
+        let color = pct == 0 ? Theme.secondaryText
+            : (higher ? Theme.statusColor(.tight) : Theme.statusColor(.okay))
+        return HStack(spacing: Theme.Spacing.regular) {
+            AppIconBadge(systemImage: symbol, tint: tint, size: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label).font(Theme.Typography.body.weight(.semibold))
+                Text("U.S. average \(PlaceFormat.money(us))/mo")
+                    .font(.caption).foregroundStyle(Theme.secondaryText)
+            }
+            Spacer(minLength: Theme.Spacing.tight)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(PlaceFormat.money(here)).font(Theme.Typography.money()).monospacedDigit()
+                Text(comparison).font(.caption2).foregroundStyle(color)
+                    .multilineTextAlignment(.trailing)
+            }
+        }
+        .frame(minHeight: 44)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label) here \(PlaceFormat.money(here)) a month, \(comparison)")
     }
 }
 
