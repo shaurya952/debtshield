@@ -17,6 +17,8 @@ struct MyNumbersView: View {
     @State private var transportation: Double?
     @State private var personal: Double?
     @State private var debt: Double?
+    @State private var debtBalance: Double?
+    @State private var debtAPR: Double?
 
     @State private var savedTrigger = 0
     @State private var showClearConfirm = false
@@ -32,6 +34,8 @@ struct MyNumbersView: View {
         _transportation = State(initialValue: plan.transportation)
         _personal = State(initialValue: plan.personal)
         _debt = State(initialValue: plan.debtPayments)
+        _debtBalance = State(initialValue: plan.debtBalance)
+        _debtAPR = State(initialValue: plan.debtAPR)
     }
 
     /// A labelled dollar field for one category, with its ⓘ "what to include".
@@ -75,8 +79,24 @@ struct MyNumbersView: View {
 
                 Section {
                     currencyField(.debt, $debt)
+                    CurrencyField(title: "Total you owe", value: $debtBalance)
+                    HStack {
+                        Text("Interest rate")
+                            .font(Theme.Typography.body)
+                        Spacer(minLength: Theme.Spacing.regular)
+                        TextField("0", value: $debtAPR, format: .number)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .font(Theme.Typography.money())
+                            .frame(minWidth: 60)
+                            .accessibilityLabel("Interest rate, annual percentage")
+                        Text("% APR").foregroundStyle(Theme.secondaryText)
+                    }
+                    .frame(minHeight: Theme.minimumTapTarget)
                 } header: {
                     Text("Debt")
+                } footer: {
+                    Text("Add the total you still owe and its rate to unlock “the fastest way out” — where your debt could clear soonest.")
                 }
 
                 Section {
@@ -112,7 +132,9 @@ struct MyNumbersView: View {
                             energy: energy,
                             transportation: transportation,
                             personal: personal,
-                            debtPayments: debt
+                            debtPayments: debt,
+                            debtBalance: debtBalance,
+                            debtAPR: debtAPR
                         ))
                         savedTrigger += 1
                         dismiss()

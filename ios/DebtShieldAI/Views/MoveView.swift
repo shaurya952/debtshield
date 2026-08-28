@@ -10,6 +10,14 @@ struct MoveView: View {
     let store: MoneyPlanStore
     let dataStore: DataStore
     let benchmarks: Benchmarks
+    /// Optional place to open on — set when arriving from the Places ranking so
+    /// the screen starts on that county instead of the empty picker.
+    var initialFIPS: String? = nil
+    /// Optional pay to open on — carried from Places so the detail matches the
+    /// number the ranking used.
+    var initialIncome: Double? = nil
+    /// Optional shortlist store — when present, a star saves this place.
+    var saved: SavedPlacesStore? = nil
 
     @State private var selectedFIPS: String?
     @State private var isPicking = false
@@ -39,6 +47,7 @@ struct MoveView: View {
                 if let outlook {
                     incomeCard
                     resultCard(outlook)
+                    if let place { costOfLivingCard(place) }
                     thresholdsCard(outlook)
                 } else if place != nil {
                     Text("There's no typical rent on record for that place, so I can't run the numbers. Try a nearby county.")
@@ -53,6 +62,18 @@ struct MoveView: View {
         .background(Theme.screenBackground)
         .navigationTitle("Could you afford a move?")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let saved, let place {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        saved.toggle(place.record.fips)
+                    } label: {
+                        Image(systemName: saved.isSaved(place.record.fips) ? "star.fill" : "star")
+                    }
+                    .accessibilityLabel(saved.isSaved(place.record.fips) ? "Remove from saved" : "Save this place")
+                }
+            }
+        }
         .sheet(isPresented: $isPicking) {
             if let searchIndex = dataStore.searchIndex {
                 AreaPickerView(searchIndex: searchIndex) { county in
@@ -61,7 +82,8 @@ struct MoveView: View {
             }
         }
         .onAppear {
-            if incomeOverride == nil { incomeOverride = store.plan.monthlyIncome }
+            if selectedFIPS == nil { selectedFIPS = initialFIPS }
+            if incomeOverride == nil { incomeOverride = initialIncome ?? store.plan.monthlyIncome }
         }
     }
 
@@ -165,14 +187,60 @@ struct MoveView: View {
         }
     }
 
+    /// How the basics differ *here* — the two costs that actually change by place
+    /// in the bundled data (rent by county, utilities by state), each against the
+    /// U.S. average. Honest about what doesn't vary.
+    private func costOfLivingCard(_ place: ScoredCounty) -> some View {
+        let rentHere = place.record.medianGrossRent ?? 0
+        let rentUS = benchmarks.nationalRent
+        let addon = benchmarks.nationalUtilitiesAddon
+        let utilHere = (benchmarks.energy.typicalBill(inState: place.state) ?? benchmarks.nationalEnergy) + addon
+        let utilUS = benchmarks.nationalEnergy + addon
+        return Card {
+            SectionHeader(title: "Cost of living here",
+                          subtitle: "How the basics compare to the U.S. average")
+            costRow("house.fill", "Housing (rent)", here: rentHere, us: rentUS,
+                    tint: Theme.essentialColor(.housing))
+            Divider()
+            costRow("bolt.fill", "Utilities", here: utilHere, us: utilUS,
+                    tint: Theme.essentialColor(.energy))
+            Text("These are the costs that change by place — rent (U.S. Census) and utilities (EIA + BLS). Food, getting around and personal costs are similar across the country, so they travel with your budget.")
+                .font(Theme.Typography.caption)
+                .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func costRow(_ symbol: String, _ label: String, here: Double, us: Double, tint: Color) -> some View {
+        let diff = us > 0 ? (here - us) / us : 0
+        let pct = Int((abs(diff) * 100).rounded())
+        let higher = here >= us
+        let comparison = pct == 0 ? "about the U.S. average"
+            : "\(pct)% \(higher ? "higher" : "lower") than the U.S."
+        let color = pct == 0 ? Theme.secondaryText
+            : (higher ? Theme.statusColor(.tight) : Theme.statusColor(.okay))
+        return HStack(spacing: Theme.Spacing.regular) {
+            AppIconBadge(systemImage: symbol, tint: tint, size: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label).font(Theme.Typography.body.weight(.semibold))
+                Text("U.S. average \(money(us))/mo")
+                    .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
+            }
+            Spacer(minLength: Theme.Spacing.tight)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(money(here)).font(Theme.Typography.money()).monospacedDigit()
+                Text(comparison).font(.caption2).foregroundStyle(color)
+                    .multilineTextAlignment(.trailing)
+            }
+        }
+        .frame(minHeight: 44)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label) here \(money(here)) a month, \(comparison)")
+    }
+
     private func thresholdsCard(_ outlook: MoveOutlook) -> some View {
         Card {
-            SectionHeader(title: "The numbers behind it")
-            row("Typical rent there",
-                money(outlook.typicalRent) + " · Census")
-            if let energy = outlook.typicalEnergy {
-                row("Typical energy there", money(energy) + "/mo · EIA")
-            }
+            SectionHeader(title: "What you could afford")
             row("Most rent you could afford here",
                 outlook.maxAffordableRent > 0
                     ? money(outlook.maxAffordableRent) + " to stay under your safe line"

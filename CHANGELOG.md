@@ -5,6 +5,131 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### State-level costs + faster "fastest way out" (polish round 3)
+- **State cost card.** Drilling into a state now opens with "Typical costs in
+  [State]" — the state's median county rent and its utilities, each vs the U.S.
+  average — before the county list, which is now clearly headed "Specific costs by
+  county." Costs live at both levels now, not only in the county detail.
+- **"The fastest way out" no longer freezes on open.** Ranking the whole country
+  and running the baseline payoff Monte Carlo now happen off the main thread with a
+  brief "working it out…" state, so the screen pushes instantly instead of hitching.
+- Shared `CostVsUSRow` so the state summary and county detail render identically.
+
+### 116 jobs + calmer Places header (polish round 2)
+- **116 occupations** (up from 64) in "same job, new place" — from CEOs to home
+  health aides, diesel mechanics, sonographers, bookkeepers, painters, and more,
+  all real BLS OEWS 2023 state medians (only jobs reported in ≥40 states are kept).
+- **Decluttered the "Rank by" control.** It's now one compact card — an icon with
+  "Ranking by / My pay" and a clear **Change** affordance, with the income field (or
+  the job note) tucked under a divider — instead of a stacked header + button + field.
+- Tightened the Places intro line.
+
+### More jobs, per-place cost breakdown, searchable picker (polish)
+- **64 occupations** (up from 24) in "same job, new place" — a much broader, more
+  relatable set (nurse practitioner, firefighter, welder, architect, EMT, chef,
+  real-estate agent, …), still real BLS OEWS 2023 state medians.
+- **Searchable job picker.** With 60+ jobs, the menu became a sheet with search —
+  "My pay" on top, jobs below, type to filter. Cleaner than a long scroll.
+- **"Cost of living here" card** in each place's detail: how the basics compare to
+  the U.S. average — Housing (this county's rent) and Utilities (this state's) with
+  a plain "X% higher/lower than the U.S." read, plus an honest note that food /
+  getting-around / personal costs don't vary by place in the data. Brings the old
+  Compare view's spirit *into* Places, localized. The affordability card was slimmed
+  to "What you could afford" (max rent + income needed).
+
+### Declutter — fewer tabs, calmer Places (post-pivot cleanup)
+- **Four tabs, not five.** Dropped the **Compare** tab (the generic "your categories
+  vs the U.S." view) — it clashed with **Places** and made the bar crowded. Tabs are
+  now Home · Places · Ask · About. (`CompareView` kept in the codebase, just untabbed.)
+- **Home is lighter.** Removed the "Could you move?" tile — it only duplicated the
+  Places tab.
+- **Places reads calmer.** One-line intro and a compact "Rank by" control instead of
+  the long paragraph + subtitle. UI tests updated for the new tab set.
+
+### "The fastest way out" — debt-free-by-place (Phase 10, the capstone)
+- **The feature that fuses everything and brings it home to debt.** Enter a debt
+  balance + rate and a new screen ranks where your debt would clear **soonest** —
+  because a cheaper place (or a better-paying local job) frees up money, and every
+  spare dollar clears debt faster. Each place shows months-to-debt-free, a **Monte
+  Carlo range** on the payoff time, and how much sooner than staying put.
+- `DebtFreedomEngine` (`Core/DebtFreedom.swift`): deterministic payoff + seeded MC
+  range; interest counted only when a rate is given (else it says so); a payment
+  that can't overtake interest reads "not in reach", never a fake number. It ties
+  together the affordability engine, the mobility/occupation pay, the Monte Carlo
+  engine, and the app's original debt mission — deterministic on real data, so it's
+  something no budgeting app or chatbot can produce.
+- `MoneyPlan` gains optional `debtBalance` / `debtAPR` (graceful migration, new
+  inputs in the Debt section). Entry from a Places card shown once a balance exists.
+- `DebtFreedomEngineTests`; bands in `THRESHOLD_REGISTRY.md`. Suite 99 passing;
+  verified on-device.
+
+### Compare two places + saved shortlist (Phases 8–9 of the relocation pivot)
+- **Side-by-side "here vs. there" (Phase 8).** `ComparePlacesView` (opened from a
+  toolbar button on Places) puts two places head-to-head — money left over,
+  year-ahead risk, rent, energy, and most-affordable-rent — with a plain verdict
+  ("in X you'd keep about $Y more a month"). Reuses `AffordabilityEngine` and the
+  occupation context, so it respects "same job, new place". Verified on-device
+  (LA County vs Knox County, TN → +$731/mo).
+- **Saved shortlist (Phase 9).** A ★ on any place detail saves it to a shortlist
+  (`Core/SavedPlaces.swift`, on-device in `debtshield.savedPlaces`); a new **Saved**
+  tab on Places re-scores and ranks your candidates with the current pay. Verified
+  on-device.
+
+### "Same job, new place" + methods page (Phases 4–5 of the relocation pivot)
+- **Occupation-aware pay (Phase 4).** Pick your job and the ranking uses that
+  occupation's *local* median wage in each state (`Core/OccupationWages.swift`,
+  bundled `Resources/occupation_wages.csv` — real **BLS OEWS May 2023** state
+  medians, 24 curated occupations × 51 states) instead of one flat income —
+  answering "where would my career go furthest?" A state where the job isn't
+  reported is left out, never guessed. Gross wage → estimated take-home via a
+  single documented ratio (`takeHomeRatio` 0.78), clearly labelled an estimate.
+  The ranking engines gained an `incomeByState` option threaded through Places.
+  `OccupationWagesTests`; verified on-device (Family Physician → Nebraska #1).
+- **Methods & sources page (Phase 5).** `MethodologyView`, linked from About —
+  what Places does, where every figure comes from (Census / EIA / BLS OEWS), how
+  the ranking and Monte Carlo risk work, and, plainly, what it can't tell you.
+  The credibility layer for the pivot.
+- Full suite 92 passing.
+
+### Place risk — the second axis (Phase 3 of the relocation pivot)
+- **Monte Carlo risk per place.** `PlaceRiskEngine` (`Core/PlaceRisk.swift`) runs
+  the existing simulation on the budget you'd have *living there*
+  (`MoveOutlook.projected`) and reads `probNegativeWithin12mo` — the odds of
+  running short over the year — banded low / watch / high. A cheap-but-fragile
+  county is now flagged, not hidden.
+- Each ranked county shows a calm risk chip alongside its money-left; computed off
+  the main thread per visible row (seeded 42, 300 runs, so it never flickers).
+- Bands documented in `THRESHOLD_REGISTRY.md`. `PlaceRiskEngineTests` (5); full
+  suite 87 passing; verified on-device.
+
+### Places screen — states + counties (Phase 2 of the relocation pivot)
+- **New `Places` tab**, the relocation hero: ranks where the person's real numbers
+  would leave the most breathing room. Two levels — **States** (the big picture,
+  "which states stretch my money") drilling into **Counties** (the specific spot),
+  each county opening the existing full affordability picture (`MoveView`).
+- States rank on `StateRankingEngine` (`Core/StateRanking.swift`) — a rollup that
+  groups the county results by state and ranks by the **median** county's
+  money-left (robust to one unusually cheap/pricey county), carrying each state's
+  best county and affordable-county count. Deterministic; `StateRankingEngineTests`.
+- Pay control lets the person model a different salary and re-rank the whole map.
+- `MoveView` gains `initialFIPS`/`initialIncome` so a ranked place opens straight
+  into its detail. Full suite 82 passing; verified on-device (Arkansas #1 rollup,
+  drill-in to Woodruff County).
+
+### Relocation ranking engine (Phase 1 of the relocation pivot)
+- **`PlaceRankingEngine` (`Core/PlaceRanking.swift`).** Promotes the single-place
+  `AffordabilityEngine` into a whole-country ranking: given a plan, it runs the
+  same deterministic affordability math across every county in the `Dataset` and
+  ranks them by projected money-left-over ("breathing room"). Pure, synchronous,
+  no SwiftUI — headlessly testable like the other engines.
+- Options: `incomeOverride` (model a new salary), `minMonthlyLeft` (affordability
+  floor), `stateFilter` (region), `limit`. Counties with no rent data are skipped,
+  never guessed; order is deterministic with a FIPS tie-break.
+- Tests: `PlaceRankingEngineTests` (8) — ranking order, filters, skips, income
+  override, determinism/tie-break. Full suite 78 passing.
+- Groundwork for the "become a cost-of-living relocation tool, not a budgeting
+  app" restructure; UI (the Places screen) is a later phase.
+
 ### Beta feedback — spending categories, Utilities & clearer entry
 - **New everyday costs, from tester feedback.** Added home upkeep, transportation
   ("Getting around"), and personal/lifestyle spending, each with an ⓘ button that

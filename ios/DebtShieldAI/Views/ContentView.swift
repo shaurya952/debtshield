@@ -10,6 +10,8 @@ struct ContentView: View {
     @State private var store = DataStore()
     @State private var moneyStore = MoneyPlanStore()
     @State private var benchmarks = BenchmarksLoader.load()
+    @State private var wages = OccupationWagesLoader.load()
+    @State private var saved = SavedPlacesStore()
     @State private var selectedTab: AppTab = .safeLine
 
     /// Set once the introduction has been read. Persisted so it appears on
@@ -68,10 +70,11 @@ struct ContentView: View {
             // county data + benchmarks power the "afford a move?" feature and
             // are optional-by-nature.
             SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
-        case .compare:
-            // The comparison layer. Uses the county data when it's loaded, and
-            // still shows national + food + debt while it isn't.
-            CompareView(store: moneyStore, dataStore: store, benchmarks: benchmarks) {
+        case .places:
+            // The relocation hero — ranks where the person's numbers would leave
+            // the most breathing room, across every county in the bundled data.
+            PlacesView(store: moneyStore, dataStore: store, benchmarks: benchmarks,
+                       wages: wages, saved: saved) {
                 selectedTab = .safeLine
             }
         case .ask:
@@ -90,12 +93,12 @@ struct ContentView: View {
 /// The tab set — a focused personal tool.
 ///
 /// - **Home** — the Safe Line: your month in plain dollars
-/// - **Compare** — your spending vs. your area and the U.S.
+/// - **Places** — where your money would stretch furthest, across the U.S.
 /// - **Ask** — the AI, in plain language, about your own numbers
 /// - **About** — how it works, privacy, and the disclaimer
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case safeLine
-    case compare
+    case places
     case ask
     case about
 
@@ -104,7 +107,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var title: String {
         switch self {
         case .safeLine: return "Home"
-        case .compare: return "Compare"
+        case .places: return "Places"
         case .ask: return "Ask"
         case .about: return "About"
         }
@@ -113,7 +116,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
     var systemImage: String {
         switch self {
         case .safeLine: return "house.fill"
-        case .compare: return "chart.bar.xaxis"
+        case .places: return "map.fill"
         case .ask: return "bubble.left.and.text.bubble.right.fill"
         case .about: return "info.circle"
         }

@@ -46,6 +46,13 @@ struct MoneyPlan: Equatable, Sendable, Codable {
     /// Minimum debt payments due this month — cards, loans, financing. Not the
     /// total balance owed; what has to go out this month to stay current.
     var debtPayments: Double?
+    /// Total debt still owed — the balance, not the monthly payment. Optional; it
+    /// unlocks the "fastest way out" payoff feature when present.
+    var debtBalance: Double?
+    /// The debt's annual interest rate (APR) as a percent, e.g. `22` for 22%.
+    /// Optional; when absent the payoff estimate simply doesn't count interest and
+    /// says so, rather than inventing a rate.
+    var debtAPR: Double?
 
     init(
         monthlyIncome: Double? = nil,
@@ -56,7 +63,9 @@ struct MoneyPlan: Equatable, Sendable, Codable {
         water: Double? = nil,
         transportation: Double? = nil,
         personal: Double? = nil,
-        debtPayments: Double? = nil
+        debtPayments: Double? = nil,
+        debtBalance: Double? = nil,
+        debtAPR: Double? = nil
     ) {
         self.monthlyIncome = monthlyIncome
         self.housing = housing
@@ -67,13 +76,15 @@ struct MoneyPlan: Equatable, Sendable, Codable {
         self.transportation = transportation
         self.personal = personal
         self.debtPayments = debtPayments
+        self.debtBalance = debtBalance
+        self.debtAPR = debtAPR
     }
 
     // MARK: - Codable (with a one-way migration)
 
     private enum CodingKeys: String, CodingKey {
         case monthlyIncome, housing, homeUpkeep, food, energy, water,
-             transportation, personal, debtPayments
+             transportation, personal, debtPayments, debtBalance, debtAPR
     }
 
     /// Custom decode so an older saved plan that stored a **separate** water bill
@@ -95,6 +106,8 @@ struct MoneyPlan: Equatable, Sendable, Codable {
         transportation = try c.decodeIfPresent(Double.self, forKey: .transportation)
         personal       = try c.decodeIfPresent(Double.self, forKey: .personal)
         debtPayments   = try c.decodeIfPresent(Double.self, forKey: .debtPayments)
+        debtBalance    = try c.decodeIfPresent(Double.self, forKey: .debtBalance)
+        debtAPR        = try c.decodeIfPresent(Double.self, forKey: .debtAPR)
     }
 
     /// Sum two optional amounts, staying `nil` only when *both* are absent — so a
