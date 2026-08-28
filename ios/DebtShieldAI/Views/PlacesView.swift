@@ -242,29 +242,41 @@ struct PlacesView: View {
     }
 
     private var intro: some View {
-        Text("Where your money would stretch furthest across the U.S. — for perspective, never a nudge to move.")
+        Text("Where your money would stretch furthest — for perspective, never a nudge to move.")
             .font(Theme.Typography.subheadline).foregroundStyle(Theme.secondaryText)
             .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// The pay the ranking runs on, as one compact control: a tappable row that
+    /// says what you're ranking by (your own pay, or a job's local pay), and — only
+    /// when it's your own pay — an inline field to adjust it. A job's per-state pay
+    /// isn't a single number to edit, so the field gives way to a one-line note.
     private var payCard: some View {
         Card {
-            SectionHeader(title: "Rank by")
             Button { pickingOccupation = true } label: {
-                HStack {
-                    Image(systemName: occupation == nil ? "person.fill" : "briefcase.fill")
-                        .foregroundStyle(Theme.brand)
-                    Text(occupation?.name ?? "My pay")
-                        .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
-                    Image(systemName: "chevron.up.chevron.down").font(.caption).foregroundStyle(Theme.secondaryText)
-                    Spacer()
+                HStack(spacing: Theme.Spacing.regular) {
+                    AppIconBadge(systemImage: occupation == nil ? "person.fill" : "briefcase.fill",
+                                 tint: Theme.brand, size: 34)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Ranking by").font(.caption).foregroundStyle(Theme.secondaryText)
+                        Text(occupation?.name ?? "My pay")
+                            .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
+                    }
+                    Spacer(minLength: Theme.Spacing.tight)
+                    HStack(spacing: 4) {
+                        Text("Change").font(.caption).foregroundStyle(Theme.brand)
+                        Image(systemName: "chevron.up.chevron.down").font(.caption2).foregroundStyle(Theme.brand)
+                    }
                 }
                 .frame(minHeight: Theme.minimumTapTarget)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Ranking by \(occupation?.name ?? "my pay"). Tap to change.")
             if occupation == nil {
+                Divider()
                 CurrencyField(title: "Monthly take-home", value: $planningIncome)
             } else {
+                Divider()
                 Text("Using the typical local pay for a \(occupation!.name) in each state — estimated take-home. States where it isn't reported are left out.")
                     .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)

@@ -5,6 +5,15 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### 116 jobs + calmer Places header (polish round 2)
+- **116 occupations** (up from 64) in "same job, new place" — from CEOs to home
+  health aides, diesel mechanics, sonographers, bookkeepers, painters, and more,
+  all real BLS OEWS 2023 state medians (only jobs reported in ≥40 states are kept).
+- **Decluttered the "Rank by" control.** It's now one compact card — an icon with
+  "Ranking by / My pay" and a clear **Change** affordance, with the income field (or
+  the job note) tucked under a divider — instead of a stacked header + button + field.
+- Tightened the Places intro line.
+
 ### More jobs, per-place cost breakdown, searchable picker (polish)
 - **64 occupations** (up from 24) in "same job, new place" — a much broader, more
   relatable set (nurse practitioner, firefighter, welder, architect, EMT, chef,
