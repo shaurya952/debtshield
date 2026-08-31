@@ -5,6 +5,13 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Move Plan — a reason to come back
+- Pinning a place as your **move goal** (from its detail) unlocks a moving-fund
+  tracker on Places: a progress bar toward a rough three-months'-rent fund, with
+  quick +/− buttons to log what you've set aside. Turns a one-time "where would my
+  money go furthest?" lookup into a trajectory — the honest retention hook,
+  on-device like everything else.
+
 ### Metro areas — the keystone credibility fix
 - **Ranking is now by metro area, not county, by default.** Ranking ~3,000 counties
   surfaced depopulating rural counties whose rent is low only because demand is (the

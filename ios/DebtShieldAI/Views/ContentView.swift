@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var benchmarks = BenchmarksLoader.load()
     @State private var wages = OccupationWagesLoader.load()
     @State private var saved = SavedPlacesStore()
+    @State private var movePlan = MovePlanStore()
     @State private var selectedTab: AppTab = .safeLine
     /// Land returning users on Places — the differentiator — rather than the monthly
     /// budget. A brand-new user (no income yet) still starts on Home so they enter
@@ -36,6 +37,7 @@ struct ContentView: View {
             }
         }
         .tint(Theme.brand)
+        .environment(movePlan)
         .task {
             // Loads the county data used by the comparison layer. The home
             // screen never waits on this — it renders and works regardless.

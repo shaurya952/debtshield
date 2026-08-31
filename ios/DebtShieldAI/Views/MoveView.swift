@@ -19,6 +19,8 @@ struct MoveView: View {
     /// Optional shortlist store — when present, a star saves this place.
     var saved: SavedPlacesStore? = nil
 
+    @Environment(MovePlanStore.self) private var movePlan: MovePlanStore?
+
     @State private var selectedFIPS: String?
     @State private var isPicking = false
     @State private var incomeOverride: Double?
@@ -52,6 +54,7 @@ struct MoveView: View {
                     resultCard(outlook)
                     if let place { costOfLivingCard(place) }
                     thresholdsCard(outlook)
+                    if let place { moveGoalButton(place) }
                 } else if place != nil {
                     Text("There's no typical rent on record for that place, so I can't run the numbers. Try a nearby county.")
                         .font(Theme.Typography.subheadline)
@@ -289,6 +292,40 @@ struct MoveView: View {
     }
 
     // MARK: - Helpers
+
+    /// Turn a one-time lookup into a goal to come back to — pin this place as the
+    /// move target, which unlocks the fund-progress tracker on the Places screen.
+    @ViewBuilder
+    private func moveGoalButton(_ place: ScoredCounty) -> some View {
+        if let movePlan {
+            let isTarget = movePlan.isTarget(place.record.fips)
+            Button {
+                if isTarget {
+                    movePlan.clear()
+                } else {
+                    movePlan.setTarget(fips: place.record.fips, name: place.displayName,
+                                       rent: place.record.medianGrossRent ?? 0)
+                }
+            } label: {
+                HStack(spacing: Theme.Spacing.regular) {
+                    Image(systemName: isTarget ? "flag.checkered" : "flag")
+                        .foregroundStyle(isTarget ? Theme.statusColor(.okay) : Theme.brand)
+                    Text(isTarget ? "This is your move goal" : "Make this my move goal")
+                        .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
+                    Spacer(minLength: Theme.Spacing.tight)
+                    Text(isTarget ? "Tap to clear" : "Track a moving fund")
+                        .font(.caption).foregroundStyle(Theme.secondaryText)
+                }
+                .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+                .padding(.horizontal, Theme.Spacing.comfortable)
+                .background {
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                        .fill((isTarget ? Theme.statusColor(.okay) : Theme.brand).opacity(0.12))
+                }
+            }
+            .buttonStyle(PressableCardStyle())
+        }
+    }
 
     private func toneColor(_ tone: MoveOutlook.Tone) -> Color {
         switch tone {

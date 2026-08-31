@@ -15,6 +15,8 @@ struct PlacesView: View {
     let saved: SavedPlacesStore
     var onGoHome: () -> Void
 
+    @Environment(MovePlanStore.self) private var movePlan: MovePlanStore?
+
     @State private var planningIncome: Double?
     /// nil = rank by the person's own pay; otherwise by this job's local pay.
     @State private var occupation: OccupationWages.Occupation?
@@ -56,6 +58,7 @@ struct PlacesView: View {
                     emptyState
                 } else {
                     intro
+                    movePlanCard
                     debtFreedomLink
                     payCard
                     Picker("View", selection: $scope) {
@@ -252,6 +255,56 @@ struct PlacesView: View {
     }
 
     // MARK: - Header pieces
+
+    /// The retention hook: once someone pins a move goal, this tracks their moving
+    /// fund so the app is worth reopening — a trajectory, not a one-time lookup.
+    @ViewBuilder
+    private var movePlanCard: some View {
+        if let movePlan, let plan = movePlan.plan {
+            Card {
+                HStack(spacing: Theme.Spacing.regular) {
+                    AppIconBadge(systemImage: "flag.checkered", tint: Theme.brand, size: 34)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Your move goal").font(.caption).foregroundStyle(Theme.secondaryText)
+                        Text(plan.targetName)
+                            .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary).lineLimit(1)
+                    }
+                    Spacer(minLength: Theme.Spacing.tight)
+                    Button { movePlan.clear() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(Theme.secondaryText.opacity(0.5))
+                    }
+                    .buttonStyle(.plain).accessibilityLabel("Clear move goal")
+                }
+                ProgressView(value: plan.progress)
+                    .tint(plan.isFunded ? Theme.statusColor(.okay) : Theme.brand)
+                HStack {
+                    Text("\(PlaceFormat.money(plan.savedSoFar)) of \(PlaceFormat.money(plan.fundGoal)) moving fund")
+                        .font(.caption).foregroundStyle(Theme.secondaryText)
+                    Spacer()
+                    Text(plan.isFunded ? "Funded 🎉" : "\(Int((plan.progress * 100).rounded()))%")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(plan.isFunded ? Theme.statusColor(.okay) : Theme.brand)
+                }
+                HStack(spacing: Theme.Spacing.regular) {
+                    fundButton("−$100", -100, movePlan)
+                    fundButton("+$100", 100, movePlan)
+                    fundButton("+$500", 500, movePlan)
+                }
+                Text("A moving fund is roughly three months' rent — deposit, truck and a cushion. An estimate you can adjust, never a quote.")
+                    .font(.caption2).foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func fundButton(_ label: String, _ amount: Double, _ store: MovePlanStore) -> some View {
+        Button { store.addToFund(amount) } label: {
+            Text(label).font(.caption.weight(.semibold))
+                .frame(maxWidth: .infinity, minHeight: 34)
+        }
+        .buttonStyle(.bordered)
+    }
 
     @ViewBuilder
     private var debtFreedomLink: some View {
