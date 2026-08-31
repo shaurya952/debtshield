@@ -223,9 +223,9 @@ struct PlacesView: View {
                 HStack(spacing: Theme.Spacing.regular) {
                     AppIconBadge(systemImage: "flag.checkered", tint: Theme.brand, size: 34)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("The fastest way out")
+                        Text("Where debt clears soonest")
                             .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
-                        Text("Where your debt could clear soonest")
+                        Text("Places your balance could be gone fastest")
                             .font(.caption).foregroundStyle(Theme.secondaryText)
                     }
                     Spacer()
@@ -299,9 +299,9 @@ struct PlacesView: View {
             .fixedSize(horizontal: false, vertical: true).padding(.top, Theme.Spacing.tight)
     }
     private var sourcesText: String {
-        let base = "Ranked by projected money left over: your numbers against each county's typical rent (U.S. Census) and its state energy bill (EIA). States show their typical (median) county. Typical figures, not a guarantee."
+        let base = "Ranked by projected money left over: your numbers against each county's typical rent (U.S. Census gross rent, which already includes utilities), plus your own food and debt. States show their typical (median) county. Doesn't include taxes, insurance, transport or the cost of moving. Typical figures, not a guarantee."
         return occupation == nil ? base
-            : base + " Pay is the state's median wage for this job (BLS OEWS 2023), shown as an estimated take-home."
+            : base + " Pay is the state's median wage for this job (BLS OEWS 2023), shown as an estimated after-tax take-home — a ballpark, not a real paycheck."
     }
 
     private var emptyState: some View {
@@ -459,26 +459,20 @@ struct StateCountiesView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    /// The state's basic figures — its typical (median) county rent and its state
-    /// utilities — each against the U.S. average, so the big picture is clear before
-    /// drilling into a single county.
+    /// The state's typical (median) county rent against the U.S. average. Census
+    /// "gross rent" already bundles utilities, so this is one whole housing+utilities
+    /// figure — never a rent line with a separate utility cost added on top.
     private var stateCostCard: some View {
         let rents = counties.compactMap { $0.county.record.medianGrossRent }.filter { $0 > 0 }.sorted()
         let medianRent = rents.isEmpty ? nil : rents[rents.count / 2]
-        let addon = benchmarks.nationalUtilitiesAddon
-        let stateUtil = (benchmarks.energy.typicalBill(inState: state) ?? benchmarks.nationalEnergy) + addon
-        let usUtil = benchmarks.nationalEnergy + addon
         return Card {
-            SectionHeader(title: "Typical costs in \(state)",
-                          subtitle: "The basics here vs the U.S. average")
+            SectionHeader(title: "Typical rent in \(state)",
+                          subtitle: "How it compares to the U.S. average")
             if let medianRent {
-                CostVsUSRow(symbol: "house.fill", label: "Housing (rent)",
+                CostVsUSRow(symbol: "house.fill", label: "Rent — utilities included",
                             here: medianRent, us: benchmarks.nationalRent, tint: Theme.essentialColor(.housing))
-                Divider()
             }
-            CostVsUSRow(symbol: "bolt.fill", label: "Utilities",
-                        here: stateUtil, us: usUtil, tint: Theme.essentialColor(.energy))
-            Text("Typical (median) rent across \(state)'s counties (U.S. Census) and its state utilities (EIA + BLS). Food, getting-around and personal costs don't vary by place in the data, so they travel with your budget.")
+            Text("Typical (median) gross rent across \(state)'s counties (U.S. Census) — it already includes utilities. Food, getting-around, state taxes and insurance don't vary by place in this data yet, so this keeps them unchanged rather than guessing.")
                 .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }

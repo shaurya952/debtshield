@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// "The fastest way out" — where your debt could clear soonest.
+/// "Where debt clears soonest" — the places your balance could be gone fastest.
 ///
 /// The capstone: it takes the debt you owe, the amount you could put toward it
 /// (your minimum plus whatever's left over), and re-runs it against every place —
@@ -56,7 +56,7 @@ struct DebtFreedomView: View {
             .padding(Theme.Spacing.comfortable).frame(maxWidth: 560).frame(maxWidth: .infinity)
         }
         .background(Theme.screenBackground)
-        .navigationTitle("The fastest way out")
+        .navigationTitle("Where debt clears soonest")
         .navigationBarTitleDisplayMode(.inline)
         .task { await compute() }
     }

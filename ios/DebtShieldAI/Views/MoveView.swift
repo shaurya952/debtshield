@@ -187,24 +187,19 @@ struct MoveView: View {
         }
     }
 
-    /// How the basics differ *here* — the two costs that actually change by place
-    /// in the bundled data (rent by county, utilities by state), each against the
-    /// U.S. average. Honest about what doesn't vary.
+    /// How rent differs *here* versus the U.S. Census "gross rent" already bundles
+    /// the renter's utilities, so this compares one whole housing+utilities figure —
+    /// it never adds a separate utility cost on top (that would double-count), and
+    /// it's honest that the other costs don't vary by place in the data yet.
     private func costOfLivingCard(_ place: ScoredCounty) -> some View {
         let rentHere = place.record.medianGrossRent ?? 0
         let rentUS = benchmarks.nationalRent
-        let addon = benchmarks.nationalUtilitiesAddon
-        let utilHere = (benchmarks.energy.typicalBill(inState: place.state) ?? benchmarks.nationalEnergy) + addon
-        let utilUS = benchmarks.nationalEnergy + addon
         return Card {
             SectionHeader(title: "Cost of living here",
-                          subtitle: "How the basics compare to the U.S. average")
-            costRow("house.fill", "Housing (rent)", here: rentHere, us: rentUS,
+                          subtitle: "How rent compares to the U.S. average")
+            costRow("house.fill", "Rent — utilities included", here: rentHere, us: rentUS,
                     tint: Theme.essentialColor(.housing))
-            Divider()
-            costRow("bolt.fill", "Utilities", here: utilHere, us: utilUS,
-                    tint: Theme.essentialColor(.energy))
-            Text("These are the costs that change by place — rent (U.S. Census) and utilities (EIA + BLS). Food, getting around and personal costs are similar across the country, so they travel with your budget.")
+            Text("Census gross rent already includes typical utilities (electricity, gas, water). Other costs — food, getting around, state taxes and insurance — don't vary by place in this data yet, so this keeps them at your current amounts rather than guessing.")
                 .font(Theme.Typography.caption)
                 .foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
@@ -240,15 +235,19 @@ struct MoveView: View {
 
     private func thresholdsCard(_ outlook: MoveOutlook) -> some View {
         Card {
-            SectionHeader(title: "What you could afford")
-            row("Most rent you could afford here",
+            SectionHeader(title: "Rough guides")
+            row("Most rent that would still fit here",
                 outlook.maxAffordableRent > 0
-                    ? money(outlook.maxAffordableRent) + " to stay under your safe line"
+                    ? "about " + money(round50(outlook.maxAffordableRent)) + " (utilities included)"
                     : "Your other costs already use it up")
-            row("Income to live here comfortably",
-                money(outlook.incomeNeeded) + "/mo")
+            row("Income to keep a comfortable cushion",
+                "about " + money(round50(outlook.incomeNeeded)) + "/mo")
         }
     }
+
+    /// Round to the nearest $50 — these are typical-data estimates, and dollar-exact
+    /// figures imply a precision the model doesn't have.
+    private func round50(_ value: Double) -> Double { (value / 50).rounded() * 50 }
 
     private func row(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {

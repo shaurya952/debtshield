@@ -5,7 +5,8 @@ import XCTest
 /// ranks the states — the big-picture view before drilling into a county.
 final class StateRankingEngineTests: XCTestCase {
 
-    // income 5000, food 400, debt 200, state energy 150 → left = 4250 − rent.
+    // income 5000, food 400, debt 200 → left = 4400 − rent. Utilities live inside
+    // the place's gross rent, so they're never subtracted a second time.
     private let plan = MoneyPlan(monthlyIncome: 5000, food: 400, energy: 150, debtPayments: 200)
 
     private func world() -> (Dataset, EnergyBenchmark) {
@@ -15,11 +16,11 @@ final class StateRankingEngineTests: XCTestCase {
                                               medianHouseholdIncome: 60000, medianGrossRent: rent))
         }
         let dataset = Dataset(counties: [
-            c("01", "Alpha", "Aville", 800),   // left 3450  (best of Alpha)
-            c("02", "Alpha", "Bville", 1200),  // left 3050
-            c("03", "Alpha", "Cville", 900),   // left 3350  (median of Alpha)
-            c("10", "Beta",  "Dville", 5200),  // left −950
-            c("11", "Beta",  "Eville", 1000)   // left 3250
+            c("01", "Alpha", "Aville", 800),   // left 3600  (best of Alpha)
+            c("02", "Alpha", "Bville", 1200),  // left 3200
+            c("03", "Alpha", "Cville", 900),   // left 3500  (median of Alpha)
+            c("10", "Beta",  "Dville", 5200),  // left −800
+            c("11", "Beta",  "Eville", 1000)   // left 3400
         ])
         return (dataset, energy)
     }
@@ -27,16 +28,16 @@ final class StateRankingEngineTests: XCTestCase {
     func testRanksStatesByMedianCounty() {
         let (data, energy) = world()
         let states = StateRankingEngine.rank(plan: plan, in: data, energy: energy)
-        XCTAssertEqual(states.map(\.state), ["Alpha", "Beta"]) // Alpha median 3350 > Beta median 650
-        XCTAssertEqual(states.first?.medianMonthlyLeft ?? 0, 3350, accuracy: 0.5)
+        XCTAssertEqual(states.map(\.state), ["Alpha", "Beta"]) // Alpha median 3500 > Beta median 1300
+        XCTAssertEqual(states.first?.medianMonthlyLeft ?? 0, 3500, accuracy: 0.5)
     }
 
     func testMedianOfEvenCountUsesTwoMiddleValues() {
         let (data, energy) = world()
         let beta = StateRankingEngine.rank(plan: plan, in: data, energy: energy).first { $0.state == "Beta" }
         XCTAssertNotNil(beta)
-        // Beta counties: 3250 and −950 → median = (3250 − 950)/2 = 1150.
-        XCTAssertEqual(beta!.medianMonthlyLeft, 1150, accuracy: 0.5)
+        // Beta counties: 3400 and −800 → median = (3400 − 800)/2 = 1300.
+        XCTAssertEqual(beta!.medianMonthlyLeft, 1300, accuracy: 0.5)
     }
 
     func testCarriesBestCountyAndAffordableCounts() {

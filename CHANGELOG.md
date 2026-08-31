@@ -5,6 +5,25 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Data-honesty pass (from external review feedback)
+- **Fixed a utilities double-count.** The place projection used Census *gross* rent
+  (which already includes utilities) as housing **and** added a separate EIA energy
+  cost on top — inflating every "money left" figure and ranking. Utilities now live
+  inside the gross-rent figure and are never added again. "Max rent" / "income needed"
+  now account for all other essentials (transport, personal, upkeep), not just food+debt.
+- **Softened over-confident verdicts.** "You could afford to live here" → "Your basics
+  would fit here," with a standing note that transport, state taxes, insurance and the
+  cost of moving aren't included yet — perspective, not a full affordability check.
+- **Rounded estimates to the nearest $50** ("about $1,700") to stop implying dollar-exact
+  precision the typical-data model doesn't have.
+- **Renamed "The fastest way out" → "Where debt clears soonest"** (calmer, less like
+  debt-settlement marketing), and dropped the unprompted "What are my odds of going into
+  debt?" suggestion chip (the year-ahead odds are still there if asked).
+- **Cost cards** now show one "Rent — utilities included" row instead of rent + a
+  separate additive-looking utilities row, and say plainly which costs don't vary by place.
+- Methodology + sources copy updated to disclose the gross-rent/utilities relationship
+  and the excluded costs. Engine suite still 99 passing.
+
 ### State-level costs + faster "fastest way out" (polish round 3)
 - **State cost card.** Drilling into a state now opens with "Typical costs in
   [State]" — the state's median county rent and its utilities, each vs the U.S.

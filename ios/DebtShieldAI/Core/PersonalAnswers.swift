@@ -138,7 +138,10 @@ enum PersonalChatEngine {
         guard plan.isComplete else {
             return ["What's the safe line?", "What can this tell me?"]
         }
-        var prompts = ["Why is it tight?", "What are my odds of going into debt?", "How does my rent compare?"]
+        // Suggested chips stay neutral and answerable — we don't hand someone an
+        // unprompted "odds of going into debt"; the year-ahead odds are still there
+        // if they ask for them.
+        var prompts = ["Why is it tight?", "Where does my money go?", "How does my rent compare?"]
         if (plan.moneyLeft ?? 0) > 0 {
             prompts.append("How's my cushion?")
         }
@@ -518,7 +521,7 @@ enum PersonalChatEngine {
             text = "If this month repeated all year, you'd be about **\(money(-yearly))** short over 12 months (\(money(-left)) a month). Closing the monthly gap is what changes that."
         }
         return ChatAnswer(text: text, provenance: "Your numbers, projected",
-                          followUps: ["What are my odds of going into debt?", "What's my fastest fix?"])
+                          followUps: ["Where does my money go?", "What's my fastest fix?"])
     }
 
     private static func safeLineExplanation(_ plan: MoneyPlan) -> ChatAnswer {
