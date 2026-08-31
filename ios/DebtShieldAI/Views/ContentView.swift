@@ -13,6 +13,10 @@ struct ContentView: View {
     @State private var wages = OccupationWagesLoader.load()
     @State private var saved = SavedPlacesStore()
     @State private var selectedTab: AppTab = .safeLine
+    /// Land returning users on Places — the differentiator — rather than the monthly
+    /// budget. A brand-new user (no income yet) still starts on Home so they enter
+    /// their numbers first, which is what unlocks everything else.
+    @State private var didPickInitialTab = false
 
     /// Set once the introduction has been read. Persisted so it appears on
     /// first launch only.
@@ -49,6 +53,13 @@ struct ContentView: View {
             #endif
             // Archive the finished month if the calendar has turned over.
             moneyStore.rollOverIfNeeded()
+            // First appearance: open on Places when there are already numbers to
+            // rank, so the hero feature is the front door. Only runs once, so it
+            // never fights the person's own tab taps.
+            if !didPickInitialTab {
+                didPickInitialTab = true
+                if (moneyStore.plan.monthlyIncome ?? 0) > 0 { selectedTab = .places }
+            }
         }
         .fullScreenCover(isPresented: $isShowingOnboarding) {
             OnboardingView {

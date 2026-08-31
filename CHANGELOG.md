@@ -5,6 +5,16 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### The hook is the front door
+- **Places is now the landing tab** for anyone who's already entered their numbers,
+  so the differentiator — where your money (or your job's local pay) goes furthest —
+  is the first thing you see, not a generic budget dashboard. A brand-new user with
+  no numbers still starts on Home, so the "how close am I?" first step is untouched.
+- **The job-pay ranking is no longer buried behind "Change."** When you're ranking by
+  your own pay, a prominent accented card — "See where your job pays furthest · rank
+  by your career's local pay, 116 jobs" — invites the one thing no other
+  cost-of-living tool does.
+
 ### Renamed the product: DebtShield → Headroom
 - All four external reviews said the name works against the app — "DebtShield" + a
   blue shield read like debt-settlement / credit-repair marketing, the exact industry

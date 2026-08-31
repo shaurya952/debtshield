@@ -275,13 +275,43 @@ struct PlacesView: View {
             if occupation == nil {
                 Divider()
                 CurrencyField(title: "Monthly take-home", value: $planningIncome)
+                jobHookCTA
             } else {
                 Divider()
-                Text("Using the typical local pay for a \(occupation!.name) in each state — estimated take-home. States where it isn't reported are left out.")
+                Text("Using the typical local pay for a \(occupation!.name) in each state — an estimated after-tax figure, a ballpark not a real paycheck. States where it isn't reported are left out.")
                     .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    /// The differentiator, made obvious: an accented invitation to rank by a job's
+    /// local pay, shown whenever the ranking is on the person's own income. It's the
+    /// one thing no other cost-of-living tool does, so it shouldn't hide behind a
+    /// grey "Change" link.
+    private var jobHookCTA: some View {
+        Button { pickingOccupation = true } label: {
+            HStack(spacing: Theme.Spacing.regular) {
+                AppIconBadge(systemImage: "briefcase.fill", tint: Theme.brand, size: 30)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("See where your job pays furthest")
+                        .font(Theme.Typography.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                    Text("Rank by your career's local pay — 116 jobs")
+                        .font(.caption).foregroundStyle(Theme.secondaryText)
+                }
+                Spacer(minLength: Theme.Spacing.tight)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold)).foregroundStyle(Theme.brand)
+            }
+            .padding(Theme.Spacing.regular)
+            .frame(maxWidth: .infinity)
+            .background {
+                RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                    .fill(Theme.brand.opacity(0.10))
+            }
+        }
+        .buttonStyle(PressableCardStyle())
+        .accessibilityHint("Ranks places by this job's typical local pay")
     }
 
     private var loadingCard: some View {
