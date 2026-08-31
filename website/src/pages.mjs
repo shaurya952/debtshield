@@ -2,8 +2,8 @@
 // `slug` is the output filename (without .html); "index" becomes index.html.
 export const pages = [
   { slug: "index", nav: false, navLabel: "Home",
-    title: "See where your money stands",
-    description: "DebtShield is a private, on-device iPhone app that shows how your money stands this month — no account, no bank connection, nothing leaves your phone." },
+    title: "See where your money goes furthest",
+    description: "DebtShield is a private, on-device iPhone app that shows how your month stands — then ranks every U.S. state and county by how far your money would go there, on your pay or a job's local pay. Nothing leaves your phone." },
 
   { slug: "how-it-works", nav: true, navLabel: "How it works",
     title: "How it works",
