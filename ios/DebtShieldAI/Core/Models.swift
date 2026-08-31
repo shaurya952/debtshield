@@ -19,10 +19,17 @@ struct CountyRecord: Identifiable, Hashable, Sendable {
     var medianHouseholdIncome: Double?
     var medianGrossRent: Double?
 
+    /// For metro areas, whose own title already carries the state(s) (e.g.
+    /// "Austin-Round Rock-Georgetown, TX"), so the display name isn't doubled up.
+    var displayOverride: String? = nil
+
     var id: String { fips }
 
-    /// "Autauga County, Alabama".
-    var displayName: String { "\(county), \(state)" }
+    /// "Autauga County, Alabama" — or the metro's own title when set.
+    var displayName: String { displayOverride ?? "\(county), \(state)" }
+
+    /// True for the rolled-up metro-area pseudo-records (FIPS starts with "M").
+    var isMetro: Bool { fips.hasPrefix("M") }
 }
 
 // MARK: - County
@@ -41,14 +48,27 @@ struct ScoredCounty: Identifiable, Hashable, Sendable {
 
 // MARK: - Dataset
 
-/// The loaded county file — a searchable list, looked up by FIPS for the
-/// comparison features.
+/// The loaded place data — counties, plus **metro areas** rolled up from them.
+///
+/// Metros are the honest primary unit for "where would my money go furthest":
+/// ranking ~3,000 counties surfaces depopulating rural counties whose rent is low
+/// only because demand is, and whose ACS estimates carry margins wider than the
+/// gaps being ranked. Metro areas (~390 population-weighted Census CBSAs) are how
+/// people actually think about moving, so they lead; counties stay as a drill-down.
 struct Dataset: Sendable {
     let counties: [ScoredCounty]
+    /// Metro areas, each stored as a `ScoredCounty` whose FIPS is `"M" + CBSA code`
+    /// so it never collides with a real county FIPS.
+    let metros: [ScoredCounty]
 
-    /// Look up a single county by its FIPS code — used by the rent/energy
-    /// comparison and the move engine to find typical costs where someone lives.
+    init(counties: [ScoredCounty], metros: [ScoredCounty] = []) {
+        self.counties = counties
+        self.metros = metros
+    }
+
+    /// Look up a single place (county *or* metro) by its FIPS code — used by the
+    /// rent comparison and the move engine to find typical costs for a place.
     func county(fips: String) -> ScoredCounty? {
-        counties.first { $0.record.fips == fips }
+        counties.first { $0.record.fips == fips } ?? metros.first { $0.record.fips == fips }
     }
 }

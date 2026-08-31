@@ -129,7 +129,7 @@ struct MoveView: View {
             if let place {
                 ActionRowLabel(
                     systemImage: "mappin.and.ellipse",
-                    title: "\(place.county), \(place.state)",
+                    title: place.displayName,
                     subtitle: "Typical rent \(money(place.record.medianGrossRent ?? 0)) · Tap to change"
                 )
             } else {

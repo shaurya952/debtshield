@@ -19,9 +19,9 @@ struct PlacesView: View {
     /// nil = rank by the person's own pay; otherwise by this job's local pay.
     @State private var occupation: OccupationWages.Occupation?
     @State private var pickingOccupation = false
-    @State private var scope: Scope = .states
+    @State private var scope: Scope = .metros
 
-    enum Scope: String, CaseIterable, Identifiable { case states = "States", counties = "Counties", saved = "Saved"; var id: String { rawValue } }
+    enum Scope: String, CaseIterable, Identifiable { case metros = "Metros", states = "States", counties = "Counties", saved = "Saved"; var id: String { rawValue } }
 
     private var baseIncome: Double? { store.plan.monthlyIncome }
 
@@ -43,6 +43,11 @@ struct PlacesView: View {
         return PlaceRankingEngine.rank(plan: store.plan, in: dataset, energy: benchmarks.energy,
                                        options: context.options(limit: 30))
     }
+    private var rankedMetros: [PlaceRankingEngine.RankedPlace] {
+        guard let dataset = dataStore.dataset else { return [] }
+        return PlaceRankingEngine.rank(plan: store.plan, in: dataset, energy: benchmarks.energy,
+                                       options: context.options(limit: 40, useMetros: true))
+    }
 
     var body: some View {
         ScrollView {
@@ -62,6 +67,7 @@ struct PlacesView: View {
                         loadingCard
                     } else {
                         switch scope {
+                        case .metros:   metrosList
                         case .states:   statesList
                         case .counties: countiesList
                         case .saved:    savedList
@@ -112,6 +118,21 @@ struct PlacesView: View {
                     .buttonStyle(PressableCardStyle())
                 }
             }
+        }
+    }
+
+    private var metrosList: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
+            listHeader(title: "Best metro areas", note: nil)
+            VStack(spacing: Theme.Spacing.regular) {
+                ForEach(Array(rankedMetros.enumerated()), id: \.element.id) { i, place in
+                    RankedPlaceRow(rank: i + 1, place: place, store: store, dataStore: dataStore,
+                                   benchmarks: benchmarks, income: context.income(for: place.county.state), saved: saved)
+                }
+            }
+            Text("Metro areas are real population centres (Census CBSAs), so this avoids ranking tiny, thinly-measured rural counties against each other. Open Counties for a finer, less certain view.")
+                .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true).padding(.top, Theme.Spacing.tight)
         }
     }
 
@@ -375,8 +396,9 @@ struct RankContext: Equatable {
     var override: Double?
     var byState: [String: Double]?
 
-    func options(limit: Int, stateFilter: String? = nil) -> PlaceRankingEngine.Options {
-        .init(incomeOverride: override, incomeByState: byState, stateFilter: stateFilter, limit: limit)
+    func options(limit: Int, stateFilter: String? = nil, useMetros: Bool = false) -> PlaceRankingEngine.Options {
+        .init(incomeOverride: override, incomeByState: byState, stateFilter: stateFilter,
+              limit: limit, useMetros: useMetros)
     }
     /// The income used for a place in the given state.
     func income(for state: String) -> Double? {

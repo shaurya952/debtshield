@@ -5,6 +5,18 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Metro areas — the keystone credibility fix
+- **Ranking is now by metro area, not county, by default.** Ranking ~3,000 counties
+  surfaced depopulating rural counties whose rent is low only because demand is (the
+  "Woodruff County" problem), with ACS margins wider than the gaps being ranked. The
+  new **Metros** tab ranks ~387 population-weighted Census CBSAs — real places people
+  actually move to (the cheapest are now Johnstown PA, Weirton-Steubenville WV-OH, not
+  ghost counties). States and Counties remain as tabs for the finer, less-certain view.
+- Metro rent/income are **population-weighted rollups** of the member counties' Census
+  figures, built from the official OMB county→CBSA delineation + Census population
+  estimates. Bundled as `metro_data.csv`; the place lookup and move engine treat a
+  metro exactly like a county, so the detail, cost card, and share card all work.
+
 ### Credibility + UX pass (more AI-review fixes)
 - **BLS job-availability counts.** When you rank by a job, each state now shows about
   how many people hold that job there ("About 1,900 nurse jobs here"), amber-flagged

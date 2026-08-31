@@ -98,7 +98,35 @@ struct CSVLoader {
 
         Self.fillMissingRentWithMedian(&records)
 
-        return Dataset(counties: records.map { ScoredCounty(record: $0) })
+        return Dataset(counties: records.map { ScoredCounty(record: $0) },
+                       metros: Self.loadMetros(bundle: bundle))
+    }
+
+    /// Load the population-weighted metro areas (`metro_data.csv`). Each becomes a
+    /// `ScoredCounty` with FIPS `"M" + cbsa`. Missing/failed load simply yields no
+    /// metros — the county layer still works — so this can never break startup.
+    static func loadMetros(bundle: Bundle) -> [ScoredCounty] {
+        guard let url = bundle.url(forResource: "metro_data", withExtension: "csv"),
+              let text = try? String(contentsOf: url, encoding: .utf8),
+              let table = try? parseTable(text, fileName: "metro_data.csv")
+        else { return [] }
+        func field(_ row: [String], _ name: String) -> String? {
+            guard let i = table.columnIndex[name], i < row.count, !row[i].isEmpty else { return nil }
+            return row[i]
+        }
+        return table.rows.compactMap { row -> ScoredCounty? in
+            guard let cbsa = field(row, "cbsa"), let name = field(row, "metro"),
+                  let state = field(row, "state") else { return nil }
+            let record = CountyRecord(
+                fips: "M\(cbsa)",
+                state: state,
+                county: name,
+                medianHouseholdIncome: field(row, "median_household_income").flatMap(Double.init),
+                medianGrossRent: field(row, "median_gross_rent").flatMap(Double.init),
+                displayOverride: name
+            )
+            return ScoredCounty(record: record)
+        }
     }
 
     // MARK: Parsing
