@@ -105,7 +105,7 @@ struct ContentView: View {
 ///
 /// - **Home** — the Safe Line: your month in plain dollars
 /// - **Places** — where your money would stretch furthest, across the U.S.
-/// - **Ask** — the AI, in plain language, about your own numbers
+/// - **Explain** — plain-language, deterministic answers about your own numbers
 /// - **About** — how it works, privacy, and the disclaimer
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case safeLine
@@ -119,7 +119,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .safeLine: return "Home"
         case .places: return "Places"
-        case .ask: return "Ask"
+        case .ask: return "Explain"
         case .about: return "About"
         }
     }

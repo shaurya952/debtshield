@@ -5,6 +5,28 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Credibility + UX pass (more AI-review fixes)
+- **BLS job-availability counts.** When you rank by a job, each state now shows about
+  how many people hold that job there ("About 1,900 nurse jobs here"), amber-flagged
+  when a state's high median rests on very few actual jobs — so a wage never implies
+  work that barely exists locally.
+- **Rounded money-left to the nearest $50** across the rankings, with a plain note
+  that places within ~$50 are effectively tied and tiny counties carry more
+  uncertainty — no more "+$3,373 vs +$3,370" false precision.
+- **Moving isn't free.** The debt screen now leads with a break-even caveat (a move
+  costs a few thousand up front and needs a job waiting), so "clears soonest" never
+  reads as "just move."
+- **Home decluttered:** cut the redundant verdict card (a quiet "what this means" link
+  replaces it), removed the ambiguous "0%" badge, and renamed the affiliate-looking
+  "Save & earn more" tile to "Free up more room."
+- **Safe Line bar** now carries a full legend, so every segment is named, not just the
+  wide ones.
+- **"Ask" → "Explain"** (honest about the deterministic engine), grouped the job picker
+  by category with a "Popular" shortlist and top search, and softened doom-y prompts.
+- **Shareable card:** any place's detail can now export a designed summary image
+  ("+$X left each month here", current-vs-there, honest "estimate, not a recommendation"
+  footer) — the tell-a-friend moment.
+
 ### The hook is the front door
 - **Places is now the landing tab** for anyone who's already entered their numbers,
   so the differentiator — where your money (or your job's local pay) goes furthest —

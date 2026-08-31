@@ -181,6 +181,18 @@ struct PlacesView: View {
 
     // MARK: - State row
 
+    /// Below this many people in a job statewide, we flag the state amber — a high
+    /// median wage there rests on very few actual jobs, so "your pay goes furthest"
+    /// could be pointing at work that barely exists locally. A named heuristic.
+    private let jobScarcityFloor = 500
+
+    private func jobCountText(_ n: Int, job: String) -> String {
+        let j = job.lowercased()
+        return n < jobScarcityFloor
+            ? "Few \(j) jobs here — about \(n.formatted())"
+            : "About \(n.formatted()) \(j) jobs here"
+    }
+
     private func stateRowLabel(rank: Int, _ state: StateRankingEngine.RankedState) -> some View {
         let color = PlaceFormat.color(for: state.medianMonthlyLeft)
         return HStack(spacing: Theme.Spacing.regular) {
@@ -194,6 +206,12 @@ struct PlacesView: View {
                 Text("Best: \(state.best.county.county) · \(state.affordableCount) of \(state.rankedCount) affordable")
                     .font(.caption).foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
+                if let occ = occupation, let n = wages.employment(occupation: occ.code, state: state.state) {
+                    Text(jobCountText(n, job: occ.name))
+                        .font(.caption2)
+                        .foregroundStyle(n < jobScarcityFloor ? Theme.statusColor(.tight) : Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             Spacer(minLength: Theme.Spacing.tight)
             VStack(alignment: .trailing, spacing: 2) {
@@ -329,7 +347,7 @@ struct PlacesView: View {
             .fixedSize(horizontal: false, vertical: true).padding(.top, Theme.Spacing.tight)
     }
     private var sourcesText: String {
-        let base = "Ranked by projected money left over: your numbers against each county's typical rent (U.S. Census gross rent, which already includes utilities), plus your own food and debt. States show their typical (median) county. Doesn't include taxes, insurance, transport or the cost of moving. Typical figures, not a guarantee."
+        let base = "Ranked by projected money left over: your numbers against each county's typical rent (U.S. Census gross rent, which already includes utilities), plus your own food and debt. States show their typical (median) county. Places within about $50 of each other are effectively tied, and very small counties carry more uncertainty. Doesn't include taxes, insurance, transport or the cost of moving. Typical figures, not a guarantee."
         return occupation == nil ? base
             : base + " Pay is the state's median wage for this job (BLS OEWS 2023), shown as an estimated after-tax take-home — a ballpark, not a real paycheck."
     }
@@ -552,8 +570,13 @@ enum PlaceFormat {
     static func money(_ value: Double) -> String {
         value.formatted(.currency(code: "USD").precision(.fractionLength(0)))
     }
+    /// Money-left figures are typical-data estimates, so they're rounded to the
+    /// nearest $50 before display: two places within ~$50 aren't meaningfully
+    /// different, and dollar-exact numbers ("+$3,373" vs "+$3,370") imply a
+    /// precision the data doesn't have. The ranking order still uses exact values.
     static func signed(_ value: Double) -> String {
-        let m = money(abs(value)); return value >= 0 ? "+\(m)" : "−\(m)"
+        let rounded = (value / 50).rounded() * 50
+        let m = money(abs(rounded)); return rounded >= 0 ? "+\(m)" : "−\(m)"
     }
     static func color(for tone: MoveOutlook.Tone) -> Color {
         switch tone {
@@ -576,7 +599,8 @@ enum PlaceFormat {
     }
 }
 
-/// A searchable picker for the occupations — far cleaner than a 60-item menu.
+/// A searchable, category-grouped picker for the occupations — with a "popular"
+/// shortlist up top so the common jobs are reachable without scrolling 116 rows.
 struct OccupationPickerSheet: View {
     let occupations: [OccupationWages.Occupation]
     let selected: OccupationWages.Occupation?
@@ -585,41 +609,85 @@ struct OccupationPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var query = ""
 
+    /// A handful of widely-held jobs, surfaced first when nothing is searched.
+    private static let popularCodes = ["29-1141", "15-1252", "25-2021", "47-2111",
+                                       "53-3032", "13-2011", "31-1131", "41-2031"]
+
     private var filtered: [OccupationWages.Occupation] {
         query.isEmpty ? occupations
             : occupations.filter { $0.name.localizedCaseInsensitiveContains(query) }
     }
 
+    /// SOC major group (first two digits) → a friendly, relatable category.
+    private func category(_ code: String) -> String {
+        switch code.prefix(2) {
+        case "11", "13": return "Business & management"
+        case "15", "17", "19": return "Tech, engineering & science"
+        case "21", "23", "25", "27": return "Education, law & creative"
+        case "29", "31": return "Healthcare"
+        case "33", "35", "37", "39": return "Service & safety"
+        case "41", "43": return "Sales & office"
+        default: return "Trades & transport"
+        }
+    }
+
+    private var grouped: [(name: String, jobs: [OccupationWages.Occupation])] {
+        let order = ["Healthcare", "Tech, engineering & science", "Trades & transport",
+                     "Business & management", "Sales & office", "Service & safety",
+                     "Education, law & creative"]
+        let dict = Dictionary(grouping: occupations) { category($0.code) }
+        return order.compactMap { key in
+            guard let jobs = dict[key] else { return nil }
+            return (key, jobs.sorted { $0.name < $1.name })
+        }
+    }
+
+    private var popular: [OccupationWages.Occupation] {
+        Self.popularCodes.compactMap { code in occupations.first { $0.code == code } }
+    }
+
     var body: some View {
         NavigationStack {
             List {
-                if query.isEmpty {
-                    Section {
-                        row(title: "My pay", subtitle: "Rank by your own take-home",
-                            isSelected: selected == nil, systemImage: "person.fill") {
-                            onSelect(nil); dismiss()
-                        }
+                Section {
+                    row(title: "My pay", subtitle: "Rank by your own take-home",
+                        isSelected: selected == nil, systemImage: "person.fill") {
+                        onSelect(nil); dismiss()
                     }
                 }
-                Section("Rank by a job's local pay") {
-                    ForEach(filtered) { occ in
-                        row(title: occ.name, subtitle: nil,
-                            isSelected: selected?.code == occ.code, systemImage: "briefcase.fill") {
-                            onSelect(occ); dismiss()
-                        }
+                if query.isEmpty {
+                    if !popular.isEmpty {
+                        Section("Popular") { jobRows(popular) }
                     }
-                    if filtered.isEmpty {
-                        Text("No jobs match “\(query)”.")
-                            .foregroundStyle(Theme.secondaryText)
+                    ForEach(grouped, id: \.name) { group in
+                        Section(group.name) { jobRows(group.jobs) }
+                    }
+                } else {
+                    Section("Results") {
+                        jobRows(filtered)
+                        if filtered.isEmpty {
+                            Text("No jobs match “\(query)”.")
+                                .foregroundStyle(Theme.secondaryText)
+                        }
                     }
                 }
             }
             .listStyle(.insetGrouped)
-            .searchable(text: $query, prompt: "Search jobs")
-            .navigationTitle("Pay to rank by")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search 116 jobs")
+            .navigationTitle("Rank by which pay?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func jobRows(_ jobs: [OccupationWages.Occupation]) -> some View {
+        ForEach(jobs) { occ in
+            row(title: occ.name, subtitle: nil,
+                isSelected: selected?.code == occ.code, systemImage: "briefcase.fill") {
+                onSelect(occ); dismiss()
             }
         }
     }

@@ -20,8 +20,17 @@ struct OccupationWages: Sendable, Equatable {
 
     /// occ code → (full state name → annual **gross** median wage).
     let annualByOccupationState: [String: [String: Double]]
+    /// occ code → (full state name → number of people employed in that job there,
+    /// BLS OEWS. Lets the UI warn when a state's median pay for a job rests on very
+    /// few actual jobs — a wage shown where the work barely exists.
+    let employmentByOccupationState: [String: [String: Int]]
     /// The occupations we carry, in display order.
     let occupations: [Occupation]
+
+    /// How many people hold this job in a state, or `nil` if not reported.
+    func employment(occupation code: String, state: String) -> Int? {
+        employmentByOccupationState[code]?[state]
+    }
 
     /// Gross annual wage is not take-home. The app works in monthly take-home, so
     /// a single documented estimate turns gross pay into a comparable figure. It's
@@ -94,6 +103,7 @@ enum OccupationWagesLoader {
 
     static func load(bundle: Bundle = .main) -> OccupationWages {
         var map: [String: [String: Double]] = [:]
+        var emp: [String: [String: Int]] = [:]
         for row in rows(of: "occupation_wages", bundle: bundle) {
             guard row.count >= 3 else { continue }
             let code = row[0].trimmingCharacters(in: .whitespaces)
@@ -102,12 +112,17 @@ enum OccupationWagesLoader {
                   let annual = Double(row[2].trimmingCharacters(in: .whitespaces)), annual > 0
             else { continue }
             map[code, default: [:]][state] = annual
+            // Optional 4th column: number employed in that job in that state.
+            if row.count >= 4, let count = Int(row[3].trimmingCharacters(in: .whitespaces)) {
+                emp[code, default: [:]][state] = count
+            }
         }
         let occs = displayNames
             .filter { map[$0.key] != nil }
             .map { OccupationWages.Occupation(code: $0.key, name: $0.value) }
             .sorted { $0.name < $1.name }
-        return OccupationWages(annualByOccupationState: map, occupations: occs)
+        return OccupationWages(annualByOccupationState: map,
+                               employmentByOccupationState: emp, occupations: occs)
     }
 
     private static func rows(of resource: String, bundle: Bundle) -> [[String]] {
@@ -129,6 +144,10 @@ extension OccupationWages {
         annualByOccupationState: [
             "29-1141": ["Massachusetts": 99730, "Tennessee": 76200, "California": 133990, "Mississippi": 69370],
             "15-1252": ["Massachusetts": 137130, "Tennessee": 110660, "California": 168660]
+        ],
+        employmentByOccupationState: [
+            "29-1141": ["Massachusetts": 89000, "Tennessee": 66000, "California": 324000, "Mississippi": 29000],
+            "15-1252": ["Massachusetts": 46000, "Tennessee": 21000, "California": 189000]
         ],
         occupations: [
             .init(code: "29-1141", name: "Registered Nurse"),

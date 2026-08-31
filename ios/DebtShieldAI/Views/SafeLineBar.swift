@@ -115,6 +115,12 @@ struct SafeLineBar: View {
             }
             .frame(height: barHeight)
 
+            // A legend under the bar so every segment is named, not just the wide
+            // ones that fit a label inside — colour is never the only signal.
+            if !plan.segments.isEmpty {
+                legend
+            }
+
             // The "safe line" caption sits under the bar so it never crowds the
             // segments.
             if showsCaption {
@@ -129,6 +135,29 @@ struct SafeLineBar: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilitySummary)
+    }
+
+    /// Wrapping legend of coloured dot + label for every essential in the bar.
+    private var legend: some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 88), spacing: 8, alignment: .leading)],
+            alignment: .leading, spacing: 4
+        ) {
+            ForEach(plan.segments) { seg in
+                HStack(spacing: 5) {
+                    Circle().fill(Theme.essentialColor(seg.kind)).frame(width: 8, height: 8)
+                    Text(seg.label)
+                        .font(.caption2).foregroundStyle(Theme.secondaryText).lineLimit(1)
+                }
+            }
+            if let left = plan.moneyLeft, left > 0 {
+                HStack(spacing: 5) {
+                    Circle().fill(Theme.statusColor(.okay).opacity(0.35)).frame(width: 8, height: 8)
+                    Text("Left over").font(.caption2).foregroundStyle(Theme.secondaryText).lineLimit(1)
+                }
+            }
+        }
+        .accessibilityHidden(true)
     }
 
     /// A thin vertical rule across the bar. Dashed for the safe line (a

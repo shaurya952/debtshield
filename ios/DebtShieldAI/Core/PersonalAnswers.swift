@@ -197,7 +197,7 @@ enum PersonalChatEngine {
         return ChatAnswer(
             text: text,
             provenance: "Simulation of your numbers, on this device",
-            followUps: ["What's my fastest fix?", "Am I heading toward debt?"]
+            followUps: ["What's my fastest fix?", "Where is my month heading?"]
         )
     }
 

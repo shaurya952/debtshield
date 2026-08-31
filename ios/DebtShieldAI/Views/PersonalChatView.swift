@@ -42,9 +42,10 @@ struct PersonalChatView: View {
             return last.followUps
         }
         var prompts = PersonalChatEngine.quickPrompts(for: plan)
-        // Once there's a couple of months tracked, lead with the differentiator.
+        // Once there's a couple of months tracked, lead with the trend question —
+        // phrased neutrally ("where is my month heading"), never a doom prompt.
         if store.history.count >= 2 {
-            prompts.insert("Am I heading toward debt?", at: 0)
+            prompts.insert("Where is my month heading?", at: 0)
         }
         return prompts
     }
@@ -57,7 +58,7 @@ struct PersonalChatView: View {
             inputBar
         }
         .background(Theme.screenGradient)
-        .navigationTitle("Ask Headroom")
+        .navigationTitle("Explain my month")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

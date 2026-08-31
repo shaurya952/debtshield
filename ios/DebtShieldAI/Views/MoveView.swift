@@ -22,6 +22,9 @@ struct MoveView: View {
     @State private var selectedFIPS: String?
     @State private var isPicking = false
     @State private var incomeOverride: Double?
+    /// A rendered, shareable summary image — the "tell a friend" moment. Rebuilt
+    /// whenever the place or pay changes.
+    @State private var shareImage: Image?
 
     private var place: ScoredCounty? {
         guard let fips = selectedFIPS, let dataset = dataStore.dataset else { return nil }
@@ -63,6 +66,15 @@ struct MoveView: View {
         .navigationTitle("Could you afford a move?")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            if let shareImage {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ShareLink(item: shareImage,
+                              preview: SharePreview("Where my money goes furthest", image: shareImage)) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .accessibilityLabel("Share this place")
+                }
+            }
             if let saved, let place {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -85,6 +97,19 @@ struct MoveView: View {
             if selectedFIPS == nil { selectedFIPS = initialFIPS }
             if incomeOverride == nil { incomeOverride = initialIncome ?? store.plan.monthlyIncome }
         }
+        .task(id: "\(selectedFIPS ?? "")#\(Int(incomeOverride ?? 0))") {
+            shareImage = renderShareCard()
+        }
+    }
+
+    /// Render the shareable card to an image on the main actor. `nil` until a place
+    /// with a runnable outlook is chosen.
+    @MainActor private func renderShareCard() -> Image? {
+        guard let place, let outlook else { return nil }
+        let renderer = ImageRenderer(content: ShareCard(place: place, outlook: outlook))
+        renderer.scale = 3
+        guard let ui = renderer.uiImage else { return nil }
+        return Image(uiImage: ui)
     }
 
     // MARK: - Intro + place
@@ -280,6 +305,75 @@ struct MoveView: View {
     private func signedMoney(_ value: Double) -> String {
         let magnitude = money(abs(value))
         return value >= 0 ? magnitude : "−\(magnitude)"
+    }
+}
+
+/// The shareable summary, designed to be rendered to an image and posted. Uses
+/// explicit colours (not theme tokens) so it looks the same wherever it lands, and
+/// carries an honest "estimate, not a recommendation" footer so a screenshot can
+/// never be mistaken for advice.
+struct ShareCard: View {
+    let place: ScoredCounty
+    let outlook: MoveOutlook
+
+    private let ink = Color(red: 0.06, green: 0.08, blue: 0.13)
+    private let muted = Color(red: 0.35, green: 0.40, blue: 0.49)
+    private let green = Color(red: 0.09, green: 0.52, blue: 0.35)
+    private let accent = Color(red: 0.18, green: 0.38, blue: 0.94)
+
+    private func money(_ v: Double) -> String {
+        let r = (v / 50).rounded() * 50
+        return r.formatted(.currency(code: "USD").precision(.fractionLength(0)))
+    }
+    private func signed(_ v: Double) -> String {
+        let m = money(abs(v)); return v >= 0 ? "+\(m)" : "−\(m)"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("WHERE MY MONEY GOES FURTHEST")
+                .font(.system(size: 13, weight: .bold)).kerning(1.2).foregroundStyle(accent)
+            Text(place.displayName)
+                .font(.system(size: 30, weight: .heavy, design: .rounded)).foregroundStyle(ink)
+                .padding(.top, 8).fixedSize(horizontal: false, vertical: true)
+
+            Text(signed(outlook.projectedLeft))
+                .font(.system(size: 56, weight: .black, design: .rounded))
+                .foregroundStyle(outlook.projectedLeft >= 0 ? green : Color(red: 0.75, green: 0.22, blue: 0.17))
+                .padding(.top, 18)
+            Text("left each month here")
+                .font(.system(size: 16, weight: .medium)).foregroundStyle(muted)
+
+            if let now = outlook.currentLeft {
+                HStack(spacing: 8) {
+                    Text("Where you are now").font(.system(size: 15)).foregroundStyle(muted)
+                    Spacer()
+                    Text("\(signed(now)) → \(signed(outlook.projectedLeft))")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(ink)
+                }
+                .padding(.top, 20)
+            }
+            HStack(spacing: 8) {
+                Text("Typical rent (utilities in)").font(.system(size: 15)).foregroundStyle(muted)
+                Spacer()
+                Text(money(outlook.typicalRent))
+                    .font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(ink)
+            }
+            .padding(.top, 10)
+
+            Spacer(minLength: 22)
+            HStack(spacing: 7) {
+                Image(systemName: "location.north.circle.fill").foregroundStyle(accent)
+                Text("Headroom").font(.system(size: 17, weight: .heavy, design: .rounded)).foregroundStyle(ink)
+                Spacer()
+                Text("Estimate — not a moving recommendation")
+                    .font(.system(size: 11)).foregroundStyle(muted)
+                    .multilineTextAlignment(.trailing).frame(width: 150)
+            }
+        }
+        .padding(28)
+        .frame(width: 360, height: 440, alignment: .topLeading)
+        .background(Color.white)
     }
 }
 

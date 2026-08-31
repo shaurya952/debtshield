@@ -30,7 +30,7 @@ struct BuildRoomView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Theme.screenGradient)
-        .navigationTitle("Save & earn more")
+        .navigationTitle("Free up more room")
         .navigationBarTitleDisplayMode(.large)
         .onAppear { UserDefaults.standard.set(true, forKey: "debtshield.opened.saveEarn") }
     }

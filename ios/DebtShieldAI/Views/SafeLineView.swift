@@ -45,7 +45,7 @@ struct SafeLineView: View {
 
                 if plan.isComplete {
                     heroCard
-                    verdictBanner
+                    situationLink
                     whatChangedCard
                     featureGrid
                     editButton
@@ -155,51 +155,28 @@ struct SafeLineView: View {
         }
     }
 
-    // MARK: - Verdict banner (one line → full detail)
+    // MARK: - Situation link (the hero already states the status; this is just the
+    // quiet way into the full read, instead of a second card repeating "on track")
 
     @ViewBuilder
-    private var verdictBanner: some View {
-        if let read = situationRead {
-            let color = HomeDetailStyle.color(read.situation)
+    private var situationLink: some View {
+        if situationRead != nil {
             NavigationLink {
                 SituationDetailView(store: store)
             } label: {
-                HStack(spacing: Theme.Spacing.regular) {
-                    Image(systemName: read.situation.symbol)
-                        .font(.headline.weight(.bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 40, height: 40)
-                        .background(color, in: Circle())
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(read.headline)
-                            .font(Theme.Typography.body.weight(.bold))
-                            .foregroundStyle(color)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text("See what this means")
-                            .font(Theme.Typography.caption)
-                            .foregroundStyle(Theme.secondaryText)
-                    }
-                    Spacer(minLength: Theme.Spacing.tight)
-                    Image(systemName: "chevron.right")
+                HStack(spacing: Theme.Spacing.tight) {
+                    Image(systemName: "text.magnifyingglass")
                         .font(.footnote.weight(.semibold))
-                        .foregroundStyle(Theme.secondaryText)
-                        .accessibilityHidden(true)
+                    Text("What this means for the months ahead")
+                        .font(Theme.Typography.subheadline.weight(.semibold))
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right").font(.caption.weight(.semibold))
                 }
-                .padding(Theme.Spacing.comfortable)
-                .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
-                .background {
-                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                        .fill(Theme.cardBackground)
-                        .overlay {
-                            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                                .fill(color.opacity(0.08))
-                        }
-                        .shadow(color: Theme.cardShadow, radius: 10, x: 0, y: 4)
-                }
+                .foregroundStyle(Theme.brand)
+                .padding(.horizontal, Theme.Spacing.comfortable)
+                .frame(minHeight: Theme.minimumTapTarget)
             }
-            .buttonStyle(PressableCardStyle())
-            .accessibilityLabel(read.headline)
+            .buttonStyle(.plain)
             .accessibilityHint("Opens the full read of where you stand")
         }
     }
@@ -282,8 +259,7 @@ struct SafeLineView: View {
                 systemImage: "chart.line.uptrend.xyaxis",
                 title: "The year ahead",
                 subtitle: riskSubtitle,
-                tint: riskTint,
-                badge: riskPct.map { "\($0)%" }
+                tint: riskTint
             )
         }
         .buttonStyle(PressableCardStyle())
@@ -308,18 +284,13 @@ struct SafeLineView: View {
             BuildRoomView(store: store)
         } label: {
             FeatureTile(
-                systemImage: "sparkles",
-                title: "Save & earn more",
-                subtitle: "Ways to free up cash",
-                tint: Theme.accentWarm
+                systemImage: "scissors",
+                title: "Free up more room",
+                subtitle: "Trim costs, keep more each month",
+                tint: Theme.brand
             )
         }
         .buttonStyle(PressableCardStyle())
-    }
-
-    // The odds read, phrased for the tile.
-    private var riskPct: Int? {
-        outlook.map { Int(($0.probNegativeWithin6mo * 100).rounded()) }
     }
 
     private var riskSubtitle: String {

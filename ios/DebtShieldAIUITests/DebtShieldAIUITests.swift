@@ -90,7 +90,7 @@ final class DebtShieldAIUITests: XCTestCase {
     // MARK: - Reachability (enforced)
 
     func testAllTabsOpen() throws {
-        for name in ["Home", "Places", "Ask", "About"] {
+        for name in ["Home", "Places", "Explain", "About"] {
             openTab(name)
             XCTAssertTrue(tab(name).isSelected, "\(name) tab should become selected")
             _ = app.staticTexts.firstMatch.waitForExistence(timeout: 5)
