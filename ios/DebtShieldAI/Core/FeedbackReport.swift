@@ -41,7 +41,7 @@ enum FeedbackReport {
         diagnostics: FeedbackDiagnostics
     ) -> String {
         var lines: [String] = []
-        lines.append("DebtShield feedback")
+        lines.append("Headroom feedback")
         lines.append("Type: \(type.rawValue)")
         lines.append("")
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -63,7 +63,7 @@ struct SafeLineView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 BrandMark(size: 28)
-                    .accessibilityLabel("DebtShield")
+                    .accessibilityLabel("Headroom")
             }
             if plan.isComplete {
                 ToolbarItem(placement: .topBarTrailing) {

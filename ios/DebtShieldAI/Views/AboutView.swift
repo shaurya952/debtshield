@@ -42,7 +42,7 @@ struct AboutView: View {
                 .shadow(color: .black.opacity(0.12), radius: 6, x: 0, y: 3)
 
             VStack(spacing: 4) {
-                Text("DebtShield")
+                Text("Headroom")
                     .font(.title.weight(.bold))
                     .foregroundStyle(.white)
                 Text("See where your money stands each month")
@@ -68,7 +68,7 @@ struct AboutView: View {
                 .shadow(color: Theme.heroShadow, radius: 14, x: 0, y: 8)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("DebtShield. See where your money stands each month. Private, on-device, no tracking.")
+        .accessibilityLabel("Headroom. See where your money stands each month. Private, on-device, no tracking.")
     }
 
     // MARK: - Sections
@@ -177,8 +177,8 @@ struct AboutView: View {
 
     private var aboutCard: some View {
         Card {
-            SectionHeader(title: "About DebtShield")
-            Text("DebtShield is a calm, private way to see your money. You enter what comes in and what goes out, and it shows you where the month stands — in plain dollars, without a score or a lecture. The goal is simple: to help you stay out of debt, or find your footing if you're already in it.")
+            SectionHeader(title: "About Headroom")
+            Text("Headroom is a calm, private way to see your money. You enter what comes in and what goes out, and it shows you where the month stands — in plain dollars, without a score or a lecture. The goal is simple: to help you stay out of debt, or find your footing if you're already in it.")
                 .font(Theme.Typography.subheadline)
                 .foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)

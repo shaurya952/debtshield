@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The DebtShield shield, drawn as a vector so it can appear anywhere at any
+/// The Headroom shield, drawn as a vector so it can appear anywhere at any
 /// size and adapt to light and dark mode.
 ///
 /// Matches the app icon: a shield split down the middle with three ascending
@@ -80,7 +80,7 @@ struct BrandLockup: View {
         HStack(spacing: Theme.Spacing.tight) {
             BrandMark(size: size, onColor: onColor)
             VStack(alignment: .leading, spacing: -2) {
-                Text("DebtShield")
+                Text("Headroom")
                     .font(.title3.weight(.bold))
                     .foregroundStyle(onColor ? .white : .primary)
                 Text("AI")
@@ -89,7 +89,7 @@ struct BrandLockup: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("DebtShield AI")
+        .accessibilityLabel("Headroom")
     }
 }
 

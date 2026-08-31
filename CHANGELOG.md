@@ -5,6 +5,17 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Renamed the product: DebtShield → Headroom
+- All four external reviews said the name works against the app — "DebtShield" + a
+  blue shield read like debt-settlement / credit-repair marketing, the exact industry
+  the app's ethics avoid, and it under-sells the cost-of-living pivot. Renamed the
+  user-facing product to **Headroom** (already the app's own word — "you've got room").
+- Changed the display name and every in-app string/label. **Bundle id, target, scheme
+  and all `debtshield.*` persistence keys are unchanged**, so existing installs keep
+  their data and the TestFlight/App Store Connect record stays intact.
+- Still to do (human/design): a new app icon (retire the shield) and the App Store
+  listing name. Website rename follows once the name is confirmed.
+
 ### Data-honesty pass (from external review feedback)
 - **Fixed a utilities double-count.** The place projection used Census *gross* rent
   (which already includes utilities) as housing **and** added a separate EIA energy

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Ask DebtShield, re-pointed at the person.
+/// Ask Headroom, re-pointed at the person.
 ///
 /// The county `ChatEngine` explained a place. This explains *your month*, from
 /// the numbers you entered — and nothing else. Like its predecessor it is a

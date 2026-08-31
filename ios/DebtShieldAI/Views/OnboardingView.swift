@@ -71,7 +71,7 @@ struct OnboardingView: View {
                     .accessibilityHidden(true)
 
                 VStack(spacing: Theme.Spacing.regular) {
-                    Text("DebtShield")
+                    Text("Headroom")
                         .font(.largeTitle.weight(.bold))
                         .accessibilityAddTraits(.isHeader)
                     Text("Know where your money stands this month.")
@@ -242,7 +242,7 @@ struct OnboardingView: View {
                     withAnimation(.easeInOut) { tourIndex += 1 }
                 }
             } label: {
-                Text(isLast ? "Start using DebtShield" : "Next")
+                Text(isLast ? "Start using Headroom" : "Next")
                     .font(Theme.Typography.body.weight(.semibold))
                     .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
             }

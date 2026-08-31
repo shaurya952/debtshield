@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Ask DebtShield, pointed at the person's own month.
+/// Ask Headroom, pointed at the person's own month.
 ///
 /// Answers come from `PersonalChatEngine`, which computes every figure from the
 /// `MoneyPlan` on this device. Nothing is networked; nothing is sent anywhere.
@@ -57,7 +57,7 @@ struct PersonalChatView: View {
             inputBar
         }
         .background(Theme.screenGradient)
-        .navigationTitle("Ask DebtShield")
+        .navigationTitle("Ask Headroom")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -212,7 +212,7 @@ struct PersonalChatView: View {
 /// One message.
 ///
 /// Role is carried three ways — alignment, background, and a visible "You" /
-/// "DebtShield" label — so it never depends on colour or position alone.
+/// "Headroom" label — so it never depends on colour or position alone.
 struct ChatBubble: View {
     let message: ChatMessage
 
@@ -222,7 +222,7 @@ struct ChatBubble: View {
         VStack(alignment: isUser ? .trailing : .leading, spacing: 4) {
             HStack(spacing: 5) {
                 if !isUser { BrandMark(size: 15) }
-                Text(isUser ? "You" : "DebtShield")
+                Text(isUser ? "You" : "Headroom")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.secondaryText)
             }

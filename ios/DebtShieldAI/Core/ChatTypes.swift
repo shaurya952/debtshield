@@ -1,6 +1,6 @@
 import Foundation
 
-/// The message and answer types shared by Ask DebtShield.
+/// The message and answer types shared by Ask Headroom.
 ///
 /// These outlived the original county chatbot: the personal responder
 /// (`PersonalChatEngine`) and its view (`PersonalChatView`) both use them, so
@@ -16,7 +16,7 @@ struct ChatMessage: Identifiable, Sendable {
         var accessibilityPrefix: String {
             switch self {
             case .user: return "You asked"
-            case .assistant: return "DebtShield replied"
+            case .assistant: return "Headroom replied"
             }
         }
     }

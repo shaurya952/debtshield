@@ -57,7 +57,7 @@ struct DebtShieldAIApp: App {
             return
         }
         context.evaluatePolicy(.deviceOwnerAuthentication,
-                               localizedReason: "Unlock DebtShield to see your numbers") { success, _ in
+                               localizedReason: "Unlock Headroom to see your numbers") { success, _ in
             Task { @MainActor in
                 if success { locked = false }
             }
@@ -74,7 +74,7 @@ private struct PrivacyCover: View {
                 .ignoresSafeArea()
             VStack(spacing: Theme.Spacing.comfortable) {
                 BrandMark(size: 72)
-                Text("DebtShield")
+                Text("Headroom")
                     .font(.title2.weight(.bold))
                     .foregroundStyle(.white)
             }
@@ -95,7 +95,7 @@ private struct LockScreen: View {
             VStack(spacing: Theme.Spacing.section) {
                 BrandMark(size: 72)
                 VStack(spacing: Theme.Spacing.tight) {
-                    Text("DebtShield is locked")
+                    Text("Headroom is locked")
                         .font(.title2.weight(.bold))
                         .foregroundStyle(.white)
                     Text("Your numbers are hidden until you unlock.")
@@ -116,6 +116,6 @@ private struct LockScreen: View {
             .padding(Theme.Spacing.section)
         }
         .accessibilityAddTraits(.isModal)
-        .accessibilityLabel("DebtShield is locked. Unlock to continue.")
+        .accessibilityLabel("Headroom is locked. Unlock to continue.")
     }
 }

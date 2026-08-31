@@ -23,7 +23,7 @@ enum DataError: LocalizedError, Equatable {
     var message: String {
         switch self {
         case .fileMissing:
-            return "DebtShield could not find its built-in comparison data. Reinstalling the app usually fixes this."
+            return "Headroom could not find its built-in comparison data. Reinstalling the app usually fixes this."
         case .unreadable:
             return "The built-in comparison data could not be opened. It may have been damaged. Reinstalling the app usually fixes this."
         case .emptyFile:

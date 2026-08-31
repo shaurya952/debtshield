@@ -34,7 +34,7 @@ struct PrivacyView: View {
                     .font(.title3.weight(.bold))
                     .accessibilityAddTraits(.isHeader)
             }
-            Text("This is the whole point. DebtShield has no servers, makes no network requests, and has no analytics or tracking. The numbers you enter are saved only on this device and are never uploaded or shared. It works fully offline, including in Airplane Mode.")
+            Text("This is the whole point. Headroom has no servers, makes no network requests, and has no analytics or tracking. The numbers you enter are saved only on this device and are never uploaded or shared. It works fully offline, including in Airplane Mode.")
                 .font(Theme.Typography.subheadline)
         }
     }
@@ -125,7 +125,7 @@ struct PrivacyView: View {
         "Track your location — it never asks and can't see it",
         "Touch your contacts, photos, calendar, or health data",
         "Collect usage analytics, crash reports, or advertising identifiers",
-        "Send anything you type into Ask DebtShield anywhere — it's answered on-device and never stored"
+        "Send anything you type into Ask Headroom anywhere — it's answered on-device and never stored"
     ]
 
     private var childrenCard: some View {
