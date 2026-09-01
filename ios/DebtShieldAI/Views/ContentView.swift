@@ -23,6 +23,9 @@ struct ContentView: View {
     /// Set once the introduction has been read. Persisted so it appears on
     /// first launch only.
     @AppStorage("debtshield.hasSeenOnboarding") private var hasSeenOnboarding = false
+    /// The bundled cost-data version this device has already seen — so an app update
+    /// that ships fresh rent/pay figures can nudge a saved move goal to be re-checked.
+    @AppStorage("debtshield.seenCostDataVersion") private var seenCostDataVersion = 0
     @State private var isShowingOnboarding = false
     /// About/settings is no longer a primary tab — it opens from a Home button, so
     /// the tab bar belongs to the three things people actually do.
@@ -66,6 +69,15 @@ struct ContentView: View {
             if !didPickInitialTab {
                 didPickInitialTab = true
                 if (moneyStore.plan.monthlyIncome ?? 0) > 0 { selectedTab = .places }
+            }
+            // If an app update shipped fresh cost data and a move goal is saved,
+            // nudge the person to re-check it (never a fabricated change — just
+            // "the data moved"). `seen == 0` is a first install, so it stays quiet.
+            if seenCostDataVersion != CostData.version {
+                if seenCostDataVersion > 0, let target = movePlan.plan?.targetName {
+                    Task { await MovePlanReminder.notifyDataRefreshed(placeName: target) }
+                }
+                seenCostDataVersion = CostData.version
             }
         }
         .fullScreenCover(isPresented: $isShowingOnboarding) {

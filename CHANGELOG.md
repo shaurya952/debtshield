@@ -20,6 +20,10 @@ phase/commit references; see Git history for exact timing.
   a bundled `.storekit` config for testing, and an honest, non-nagging paywall.
 
 ### Move Plan — a reason to come back
+- **Goal reminders (opt-in).** Setting a move goal offers a gentle monthly nudge to
+  log savings, and when an app update ships fresh cost data a saved goal gets a
+  one-off "figures refreshed" alert — a real trigger, never a fabricated "rent rose"
+  claim. All local, cancellable by clearing the goal.
 - Pinning a place as your **move goal** (from its detail) unlocks a moving-fund
   tracker on Places: a progress bar toward a rough three-months'-rent fund, with
   quick +/− buttons to log what you've set aside. Turns a one-time "where would my

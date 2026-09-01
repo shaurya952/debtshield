@@ -51,6 +51,9 @@ final class MovePlanStore {
         let keepSaved = (plan?.targetFIPS == fips) ? (plan?.savedSoFar ?? 0) : 0
         plan = MovePlan(targetFIPS: fips, targetName: name, targetRent: rent, savedSoFar: keepSaved)
         persist()
+        // Offer a gentle monthly nudge toward the goal (asks permission once; a no
+        // just means no nudge).
+        Task { await MovePlanReminder.enable(placeName: name) }
     }
 
     /// Add (or, with a negative amount, remove) money from the fund. Never below 0.
@@ -64,6 +67,7 @@ final class MovePlanStore {
     func clear() {
         plan = nil
         defaults.removeObject(forKey: Self.defaultsKey)
+        MovePlanReminder.cancel()
     }
 
     private func persist() {
