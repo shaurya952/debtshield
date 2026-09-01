@@ -96,20 +96,14 @@ struct PlacesView: View {
                             ComparePlacesView(store: store, dataStore: dataStore,
                                               benchmarks: benchmarks, context: context)
                         } label: {
-                            Image(systemName: "arrow.left.arrow.right")
+                            compareLabel(locked: false)
                         }
-                        .accessibilityLabel("Compare two places")
+                        .accessibilityLabel("Compare two places side by side")
                     } else {
                         Button { showingPaywall = true } label: {
-                            Image(systemName: "arrow.left.arrow.right")
-                                .overlay(alignment: .topTrailing) {
-                                    Image(systemName: "lock.fill")
-                                        .font(.system(size: 9, weight: .bold))
-                                        .foregroundStyle(Theme.brand)
-                                        .offset(x: 7, y: -6)
-                                }
+                            compareLabel(locked: true)
                         }
-                        .accessibilityLabel("Compare two places (Headroom Pro)")
+                        .accessibilityLabel("Compare two places side by side (Headroom Pro)")
                     }
                 }
             }
@@ -123,6 +117,17 @@ struct PlacesView: View {
                 occupation = picked
             }
         }
+    }
+
+    /// The Compare toolbar button — a clear labelled control (the word "Compare" is
+    /// the instruction), with a lock when it's a Pro feature.
+    private func compareLabel(locked: Bool) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: locked ? "lock.fill" : "rectangle.split.2x1")
+                .font(.footnote.weight(.semibold))
+            Text("Compare").font(.subheadline.weight(.semibold))
+        }
+        .foregroundStyle(Theme.brand)
     }
 
     // MARK: - Lists
@@ -360,14 +365,18 @@ struct PlacesView: View {
     /// isn't a single number to edit, so the field gives way to a one-line note.
     private var payCard: some View {
         Card {
+            Text("WHICH PAY TO RANK PLACES BY")
+                .font(.caption2.weight(.semibold)).tracking(0.4)
+                .foregroundStyle(Theme.secondaryText)
             Button { pickingOccupation = true } label: {
                 HStack(spacing: Theme.Spacing.regular) {
                     AppIconBadge(systemImage: occupation == nil ? "person.fill" : "briefcase.fill",
                                  tint: Theme.brand, size: 34)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Ranking by").font(.caption).foregroundStyle(Theme.secondaryText)
-                        Text(occupation?.name ?? "My pay")
+                        Text(occupation?.name ?? "Your own take-home")
                             .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
+                        Text(occupation == nil ? "The pay you enter below" : "This job's local pay, state by state")
+                            .font(.caption).foregroundStyle(Theme.secondaryText)
                     }
                     Spacer(minLength: Theme.Spacing.tight)
                     HStack(spacing: 4) {
@@ -378,7 +387,7 @@ struct PlacesView: View {
                 .frame(minHeight: Theme.minimumTapTarget)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Ranking by \(occupation?.name ?? "my pay"). Tap to change.")
+            .accessibilityLabel("Ranking by \(occupation?.name ?? "your own pay"). Tap to change.")
             if occupation == nil {
                 Divider()
                 CurrencyField(title: "Monthly take-home", value: $planningIncome)
@@ -401,9 +410,9 @@ struct PlacesView: View {
             HStack(spacing: Theme.Spacing.regular) {
                 AppIconBadge(systemImage: "briefcase.fill", tint: Theme.brand, size: 30)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("See where your job pays furthest")
+                    Text("Rank by a job's pay instead")
                         .font(Theme.Typography.subheadline.weight(.semibold)).foregroundStyle(.primary)
-                    Text("116 jobs · real local pay by state")
+                    Text("Pick from 116 jobs — real local pay")
                         .font(.caption).foregroundStyle(Theme.secondaryText)
                 }
                 Spacer(minLength: Theme.Spacing.tight)

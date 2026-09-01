@@ -107,9 +107,9 @@ struct AboutView: View {
                 replayOnboarding()
             } label: {
                 DetailNavigationRow(
-                    title: "Show the welcome screen again",
-                    subtitle: "The screen shown when the app first opens",
-                    systemImage: "arrow.counterclockwise"
+                    title: "Replay the intro tour",
+                    subtitle: "A quick walkthrough of what each screen does",
+                    systemImage: "play.circle"
                 )
             }
             .buttonStyle(.plain)
