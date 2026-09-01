@@ -365,7 +365,7 @@ struct PlacesView: View {
     /// isn't a single number to edit, so the field gives way to a one-line note.
     private var payCard: some View {
         Card {
-            Text("WHICH PAY TO RANK PLACES BY")
+            Text(occupation == nil ? "RANKING BY YOUR OWN PAY" : "RANKING BY A JOB'S PAY")
                 .font(.caption2.weight(.semibold)).tracking(0.4)
                 .foregroundStyle(Theme.secondaryText)
             Button { pickingOccupation = true } label: {
@@ -410,9 +410,9 @@ struct PlacesView: View {
             HStack(spacing: Theme.Spacing.regular) {
                 AppIconBadge(systemImage: "briefcase.fill", tint: Theme.brand, size: 30)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Rank by a job's pay instead")
+                    Text("See where your job pays best")
                         .font(Theme.Typography.subheadline.weight(.semibold)).foregroundStyle(.primary)
-                    Text("Pick from 116 jobs — real local pay")
+                    Text("Rank places by your job's local pay · 300+ jobs")
                         .font(.caption).foregroundStyle(Theme.secondaryText)
                 }
                 Spacer(minLength: Theme.Spacing.tight)
@@ -713,7 +713,7 @@ enum PlaceFormat {
 }
 
 /// A searchable, category-grouped picker for the occupations — with a "popular"
-/// shortlist up top so the common jobs are reachable without scrolling 116 rows.
+/// shortlist up top so the common jobs are reachable without scrolling 300 rows.
 struct OccupationPickerSheet: View {
     let occupations: [OccupationWages.Occupation]
     let selected: OccupationWages.Occupation?
@@ -786,7 +786,7 @@ struct OccupationPickerSheet: View {
                 }
             }
             .listStyle(.insetGrouped)
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search 116 jobs")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search 300+ jobs")
             .navigationTitle("Rank by which pay?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -74,7 +74,7 @@ struct PaywallView: View {
     private var freeNote: some View {
         HStack(alignment: .top, spacing: Theme.Spacing.regular) {
             Image(systemName: "checkmark.seal.fill").foregroundStyle(Theme.statusColor(.okay))
-            Text("The whole core stays free — your month, every ranking, all 116 jobs, your move plan — and anything about being short on money is never behind a paywall.")
+            Text("The whole core stays free — your month, every ranking, all 300+ jobs, your move plan — and anything about being short on money is never behind a paywall.")
                 .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }

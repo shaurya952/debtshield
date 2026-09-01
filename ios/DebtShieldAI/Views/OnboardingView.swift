@@ -180,7 +180,7 @@ struct OnboardingView: View {
                      body: "Open the Places tab to rank U.S. metro areas by how much you'd have left living there — your own numbers against each place's real rent. Perspective, never a nudge to move."),
             TourStep(id: 2, symbol: "briefcase.fill", tint: Theme.brand,
                      title: "Rank by your job's local pay",
-                     body: "The same career pays very differently across the country. On Places, tap \u{201C}See where your job pays furthest\u{201D}, pick from 116 jobs, and the whole list re-ranks by that job's local pay."),
+                     body: "The same career pays very differently across the country. On Places, tap \u{201C}See where your job pays furthest\u{201D}, pick from 300+ jobs, and the whole list re-ranks by that job's local pay."),
             TourStep(id: 3, symbol: "flag.checkered", tint: Theme.essentialColor(.debt),
                      title: "Plan a move, at your pace",
                      body: "Found somewhere worth it? Make it your move goal and track a moving fund. Carrying debt? \u{201C}Where debt clears soonest\u{201D} shows where your balance could be gone fastest."),
@@ -412,7 +412,7 @@ private struct TourPreview: View {
                     Text("Registered Nurse").font(.subheadline.weight(.bold))
                 }
                 Spacer()
-                Text("116 jobs").font(.caption).foregroundStyle(Theme.brand)
+                Text("300+ jobs").font(.caption).foregroundStyle(Theme.brand)
             }
             rankRow("1", "California", "$8,700/mo")
             rankRow("2", "Oregon", "$7,200/mo")

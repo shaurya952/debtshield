@@ -54,7 +54,7 @@ struct PersonalChatView: View {
         VStack(spacing: 0) {
             transcript
             Divider()
-            suggestionBar
+            if messages.count > 1 { suggestionBar }
             inputBar
         }
         .background(Theme.screenGradient)
@@ -89,6 +89,7 @@ struct PersonalChatView: View {
                             .id(message.id)
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                    if messages.count <= 1 { exampleCards }
                     disclaimer
                         .id(disclaimerID)
                 }
@@ -124,6 +125,43 @@ struct PersonalChatView: View {
         .frame(maxWidth: .infinity)
         .padding(.top, Theme.Spacing.comfortable)
         .padding(.bottom, Theme.Spacing.tight)
+    }
+
+    /// Friendly starter prompts as tappable cards — fills the first-open screen with
+    /// something to do (and shows what it can actually answer), instead of blank space.
+    private var starterPrompts: [(q: String, icon: String, tint: Color)] {
+        [("Why is it tight?", "questionmark.circle.fill", Theme.statusColor(.tight)),
+         ("Where does my money go?", "chart.pie.fill", Theme.essentialColor(.food)),
+         ("How does my rent compare?", "house.fill", Theme.essentialColor(.housing)),
+         ("What would free up the most?", "scissors", Theme.brand)]
+    }
+
+    private var exampleCards: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.tight) {
+            Text("TRY ASKING")
+                .font(.caption2.weight(.semibold)).tracking(0.4)
+                .foregroundStyle(Theme.secondaryText)
+                .padding(.leading, 4).padding(.top, Theme.Spacing.tight)
+            ForEach(starterPrompts, id: \.q) { item in
+                Button { send(item.q) } label: {
+                    HStack(spacing: Theme.Spacing.regular) {
+                        AppIconBadge(systemImage: item.icon, tint: item.tint, size: 34)
+                        Text(item.q).font(Theme.Typography.body.weight(.medium)).foregroundStyle(.primary)
+                        Spacer(minLength: 0)
+                        Image(systemName: "arrow.turn.down.left").font(.footnote.weight(.semibold))
+                            .foregroundStyle(Theme.brand)
+                    }
+                    .padding(Theme.Spacing.regular)
+                    .frame(maxWidth: .infinity)
+                    .background {
+                        RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                            .fill(Theme.cardBackground)
+                            .shadow(color: Theme.cardShadow, radius: 6, x: 0, y: 3)
+                    }
+                }
+                .buttonStyle(PressableCardStyle())
+            }
+        }
     }
 
     private let disclaimerID = "disclaimer"

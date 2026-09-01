@@ -5,6 +5,16 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### 300 jobs, clearer pay labels, a livelier Explain
+- **Jobs 116 → 300+.** Expanded the occupation set to the ~300 most-common U.S. jobs
+  (real BLS OEWS 2023 state medians + employment), so far more people find their own.
+- **Clearer pay card.** The header now reads "RANKING BY YOUR OWN PAY" / "…A JOB'S PAY"
+  and the invite is "See where your job pays best — rank places by your job's local
+  pay · 300+ jobs" — plainly about jobs, no vague "pays furthest."
+- **Explain isn't boring.** The first-open screen now shows a "TRY ASKING" set of
+  tappable, icon-led starter cards (why it's tight, where money goes, rent vs area,
+  what frees up the most) instead of empty space.
+
 ### Clearer captions + a visual pass on every page
 - **Tightened the wordy captions** across Places — the metros note, the ranking sources,
   the job-pay subtitle and the "you now" figure are all shorter and plainer now.
