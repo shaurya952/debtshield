@@ -151,7 +151,7 @@ struct PlacesView: View {
                                    benchmarks: benchmarks, income: context.income(for: place.county.state), saved: saved)
                 }
             }
-            Text("Metro areas are real population centres (Census CBSAs), so this avoids ranking tiny, thinly-measured rural counties against each other. Open Counties for a finer, less certain view.")
+            Text("Real cities, not tiny rural counties with shaky numbers. Tap Counties for a closer, less certain look.")
                 .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true).padding(.top, Theme.Spacing.tight)
         }
@@ -213,7 +213,7 @@ struct PlacesView: View {
             Text(title).font(Theme.Typography.headline)
             Spacer()
             if occupation == nil, let now = store.plan.moneyLeft {
-                Text("You now: \(PlaceFormat.signed(now))/mo")
+                Text("Now: \(PlaceFormat.signed(now)) left")
                     .font(.caption).foregroundStyle(Theme.secondaryText).monospacedDigit()
             } else if let note {
                 Text(note).font(.caption).foregroundStyle(Theme.secondaryText)
@@ -238,10 +238,7 @@ struct PlacesView: View {
     private func stateRowLabel(rank: Int, _ state: StateRankingEngine.RankedState) -> some View {
         let color = PlaceFormat.color(for: state.medianMonthlyLeft)
         return HStack(spacing: Theme.Spacing.regular) {
-            Text("\(rank)")
-                .font(.callout.weight(.semibold).monospacedDigit())
-                .foregroundStyle(Theme.secondaryText)
-                .frame(width: 26, alignment: .trailing).accessibilityHidden(true)
+            RankBadge(rank: rank)
             VStack(alignment: .leading, spacing: 3) {
                 Text(state.state)
                     .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
@@ -352,7 +349,7 @@ struct PlacesView: View {
     }
 
     private var intro: some View {
-        Text("Where your money would stretch furthest — for perspective, never a nudge to move.")
+        Text("Where your money would stretch furthest. For perspective, never a nudge to move.")
             .font(Theme.Typography.subheadline).foregroundStyle(Theme.secondaryText)
             .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -388,7 +385,7 @@ struct PlacesView: View {
                 jobHookCTA
             } else {
                 Divider()
-                Text("Using the typical local pay for a \(occupation!.name) in each state — an estimated after-tax figure, a ballpark not a real paycheck. States where it isn't reported are left out.")
+                Text("Using a \(occupation!.name)'s typical pay in each state (after an estimated tax cut) — a ballpark, not a real paycheck.")
                     .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -406,7 +403,7 @@ struct PlacesView: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("See where your job pays furthest")
                         .font(Theme.Typography.subheadline.weight(.semibold)).foregroundStyle(.primary)
-                    Text("Rank by your career's local pay — 116 jobs")
+                    Text("116 jobs · real local pay by state")
                         .font(.caption).foregroundStyle(Theme.secondaryText)
                 }
                 Spacer(minLength: Theme.Spacing.tight)
@@ -439,9 +436,9 @@ struct PlacesView: View {
             .fixedSize(horizontal: false, vertical: true).padding(.top, Theme.Spacing.tight)
     }
     private var sourcesText: String {
-        let base = "Ranked by projected money left over: your numbers against each county's typical rent (U.S. Census gross rent, which already includes utilities), plus your own food and debt. States show their typical (median) county. Places within about $50 of each other are effectively tied, and very small counties carry more uncertainty. Doesn't include taxes, insurance, transport or the cost of moving. Typical figures, not a guarantee."
+        let base = "Ranked by money left after rent (U.S. Census — utilities included). Places within ~$50 are effectively tied. Doesn't count taxes, insurance, or moving costs. Typical figures, not a promise."
         return occupation == nil ? base
-            : base + " Pay is the state's median wage for this job (BLS OEWS 2023), shown as an estimated after-tax take-home — a ballpark, not a real paycheck."
+            : base + " Pay is this job's typical state wage (BLS 2023), after an estimated tax cut."
     }
 
     private var emptyState: some View {
@@ -478,6 +475,23 @@ struct RankContext: Equatable {
     }
 }
 
+/// A premium leaderboard-style rank badge — #1 gets a filled gradient coin, the
+/// rest a soft tinted circle. Small touch, but it makes the ranking feel ranked.
+struct RankBadge: View {
+    let rank: Int
+    var body: some View {
+        Text("\(rank)")
+            .font(.footnote.weight(.bold).monospacedDigit())
+            .foregroundStyle(rank == 1 ? .white : Theme.brand)
+            .frame(width: 28, height: 28)
+            .background {
+                Circle().fill(rank == 1 ? AnyShapeStyle(Theme.brandGradient)
+                                        : AnyShapeStyle(Theme.brand.opacity(0.12)))
+            }
+            .accessibilityHidden(true)
+    }
+}
+
 // MARK: - Shared county row
 
 /// One ranked county, as a tappable card that opens its full affordability
@@ -503,10 +517,7 @@ struct RankedPlaceRow: View {
                      initialFIPS: place.county.record.fips, initialIncome: income, saved: saved)
         } label: {
             HStack(spacing: Theme.Spacing.regular) {
-                Text("\(rank)")
-                    .font(.callout.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(Theme.secondaryText)
-                    .frame(width: 26, alignment: .trailing).accessibilityHidden(true)
+                RankBadge(rank: rank)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(place.county.displayName)
                         .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
@@ -584,7 +595,7 @@ struct StateCountiesView: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
                     Text("Specific costs by county")
                         .font(Theme.Typography.headline)
-                    Text("Ranked by the room your numbers would have. Tap any county for its own rent, utilities and payoff.")
+                    Text("Tap any county for its own rent, utilities and payoff.")
                         .font(Theme.Typography.subheadline).foregroundStyle(Theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                     ForEach(Array(counties.enumerated()), id: \.element.id) { i, place in

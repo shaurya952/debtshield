@@ -5,6 +5,15 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Clearer captions + a visual pass on every page
+- **Tightened the wordy captions** across Places — the metros note, the ranking sources,
+  the job-pay subtitle and the "you now" figure are all shorter and plainer now.
+- **Home:** feature tiles get a richer tinted-gradient fill and crisper border.
+- **Places:** leaderboard-style **rank badges** — #1 is a filled gradient coin, the rest
+  soft tinted circles, so the ranking actually reads as ranked.
+- **Explain:** a branded welcome header (the Headroom mark + "Explain your month") so the
+  first-open screen feels intentional instead of empty.
+
 ### Visual lift + pop-to-root navigation
 - **Every screen sits on a soft, brand-tinted ambient backdrop** now (a faint wash at
   the top), with slightly richer card depth — a subtle, premium lift applied at the

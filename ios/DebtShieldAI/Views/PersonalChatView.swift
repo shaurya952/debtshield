@@ -83,6 +83,7 @@ struct PersonalChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.comfortable) {
+                    if messages.count <= 1 { welcomeHeader }
                     ForEach(messages) { message in
                         ChatBubble(message: message)
                             .id(message.id)
@@ -104,6 +105,25 @@ struct PersonalChatView: View {
                 }
             }
         }
+    }
+
+    /// A branded anchor so the first-open Explain screen feels intentional, not empty.
+    private var welcomeHeader: some View {
+        VStack(spacing: Theme.Spacing.regular) {
+            BrandMark(size: 58)
+                .shadow(color: Theme.brand.opacity(0.25), radius: 12, x: 0, y: 6)
+            Text("Explain your month")
+                .font(Theme.Typography.title)
+                .multilineTextAlignment(.center)
+            Text("Answers come only from the numbers you entered — never made up.")
+                .font(Theme.Typography.subheadline)
+                .foregroundStyle(Theme.secondaryText)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, Theme.Spacing.comfortable)
+        .padding(.bottom, Theme.Spacing.tight)
     }
 
     private let disclaimerID = "disclaimer"
