@@ -53,11 +53,11 @@ struct PersonalChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             transcript
-            Divider()
+            Divider().opacity(0.5)
             suggestionBar
             inputBar
         }
-        .background(Theme.screenGradient)
+        .background(AppBackdrop())
         .navigationTitle("Explain my month")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -110,8 +110,14 @@ struct PersonalChatView: View {
     /// A branded anchor so the first-open Explain screen feels intentional, not empty.
     private var welcomeHeader: some View {
         VStack(spacing: Theme.Spacing.regular) {
-            BrandMark(size: 58)
-                .shadow(color: Theme.brand.opacity(0.25), radius: 12, x: 0, y: 6)
+            ZStack {
+                Circle()
+                    .fill(Theme.brand.opacity(0.14))
+                    .frame(width: 108, height: 108)
+                    .blur(radius: 22)
+                BrandMark(size: 58)
+                    .shadow(color: Theme.brand.opacity(0.28), radius: 12, x: 0, y: 6)
+            }
             Text("Explain your month")
                 .font(Theme.Typography.title)
                 .multilineTextAlignment(.center)
@@ -163,7 +169,7 @@ struct PersonalChatView: View {
             .padding(.horizontal, Theme.Spacing.comfortable)
             .padding(.vertical, Theme.Spacing.tight)
         }
-        .background(Theme.screenGradient)
+        .background(.clear)
         .accessibilityLabel("Suggested questions")
     }
 
@@ -264,14 +270,28 @@ struct ChatBubble: View {
             }
             .padding(Theme.Spacing.regular)
             .background {
-                let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+                // Asymmetric corners give each bubble a subtle "tail" toward its
+                // speaker — the classic chat read — while the rest stays soft.
+                let shape = UnevenRoundedRectangle(
+                    topLeadingRadius: 20,
+                    bottomLeadingRadius: isUser ? 20 : 6,
+                    bottomTrailingRadius: isUser ? 6 : 20,
+                    topTrailingRadius: 20,
+                    style: .continuous
+                )
                 if isUser {
                     shape.fill(Theme.brandGradient)
-                        .shadow(color: Theme.brand.opacity(0.28), radius: 8, x: 0, y: 4)
+                        .shadow(color: Theme.brand.opacity(0.30), radius: 10, x: 0, y: 5)
                 } else {
                     shape.fill(Theme.cardBackground)
-                        .overlay(shape.strokeBorder(Theme.separator.opacity(0.6), lineWidth: 1))
-                        .shadow(color: Theme.cardShadow, radius: 7, x: 0, y: 3)
+                        .overlay(
+                            shape.fill(
+                                LinearGradient(colors: [Theme.brand.opacity(0.06), .clear],
+                                               startPoint: .top, endPoint: .bottom)
+                            )
+                        )
+                        .overlay(shape.strokeBorder(Theme.separator.opacity(0.5), lineWidth: 1))
+                        .shadow(color: Theme.cardShadow, radius: 8, x: 0, y: 4)
                 }
             }
         }
