@@ -18,7 +18,18 @@ const has = (html, re) => re.test(html);
 
 async function run() {
   await build();
-  const files = (await readdir(outDir)).filter((f) => f.endsWith(".html"));
+
+  // Walk the built tree so generated SEO pages (jobs/*, cost-of-living/*) count as
+  // both pages to validate and valid link targets.
+  async function walkHtml(dir, prefix = "") {
+    const out = [];
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      if (entry.isDirectory()) out.push(...(await walkHtml(join(dir, entry.name), prefix + entry.name + "/")));
+      else if (entry.name.endsWith(".html")) out.push(prefix + entry.name);
+    }
+    return out;
+  }
+  const files = await walkHtml(outDir);
   if (files.length === 0) err("no HTML files were generated");
 
   const linkTargets = new Set(files.map((f) => "/" + f));
