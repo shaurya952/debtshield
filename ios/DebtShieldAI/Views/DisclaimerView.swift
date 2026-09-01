@@ -14,7 +14,7 @@ struct DisclaimerView: View {
                             .font(.title3.weight(.bold))
                             .accessibilityAddTraits(.isHeader)
                     }
-                    Text("DebtShield shows you your own numbers clearly. It isn't financial advice, legal advice, or benefits advice, and it can't see your full situation.")
+                    Text("Headroom shows you your own numbers clearly. It isn't financial advice, legal advice, or benefits advice, and it can't see your full situation.")
                         .font(Theme.Typography.subheadline)
                 }
 

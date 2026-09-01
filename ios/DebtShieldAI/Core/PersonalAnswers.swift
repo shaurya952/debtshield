@@ -1,6 +1,6 @@
 import Foundation
 
-/// Ask DebtShield, re-pointed at the person.
+/// Ask Headroom, re-pointed at the person.
 ///
 /// The county `ChatEngine` explained a place. This explains *your month*, from
 /// the numbers you entered — and nothing else. Like its predecessor it is a
@@ -138,7 +138,10 @@ enum PersonalChatEngine {
         guard plan.isComplete else {
             return ["What's the safe line?", "What can this tell me?"]
         }
-        var prompts = ["Why is it tight?", "What are my odds of going into debt?", "How does my rent compare?"]
+        // Suggested chips stay neutral and answerable — we don't hand someone an
+        // unprompted "odds of going into debt"; the year-ahead odds are still there
+        // if they ask for them.
+        var prompts = ["Why is it tight?", "Where does my money go?", "How does my rent compare?"]
         if (plan.moneyLeft ?? 0) > 0 {
             prompts.append("How's my cushion?")
         }
@@ -194,7 +197,7 @@ enum PersonalChatEngine {
         return ChatAnswer(
             text: text,
             provenance: "Simulation of your numbers, on this device",
-            followUps: ["What's my fastest fix?", "Am I heading toward debt?"]
+            followUps: ["What's my fastest fix?", "Where is my month heading?"]
         )
     }
 
@@ -518,7 +521,7 @@ enum PersonalChatEngine {
             text = "If this month repeated all year, you'd be about **\(money(-yearly))** short over 12 months (\(money(-left)) a month). Closing the monthly gap is what changes that."
         }
         return ChatAnswer(text: text, provenance: "Your numbers, projected",
-                          followUps: ["What are my odds of going into debt?", "What's my fastest fix?"])
+                          followUps: ["Where does my money go?", "What's my fastest fix?"])
     }
 
     private static func safeLineExplanation(_ plan: MoneyPlan) -> ChatAnswer {

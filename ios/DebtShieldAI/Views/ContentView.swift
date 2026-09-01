@@ -12,17 +12,47 @@ struct ContentView: View {
     @State private var benchmarks = BenchmarksLoader.load()
     @State private var wages = OccupationWagesLoader.load()
     @State private var saved = SavedPlacesStore()
+    @State private var movePlan = MovePlanStore()
+    @State private var pro = ProStore()
     @State private var selectedTab: AppTab = .safeLine
+    /// Land returning users on Places — the differentiator — rather than the monthly
+    /// budget. A brand-new user (no income yet) still starts on Home so they enter
+    /// their numbers first, which is what unlocks everything else.
+    @State private var didPickInitialTab = false
 
     /// Set once the introduction has been read. Persisted so it appears on
     /// first launch only.
     @AppStorage("debtshield.hasSeenOnboarding") private var hasSeenOnboarding = false
+    /// The bundled cost-data version this device has already seen — so an app update
+    /// that ships fresh rent/pay figures can nudge a saved move goal to be re-checked.
+    @AppStorage("debtshield.seenCostDataVersion") private var seenCostDataVersion = 0
     @State private var isShowingOnboarding = false
+    /// About/settings is no longer a primary tab — it opens from a Home button, so
+    /// the tab bar belongs to the three things people actually do.
+    @State private var isShowingAbout = false
+    /// One navigation path per tab, so re-tapping the active tab can pop it back to
+    /// its root — the standard iOS way to never get stuck deep in a section.
+    @State private var paths: [AppTab: NavigationPath] = [:]
+
+    /// Selection binding that pops the active tab to its root when it's re-tapped.
+    private var tabSelection: Binding<AppTab> {
+        Binding(
+            get: { selectedTab },
+            set: { newTab in
+                if newTab == selectedTab { paths[newTab] = NavigationPath() }
+                selectedTab = newTab
+            }
+        )
+    }
+
+    private func path(for tab: AppTab) -> Binding<NavigationPath> {
+        Binding(get: { paths[tab] ?? NavigationPath() }, set: { paths[tab] = $0 })
+    }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: tabSelection) {
             ForEach(AppTab.allCases) { tab in
-                NavigationStack {
+                NavigationStack(path: path(for: tab)) {
                     content(for: tab)
                 }
                 .tabItem {
@@ -32,6 +62,8 @@ struct ContentView: View {
             }
         }
         .tint(Theme.brand)
+        .environment(movePlan)
+        .environment(pro)
         .task {
             // Loads the county data used by the comparison layer. The home
             // screen never waits on this — it renders and works regardless.
@@ -49,6 +81,22 @@ struct ContentView: View {
             #endif
             // Archive the finished month if the calendar has turned over.
             moneyStore.rollOverIfNeeded()
+            // First appearance: open on Places when there are already numbers to
+            // rank, so the hero feature is the front door. Only runs once, so it
+            // never fights the person's own tab taps.
+            if !didPickInitialTab {
+                didPickInitialTab = true
+                if (moneyStore.plan.monthlyIncome ?? 0) > 0 { selectedTab = .places }
+            }
+            // If an app update shipped fresh cost data and a move goal is saved,
+            // nudge the person to re-check it (never a fabricated change — just
+            // "the data moved"). `seen == 0` is a first install, so it stays quiet.
+            if seenCostDataVersion != CostData.version {
+                if seenCostDataVersion > 0, let target = movePlan.plan?.targetName {
+                    Task { await MovePlanReminder.notifyDataRefreshed(placeName: target) }
+                }
+                seenCostDataVersion = CostData.version
+            }
         }
         .fullScreenCover(isPresented: $isShowingOnboarding) {
             OnboardingView {
@@ -56,6 +104,19 @@ struct ContentView: View {
                 isShowingOnboarding = false
             }
             .interactiveDismissDisabled()
+        }
+        .sheet(isPresented: $isShowingAbout) {
+            NavigationStack {
+                AboutView(store: moneyStore) {
+                    isShowingAbout = false
+                    isShowingOnboarding = true
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Done") { isShowingAbout = false }
+                    }
+                }
+            }
         }
         .onAppear {
             if !hasSeenOnboarding { isShowingOnboarding = true }
@@ -68,8 +129,9 @@ struct ContentView: View {
         case .safeLine:
             // The person's own numbers — never waits on the county data. The
             // county data + benchmarks power the "afford a move?" feature and
-            // are optional-by-nature.
-            SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
+            // are optional-by-nature. About/settings opens from its toolbar.
+            SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks,
+                         onShowAbout: { isShowingAbout = true })
         case .places:
             // The relocation hero — ranks where the person's numbers would leave
             // the most breathing room, across every county in the bundled data.
@@ -78,14 +140,9 @@ struct ContentView: View {
                 selectedTab = .safeLine
             }
         case .ask:
-            // The AI, in its own section — with the comparison data wired in so
-            // it can answer "how does my rent compare".
+            // The deterministic assistant, in its own section — with the comparison
+            // data wired in so it can answer "how does my rent compare".
             PersonalChatView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
-        case .about:
-            // About is static — it doesn't depend on the county data.
-            AboutView(store: moneyStore) {
-                isShowingOnboarding = true
-            }
         }
     }
 }
@@ -94,13 +151,13 @@ struct ContentView: View {
 ///
 /// - **Home** — the Safe Line: your month in plain dollars
 /// - **Places** — where your money would stretch furthest, across the U.S.
-/// - **Ask** — the AI, in plain language, about your own numbers
-/// - **About** — how it works, privacy, and the disclaimer
+/// - **Explain** — plain-language, deterministic answers about your own numbers
+///
+/// (About/privacy/methodology opens from a button on Home, not a primary tab.)
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case safeLine
     case places
     case ask
-    case about
 
     var id: String { rawValue }
 
@@ -108,8 +165,7 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         switch self {
         case .safeLine: return "Home"
         case .places: return "Places"
-        case .ask: return "Ask"
-        case .about: return "About"
+        case .ask: return "Explain"
         }
     }
 
@@ -118,7 +174,6 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         case .safeLine: return "house.fill"
         case .places: return "map.fill"
         case .ask: return "bubble.left.and.text.bubble.right.fill"
-        case .about: return "info.circle"
         }
     }
 }

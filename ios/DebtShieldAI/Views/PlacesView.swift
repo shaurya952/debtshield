@@ -15,13 +15,17 @@ struct PlacesView: View {
     let saved: SavedPlacesStore
     var onGoHome: () -> Void
 
+    @Environment(MovePlanStore.self) private var movePlan: MovePlanStore?
+    @Environment(ProStore.self) private var pro: ProStore?
+
     @State private var planningIncome: Double?
+    @State private var showingPaywall = false
     /// nil = rank by the person's own pay; otherwise by this job's local pay.
     @State private var occupation: OccupationWages.Occupation?
     @State private var pickingOccupation = false
-    @State private var scope: Scope = .states
+    @State private var scope: Scope = .metros
 
-    enum Scope: String, CaseIterable, Identifiable { case states = "States", counties = "Counties", saved = "Saved"; var id: String { rawValue } }
+    enum Scope: String, CaseIterable, Identifiable { case metros = "Metros", states = "States", counties = "Counties", saved = "Saved"; var id: String { rawValue } }
 
     private var baseIncome: Double? { store.plan.monthlyIncome }
 
@@ -43,6 +47,11 @@ struct PlacesView: View {
         return PlaceRankingEngine.rank(plan: store.plan, in: dataset, energy: benchmarks.energy,
                                        options: context.options(limit: 30))
     }
+    private var rankedMetros: [PlaceRankingEngine.RankedPlace] {
+        guard let dataset = dataStore.dataset else { return [] }
+        return PlaceRankingEngine.rank(plan: store.plan, in: dataset, energy: benchmarks.energy,
+                                       options: context.options(limit: 40, useMetros: true))
+    }
 
     var body: some View {
         ScrollView {
@@ -51,6 +60,7 @@ struct PlacesView: View {
                     emptyState
                 } else {
                     intro
+                    movePlanCard
                     debtFreedomLink
                     payCard
                     Picker("View", selection: $scope) {
@@ -62,6 +72,7 @@ struct PlacesView: View {
                         loadingCard
                     } else {
                         switch scope {
+                        case .metros:   metrosList
                         case .states:   statesList
                         case .counties: countiesList
                         case .saved:    savedList
@@ -74,28 +85,49 @@ struct PlacesView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Where you'd have room")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if baseIncome != nil {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        ComparePlacesView(store: store, dataStore: dataStore,
-                                          benchmarks: benchmarks, context: context)
-                    } label: {
-                        Image(systemName: "arrow.left.arrow.right")
+                    if pro?.isPro == true {
+                        NavigationLink {
+                            ComparePlacesView(store: store, dataStore: dataStore,
+                                              benchmarks: benchmarks, context: context)
+                        } label: {
+                            compareLabel(locked: false)
+                        }
+                        .accessibilityLabel("Compare two places side by side")
+                    } else {
+                        Button { showingPaywall = true } label: {
+                            compareLabel(locked: true)
+                        }
+                        .accessibilityLabel("Compare two places side by side (Headroom Pro)")
                     }
-                    .accessibilityLabel("Compare two places")
                 }
             }
         }
         .onAppear { if planningIncome == nil { planningIncome = store.plan.monthlyIncome } }
+        .sheet(isPresented: $showingPaywall) {
+            if let pro { PaywallView(pro: pro) }
+        }
         .sheet(isPresented: $pickingOccupation) {
             OccupationPickerSheet(occupations: wages.occupations, selected: occupation) { picked in
                 occupation = picked
             }
         }
+    }
+
+    /// The Compare toolbar button — a clear labelled control (the word "Compare" is
+    /// the instruction), with a lock when it's a Pro feature.
+    private func compareLabel(locked: Bool) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: locked ? "lock.fill" : "rectangle.split.2x1")
+                .font(.footnote.weight(.semibold))
+            Text("Compare").font(.subheadline.weight(.semibold))
+        }
+        .foregroundStyle(Theme.brand)
     }
 
     // MARK: - Lists
@@ -112,6 +144,21 @@ struct PlacesView: View {
                     .buttonStyle(PressableCardStyle())
                 }
             }
+        }
+    }
+
+    private var metrosList: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
+            listHeader(title: "Best metro areas", note: nil)
+            VStack(spacing: Theme.Spacing.regular) {
+                ForEach(Array(rankedMetros.enumerated()), id: \.element.id) { i, place in
+                    RankedPlaceRow(rank: i + 1, place: place, store: store, dataStore: dataStore,
+                                   benchmarks: benchmarks, income: context.income(for: place.county.state), saved: saved)
+                }
+            }
+            Text("Real cities, not tiny rural counties with shaky numbers. Tap Counties for a closer, less certain look.")
+                .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true).padding(.top, Theme.Spacing.tight)
         }
     }
 
@@ -171,7 +218,7 @@ struct PlacesView: View {
             Text(title).font(Theme.Typography.headline)
             Spacer()
             if occupation == nil, let now = store.plan.moneyLeft {
-                Text("You now: \(PlaceFormat.signed(now))/mo")
+                Text("Now: \(PlaceFormat.signed(now)) left")
                     .font(.caption).foregroundStyle(Theme.secondaryText).monospacedDigit()
             } else if let note {
                 Text(note).font(.caption).foregroundStyle(Theme.secondaryText)
@@ -181,19 +228,34 @@ struct PlacesView: View {
 
     // MARK: - State row
 
+    /// Below this many people in a job statewide, we flag the state amber — a high
+    /// median wage there rests on very few actual jobs, so "your pay goes furthest"
+    /// could be pointing at work that barely exists locally. A named heuristic.
+    private let jobScarcityFloor = 500
+
+    private func jobCountText(_ n: Int, job: String) -> String {
+        let j = job.lowercased()
+        return n < jobScarcityFloor
+            ? "Few \(j) jobs here — about \(n.formatted())"
+            : "About \(n.formatted()) \(j) jobs here"
+    }
+
     private func stateRowLabel(rank: Int, _ state: StateRankingEngine.RankedState) -> some View {
         let color = PlaceFormat.color(for: state.medianMonthlyLeft)
         return HStack(spacing: Theme.Spacing.regular) {
-            Text("\(rank)")
-                .font(.callout.weight(.semibold).monospacedDigit())
-                .foregroundStyle(Theme.secondaryText)
-                .frame(width: 26, alignment: .trailing).accessibilityHidden(true)
+            RankBadge(rank: rank)
             VStack(alignment: .leading, spacing: 3) {
                 Text(state.state)
                     .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
                 Text("Best: \(state.best.county.county) · \(state.affordableCount) of \(state.rankedCount) affordable")
                     .font(.caption).foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
+                if let occ = occupation, let n = wages.employment(occupation: occ.code, state: state.state) {
+                    Text(jobCountText(n, job: occ.name))
+                        .font(.caption2)
+                        .foregroundStyle(n < jobScarcityFloor ? Theme.statusColor(.tight) : Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             Spacer(minLength: Theme.Spacing.tight)
             VStack(alignment: .trailing, spacing: 2) {
@@ -214,6 +276,56 @@ struct PlacesView: View {
 
     // MARK: - Header pieces
 
+    /// The retention hook: once someone pins a move goal, this tracks their moving
+    /// fund so the app is worth reopening — a trajectory, not a one-time lookup.
+    @ViewBuilder
+    private var movePlanCard: some View {
+        if let movePlan, let plan = movePlan.plan {
+            Card {
+                HStack(spacing: Theme.Spacing.regular) {
+                    AppIconBadge(systemImage: "flag.checkered", tint: Theme.brand, size: 34)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Your move goal").font(.caption).foregroundStyle(Theme.secondaryText)
+                        Text(plan.targetName)
+                            .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary).lineLimit(1)
+                    }
+                    Spacer(minLength: Theme.Spacing.tight)
+                    Button { movePlan.clear() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(Theme.secondaryText.opacity(0.5))
+                    }
+                    .buttonStyle(.plain).accessibilityLabel("Clear move goal")
+                }
+                ProgressView(value: plan.progress)
+                    .tint(plan.isFunded ? Theme.statusColor(.okay) : Theme.brand)
+                HStack {
+                    Text("\(PlaceFormat.money(plan.savedSoFar)) of \(PlaceFormat.money(plan.fundGoal)) moving fund")
+                        .font(.caption).foregroundStyle(Theme.secondaryText)
+                    Spacer()
+                    Text(plan.isFunded ? "Funded 🎉" : "\(Int((plan.progress * 100).rounded()))%")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(plan.isFunded ? Theme.statusColor(.okay) : Theme.brand)
+                }
+                HStack(spacing: Theme.Spacing.regular) {
+                    fundButton("−$100", -100, movePlan)
+                    fundButton("+$100", 100, movePlan)
+                    fundButton("+$500", 500, movePlan)
+                }
+                Text("A moving fund is roughly three months' rent — deposit, truck and a cushion. An estimate you can adjust, never a quote.")
+                    .font(.caption2).foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func fundButton(_ label: String, _ amount: Double, _ store: MovePlanStore) -> some View {
+        Button { store.addToFund(amount) } label: {
+            Text(label).font(.caption.weight(.semibold))
+                .frame(maxWidth: .infinity, minHeight: 34)
+        }
+        .buttonStyle(.bordered)
+    }
+
     @ViewBuilder
     private var debtFreedomLink: some View {
         if let b = store.plan.debtBalance, b > 0 {
@@ -223,9 +335,9 @@ struct PlacesView: View {
                 HStack(spacing: Theme.Spacing.regular) {
                     AppIconBadge(systemImage: "flag.checkered", tint: Theme.brand, size: 34)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("The fastest way out")
+                        Text("Where debt clears soonest")
                             .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
-                        Text("Where your debt could clear soonest")
+                        Text("Places your balance could be gone fastest")
                             .font(.caption).foregroundStyle(Theme.secondaryText)
                     }
                     Spacer()
@@ -242,7 +354,7 @@ struct PlacesView: View {
     }
 
     private var intro: some View {
-        Text("Where your money would stretch furthest — for perspective, never a nudge to move.")
+        Text("Where your money would stretch furthest. For perspective, never a nudge to move.")
             .font(Theme.Typography.subheadline).foregroundStyle(Theme.secondaryText)
             .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -253,14 +365,18 @@ struct PlacesView: View {
     /// isn't a single number to edit, so the field gives way to a one-line note.
     private var payCard: some View {
         Card {
+            Text(occupation == nil ? "RANKING BY YOUR OWN PAY" : "RANKING BY A JOB'S PAY")
+                .font(.caption2.weight(.semibold)).tracking(0.4)
+                .foregroundStyle(Theme.secondaryText)
             Button { pickingOccupation = true } label: {
                 HStack(spacing: Theme.Spacing.regular) {
                     AppIconBadge(systemImage: occupation == nil ? "person.fill" : "briefcase.fill",
                                  tint: Theme.brand, size: 34)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Ranking by").font(.caption).foregroundStyle(Theme.secondaryText)
-                        Text(occupation?.name ?? "My pay")
+                        Text(occupation?.name ?? "Your own take-home")
                             .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
+                        Text(occupation == nil ? "The pay you enter below" : "This job's local pay, state by state")
+                            .font(.caption).foregroundStyle(Theme.secondaryText)
                     }
                     Spacer(minLength: Theme.Spacing.tight)
                     HStack(spacing: 4) {
@@ -271,17 +387,47 @@ struct PlacesView: View {
                 .frame(minHeight: Theme.minimumTapTarget)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Ranking by \(occupation?.name ?? "my pay"). Tap to change.")
+            .accessibilityLabel("Ranking by \(occupation?.name ?? "your own pay"). Tap to change.")
             if occupation == nil {
                 Divider()
                 CurrencyField(title: "Monthly take-home", value: $planningIncome)
+                jobHookCTA
             } else {
                 Divider()
-                Text("Using the typical local pay for a \(occupation!.name) in each state — estimated take-home. States where it isn't reported are left out.")
+                Text("Using a \(occupation!.name)'s typical pay in each state (after an estimated tax cut) — a ballpark, not a real paycheck.")
                     .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+    }
+
+    /// The differentiator, made obvious: an accented invitation to rank by a job's
+    /// local pay, shown whenever the ranking is on the person's own income. It's the
+    /// one thing no other cost-of-living tool does, so it shouldn't hide behind a
+    /// grey "Change" link.
+    private var jobHookCTA: some View {
+        Button { pickingOccupation = true } label: {
+            HStack(spacing: Theme.Spacing.regular) {
+                AppIconBadge(systemImage: "briefcase.fill", tint: Theme.brand, size: 30)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("See where your job pays best")
+                        .font(Theme.Typography.subheadline.weight(.semibold)).foregroundStyle(.primary)
+                    Text("Rank places by your job's local pay · 300+ jobs")
+                        .font(.caption).foregroundStyle(Theme.secondaryText)
+                }
+                Spacer(minLength: Theme.Spacing.tight)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold)).foregroundStyle(Theme.brand)
+            }
+            .padding(Theme.Spacing.regular)
+            .frame(maxWidth: .infinity)
+            .background {
+                RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                    .fill(Theme.brand.opacity(0.10))
+            }
+        }
+        .buttonStyle(PressableCardStyle())
+        .accessibilityHint("Ranks places by this job's typical local pay")
     }
 
     private var loadingCard: some View {
@@ -299,9 +445,9 @@ struct PlacesView: View {
             .fixedSize(horizontal: false, vertical: true).padding(.top, Theme.Spacing.tight)
     }
     private var sourcesText: String {
-        let base = "Ranked by projected money left over: your numbers against each county's typical rent (U.S. Census) and its state energy bill (EIA). States show their typical (median) county. Typical figures, not a guarantee."
+        let base = "Ranked by money left after rent (U.S. Census — utilities included). Places within ~$50 are effectively tied. Doesn't count taxes, insurance, or moving costs. Typical figures, not a promise."
         return occupation == nil ? base
-            : base + " Pay is the state's median wage for this job (BLS OEWS 2023), shown as an estimated take-home."
+            : base + " Pay is this job's typical state wage (BLS 2023), after an estimated tax cut."
     }
 
     private var emptyState: some View {
@@ -327,13 +473,31 @@ struct RankContext: Equatable {
     var override: Double?
     var byState: [String: Double]?
 
-    func options(limit: Int, stateFilter: String? = nil) -> PlaceRankingEngine.Options {
-        .init(incomeOverride: override, incomeByState: byState, stateFilter: stateFilter, limit: limit)
+    func options(limit: Int, stateFilter: String? = nil, useMetros: Bool = false) -> PlaceRankingEngine.Options {
+        .init(incomeOverride: override, incomeByState: byState, stateFilter: stateFilter,
+              limit: limit, useMetros: useMetros)
     }
     /// The income used for a place in the given state.
     func income(for state: String) -> Double? {
         if let byState { return byState[state] }
         return override
+    }
+}
+
+/// A premium leaderboard-style rank badge — #1 gets a filled gradient coin, the
+/// rest a soft tinted circle. Small touch, but it makes the ranking feel ranked.
+struct RankBadge: View {
+    let rank: Int
+    var body: some View {
+        Text("\(rank)")
+            .font(.footnote.weight(.bold).monospacedDigit())
+            .foregroundStyle(rank == 1 ? .white : Theme.brand)
+            .frame(width: 28, height: 28)
+            .background {
+                Circle().fill(rank == 1 ? AnyShapeStyle(Theme.brandGradient)
+                                        : AnyShapeStyle(Theme.brand.opacity(0.12)))
+            }
+            .accessibilityHidden(true)
     }
 }
 
@@ -362,10 +526,7 @@ struct RankedPlaceRow: View {
                      initialFIPS: place.county.record.fips, initialIncome: income, saved: saved)
         } label: {
             HStack(spacing: Theme.Spacing.regular) {
-                Text("\(rank)")
-                    .font(.callout.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(Theme.secondaryText)
-                    .frame(width: 26, alignment: .trailing).accessibilityHidden(true)
+                RankBadge(rank: rank)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(place.county.displayName)
                         .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
@@ -443,7 +604,7 @@ struct StateCountiesView: View {
                 VStack(alignment: .leading, spacing: Theme.Spacing.regular) {
                     Text("Specific costs by county")
                         .font(Theme.Typography.headline)
-                    Text("Ranked by the room your numbers would have. Tap any county for its own rent, utilities and payoff.")
+                    Text("Tap any county for its own rent, utilities and payoff.")
                         .font(Theme.Typography.subheadline).foregroundStyle(Theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                     ForEach(Array(counties.enumerated()), id: \.element.id) { i, place in
@@ -454,31 +615,25 @@ struct StateCountiesView: View {
             }
             .padding(Theme.Spacing.comfortable).frame(maxWidth: 560).frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle(state)
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    /// The state's basic figures — its typical (median) county rent and its state
-    /// utilities — each against the U.S. average, so the big picture is clear before
-    /// drilling into a single county.
+    /// The state's typical (median) county rent against the U.S. average. Census
+    /// "gross rent" already bundles utilities, so this is one whole housing+utilities
+    /// figure — never a rent line with a separate utility cost added on top.
     private var stateCostCard: some View {
         let rents = counties.compactMap { $0.county.record.medianGrossRent }.filter { $0 > 0 }.sorted()
         let medianRent = rents.isEmpty ? nil : rents[rents.count / 2]
-        let addon = benchmarks.nationalUtilitiesAddon
-        let stateUtil = (benchmarks.energy.typicalBill(inState: state) ?? benchmarks.nationalEnergy) + addon
-        let usUtil = benchmarks.nationalEnergy + addon
         return Card {
-            SectionHeader(title: "Typical costs in \(state)",
-                          subtitle: "The basics here vs the U.S. average")
+            SectionHeader(title: "Typical rent in \(state)",
+                          subtitle: "How it compares to the U.S. average")
             if let medianRent {
-                CostVsUSRow(symbol: "house.fill", label: "Housing (rent)",
+                CostVsUSRow(symbol: "house.fill", label: "Rent — utilities included",
                             here: medianRent, us: benchmarks.nationalRent, tint: Theme.essentialColor(.housing))
-                Divider()
             }
-            CostVsUSRow(symbol: "bolt.fill", label: "Utilities",
-                        here: stateUtil, us: usUtil, tint: Theme.essentialColor(.energy))
-            Text("Typical (median) rent across \(state)'s counties (U.S. Census) and its state utilities (EIA + BLS). Food, getting-around and personal costs don't vary by place in the data, so they travel with your budget.")
+            Text("Typical (median) gross rent across \(state)'s counties (U.S. Census) — it already includes utilities. Food, getting-around, state taxes and insurance don't vary by place in this data yet, so this keeps them unchanged rather than guessing.")
                 .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -528,8 +683,13 @@ enum PlaceFormat {
     static func money(_ value: Double) -> String {
         value.formatted(.currency(code: "USD").precision(.fractionLength(0)))
     }
+    /// Money-left figures are typical-data estimates, so they're rounded to the
+    /// nearest $50 before display: two places within ~$50 aren't meaningfully
+    /// different, and dollar-exact numbers ("+$3,373" vs "+$3,370") imply a
+    /// precision the data doesn't have. The ranking order still uses exact values.
     static func signed(_ value: Double) -> String {
-        let m = money(abs(value)); return value >= 0 ? "+\(m)" : "−\(m)"
+        let rounded = (value / 50).rounded() * 50
+        let m = money(abs(rounded)); return rounded >= 0 ? "+\(m)" : "−\(m)"
     }
     static func color(for tone: MoveOutlook.Tone) -> Color {
         switch tone {
@@ -552,7 +712,8 @@ enum PlaceFormat {
     }
 }
 
-/// A searchable picker for the occupations — far cleaner than a 60-item menu.
+/// A searchable, category-grouped picker for the occupations — with a "popular"
+/// shortlist up top so the common jobs are reachable without scrolling 300 rows.
 struct OccupationPickerSheet: View {
     let occupations: [OccupationWages.Occupation]
     let selected: OccupationWages.Occupation?
@@ -561,41 +722,85 @@ struct OccupationPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var query = ""
 
+    /// A handful of widely-held jobs, surfaced first when nothing is searched.
+    private static let popularCodes = ["29-1141", "15-1252", "25-2021", "47-2111",
+                                       "53-3032", "13-2011", "31-1131", "41-2031"]
+
     private var filtered: [OccupationWages.Occupation] {
         query.isEmpty ? occupations
             : occupations.filter { $0.name.localizedCaseInsensitiveContains(query) }
     }
 
+    /// SOC major group (first two digits) → a friendly, relatable category.
+    private func category(_ code: String) -> String {
+        switch code.prefix(2) {
+        case "11", "13": return "Business & management"
+        case "15", "17", "19": return "Tech, engineering & science"
+        case "21", "23", "25", "27": return "Education, law & creative"
+        case "29", "31": return "Healthcare"
+        case "33", "35", "37", "39": return "Service & safety"
+        case "41", "43": return "Sales & office"
+        default: return "Trades & transport"
+        }
+    }
+
+    private var grouped: [(name: String, jobs: [OccupationWages.Occupation])] {
+        let order = ["Healthcare", "Tech, engineering & science", "Trades & transport",
+                     "Business & management", "Sales & office", "Service & safety",
+                     "Education, law & creative"]
+        let dict = Dictionary(grouping: occupations) { category($0.code) }
+        return order.compactMap { key in
+            guard let jobs = dict[key] else { return nil }
+            return (key, jobs.sorted { $0.name < $1.name })
+        }
+    }
+
+    private var popular: [OccupationWages.Occupation] {
+        Self.popularCodes.compactMap { code in occupations.first { $0.code == code } }
+    }
+
     var body: some View {
         NavigationStack {
             List {
-                if query.isEmpty {
-                    Section {
-                        row(title: "My pay", subtitle: "Rank by your own take-home",
-                            isSelected: selected == nil, systemImage: "person.fill") {
-                            onSelect(nil); dismiss()
-                        }
+                Section {
+                    row(title: "My pay", subtitle: "Rank by your own take-home",
+                        isSelected: selected == nil, systemImage: "person.fill") {
+                        onSelect(nil); dismiss()
                     }
                 }
-                Section("Rank by a job's local pay") {
-                    ForEach(filtered) { occ in
-                        row(title: occ.name, subtitle: nil,
-                            isSelected: selected?.code == occ.code, systemImage: "briefcase.fill") {
-                            onSelect(occ); dismiss()
-                        }
+                if query.isEmpty {
+                    if !popular.isEmpty {
+                        Section("Popular") { jobRows(popular) }
                     }
-                    if filtered.isEmpty {
-                        Text("No jobs match “\(query)”.")
-                            .foregroundStyle(Theme.secondaryText)
+                    ForEach(grouped, id: \.name) { group in
+                        Section(group.name) { jobRows(group.jobs) }
+                    }
+                } else {
+                    Section("Results") {
+                        jobRows(filtered)
+                        if filtered.isEmpty {
+                            Text("No jobs match “\(query)”.")
+                                .foregroundStyle(Theme.secondaryText)
+                        }
                     }
                 }
             }
             .listStyle(.insetGrouped)
-            .searchable(text: $query, prompt: "Search jobs")
-            .navigationTitle("Pay to rank by")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search 300+ jobs")
+            .navigationTitle("Rank by which pay?")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func jobRows(_ jobs: [OccupationWages.Occupation]) -> some View {
+        ForEach(jobs) { occ in
+            row(title: occ.name, subtitle: nil,
+                isSelected: selected?.code == occ.code, systemImage: "briefcase.fill") {
+                onSelect(occ); dismiss()
             }
         }
     }

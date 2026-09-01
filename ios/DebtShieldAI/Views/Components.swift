@@ -205,11 +205,12 @@ struct FeatureTile: View {
                 .fill(Theme.cardBackground)
                 .overlay {
                     RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                        .fill(tint.opacity(0.06))
+                        .fill(LinearGradient(colors: [tint.opacity(0.13), tint.opacity(0.04)],
+                                             startPoint: .topLeading, endPoint: .bottomTrailing))
                 }
                 .overlay {
                     RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                        .strokeBorder(tint.opacity(0.12), lineWidth: 1)
+                        .strokeBorder(tint.opacity(0.18), lineWidth: 1)
                 }
                 .shadow(color: Theme.cardShadow, radius: 10, x: 0, y: 5)
         }
@@ -474,6 +475,6 @@ struct ErrorStateView: View {
             .frame(maxWidth: 520)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
     }
 }

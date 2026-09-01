@@ -39,7 +39,7 @@ struct MonthlyCheckInCard: View {
             }
 
             if showDeniedNote {
-                Text("Notifications are turned off for DebtShield. To get the reminder, enable them in iOS Settings ▸ DebtShield ▸ Notifications.")
+                Text("Notifications are turned off for Headroom. To get the reminder, enable them in iOS Settings ▸ Headroom ▸ Notifications.")
                     .font(Theme.Typography.caption)
                     .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)

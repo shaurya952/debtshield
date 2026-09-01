@@ -100,6 +100,20 @@ at the balance (`availableToward`). Interest is counted only when an APR is
 entered; with no rate it says so rather than inventing one. A payment that can't
 overtake the interest returns "not in reach", never a fake month count.
 
+## Places — relocation ranking (`Views/PlacesView.swift`, `Core/MovePlan.swift`)
+| Name | Value | Meaning | Source |
+|------|-------|---------|--------|
+| `PlacesView.jobScarcityFloor` | `500` | Below this many people in a job statewide, the state is flagged amber — a high median wage there rests on very few actual jobs. | Product heuristic. |
+| Money-left display rounding | `$50` | Ranked money-left figures are rounded to the nearest $50; places within ~$50 are shown as effectively tied, never dollar-exact. | Anti-false-precision. |
+| `MovePlan.fundGoal` | `max($2,000, 3× rent)` | Rough moving-fund target (deposit, truck, cushion), shown as an adjustable estimate. | Product heuristic. |
+| `MoveView.freeSavedLimit` | `5` | Free shortlist size; saving more needs Headroom Pro. Removing/re-saving is always free, and nothing about distress is ever paywalled. | Product/monetization heuristic. |
+
+Ranking defaults to **metro areas** (population-weighted Census CBSAs), not
+counties, so tiny statistically-noisy rural counties aren't ranked against each
+other. Occupation pay is a **state** median shown as an estimated after-tax
+figure (`OccupationWages.takeHomeRatio = 0.78`), never presented as a real
+paycheck; a state where a job isn't reported is left out, never guessed.
+
 ## Change protocol
 1. Edit the `static let` at its source of truth and update this table.
 2. Re-run the (Phase-2) engine unit tests — verdict-boundary and Monte Carlo

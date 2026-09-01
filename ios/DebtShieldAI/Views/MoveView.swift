@@ -19,9 +19,19 @@ struct MoveView: View {
     /// Optional shortlist store — when present, a star saves this place.
     var saved: SavedPlacesStore? = nil
 
+    @Environment(MovePlanStore.self) private var movePlan: MovePlanStore?
+    @Environment(ProStore.self) private var pro: ProStore?
+
+    /// Free shortlist size; beyond this, saving needs Pro (a named heuristic).
+    private let freeSavedLimit = 5
+
+    @State private var showingPaywall = false
     @State private var selectedFIPS: String?
     @State private var isPicking = false
     @State private var incomeOverride: Double?
+    /// A rendered, shareable summary image — the "tell a friend" moment. Rebuilt
+    /// whenever the place or pay changes.
+    @State private var shareImage: Image?
 
     private var place: ScoredCounty? {
         guard let fips = selectedFIPS, let dataset = dataStore.dataset else { return nil }
@@ -49,6 +59,7 @@ struct MoveView: View {
                     resultCard(outlook)
                     if let place { costOfLivingCard(place) }
                     thresholdsCard(outlook)
+                    if let place { moveGoalButton(place) }
                 } else if place != nil {
                     Text("There's no typical rent on record for that place, so I can't run the numbers. Try a nearby county.")
                         .font(Theme.Typography.subheadline)
@@ -59,14 +70,30 @@ struct MoveView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Could you afford a move?")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            if let shareImage {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ShareLink(item: shareImage,
+                              preview: SharePreview("Where my money goes furthest", image: shareImage)) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .accessibilityLabel("Share this place")
+                }
+            }
             if let saved, let place {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        saved.toggle(place.record.fips)
+                        let isSaved = saved.isSaved(place.record.fips)
+                        // Free shortlist holds a handful; beyond that, Pro. Removing
+                        // and re-saving existing places is always free.
+                        if !isSaved, saved.fips.count >= freeSavedLimit, pro?.isPro != true {
+                            showingPaywall = true
+                        } else {
+                            saved.toggle(place.record.fips)
+                        }
                     } label: {
                         Image(systemName: saved.isSaved(place.record.fips) ? "star.fill" : "star")
                     }
@@ -81,10 +108,26 @@ struct MoveView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingPaywall) {
+            if let pro { PaywallView(pro: pro) }
+        }
         .onAppear {
             if selectedFIPS == nil { selectedFIPS = initialFIPS }
             if incomeOverride == nil { incomeOverride = initialIncome ?? store.plan.monthlyIncome }
         }
+        .task(id: "\(selectedFIPS ?? "")#\(Int(incomeOverride ?? 0))") {
+            shareImage = renderShareCard()
+        }
+    }
+
+    /// Render the shareable card to an image on the main actor. `nil` until a place
+    /// with a runnable outlook is chosen.
+    @MainActor private func renderShareCard() -> Image? {
+        guard let place, let outlook else { return nil }
+        let renderer = ImageRenderer(content: ShareCard(place: place, outlook: outlook))
+        renderer.scale = 3
+        guard let ui = renderer.uiImage else { return nil }
+        return Image(uiImage: ui)
     }
 
     // MARK: - Intro + place
@@ -104,7 +147,7 @@ struct MoveView: View {
             if let place {
                 ActionRowLabel(
                     systemImage: "mappin.and.ellipse",
-                    title: "\(place.county), \(place.state)",
+                    title: place.displayName,
                     subtitle: "Typical rent \(money(place.record.medianGrossRent ?? 0)) · Tap to change"
                 )
             } else {
@@ -187,24 +230,19 @@ struct MoveView: View {
         }
     }
 
-    /// How the basics differ *here* — the two costs that actually change by place
-    /// in the bundled data (rent by county, utilities by state), each against the
-    /// U.S. average. Honest about what doesn't vary.
+    /// How rent differs *here* versus the U.S. Census "gross rent" already bundles
+    /// the renter's utilities, so this compares one whole housing+utilities figure —
+    /// it never adds a separate utility cost on top (that would double-count), and
+    /// it's honest that the other costs don't vary by place in the data yet.
     private func costOfLivingCard(_ place: ScoredCounty) -> some View {
         let rentHere = place.record.medianGrossRent ?? 0
         let rentUS = benchmarks.nationalRent
-        let addon = benchmarks.nationalUtilitiesAddon
-        let utilHere = (benchmarks.energy.typicalBill(inState: place.state) ?? benchmarks.nationalEnergy) + addon
-        let utilUS = benchmarks.nationalEnergy + addon
         return Card {
             SectionHeader(title: "Cost of living here",
-                          subtitle: "How the basics compare to the U.S. average")
-            costRow("house.fill", "Housing (rent)", here: rentHere, us: rentUS,
+                          subtitle: "How rent compares to the U.S. average")
+            costRow("house.fill", "Rent — utilities included", here: rentHere, us: rentUS,
                     tint: Theme.essentialColor(.housing))
-            Divider()
-            costRow("bolt.fill", "Utilities", here: utilHere, us: utilUS,
-                    tint: Theme.essentialColor(.energy))
-            Text("These are the costs that change by place — rent (U.S. Census) and utilities (EIA + BLS). Food, getting around and personal costs are similar across the country, so they travel with your budget.")
+            Text("Census gross rent already includes typical utilities (electricity, gas, water). Other costs — food, getting around, state taxes and insurance — don't vary by place in this data yet, so this keeps them at your current amounts rather than guessing.")
                 .font(Theme.Typography.caption)
                 .foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
@@ -240,15 +278,19 @@ struct MoveView: View {
 
     private func thresholdsCard(_ outlook: MoveOutlook) -> some View {
         Card {
-            SectionHeader(title: "What you could afford")
-            row("Most rent you could afford here",
+            SectionHeader(title: "Rough guides")
+            row("Most rent that would still fit here",
                 outlook.maxAffordableRent > 0
-                    ? money(outlook.maxAffordableRent) + " to stay under your safe line"
+                    ? "about " + money(round50(outlook.maxAffordableRent)) + " (utilities included)"
                     : "Your other costs already use it up")
-            row("Income to live here comfortably",
-                money(outlook.incomeNeeded) + "/mo")
+            row("Income to keep a comfortable cushion",
+                "about " + money(round50(outlook.incomeNeeded)) + "/mo")
         }
     }
+
+    /// Round to the nearest $50 — these are typical-data estimates, and dollar-exact
+    /// figures imply a precision the model doesn't have.
+    private func round50(_ value: Double) -> Double { (value / 50).rounded() * 50 }
 
     private func row(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -266,6 +308,40 @@ struct MoveView: View {
 
     // MARK: - Helpers
 
+    /// Turn a one-time lookup into a goal to come back to — pin this place as the
+    /// move target, which unlocks the fund-progress tracker on the Places screen.
+    @ViewBuilder
+    private func moveGoalButton(_ place: ScoredCounty) -> some View {
+        if let movePlan {
+            let isTarget = movePlan.isTarget(place.record.fips)
+            Button {
+                if isTarget {
+                    movePlan.clear()
+                } else {
+                    movePlan.setTarget(fips: place.record.fips, name: place.displayName,
+                                       rent: place.record.medianGrossRent ?? 0)
+                }
+            } label: {
+                HStack(spacing: Theme.Spacing.regular) {
+                    Image(systemName: isTarget ? "flag.checkered" : "flag")
+                        .foregroundStyle(isTarget ? Theme.statusColor(.okay) : Theme.brand)
+                    Text(isTarget ? "This is your move goal" : "Make this my move goal")
+                        .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
+                    Spacer(minLength: Theme.Spacing.tight)
+                    Text(isTarget ? "Tap to clear" : "Track a moving fund")
+                        .font(.caption).foregroundStyle(Theme.secondaryText)
+                }
+                .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+                .padding(.horizontal, Theme.Spacing.comfortable)
+                .background {
+                    RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                        .fill((isTarget ? Theme.statusColor(.okay) : Theme.brand).opacity(0.12))
+                }
+            }
+            .buttonStyle(PressableCardStyle())
+        }
+    }
+
     private func toneColor(_ tone: MoveOutlook.Tone) -> Color {
         switch tone {
         case .good: return Theme.statusColor(.okay)
@@ -281,6 +357,75 @@ struct MoveView: View {
     private func signedMoney(_ value: Double) -> String {
         let magnitude = money(abs(value))
         return value >= 0 ? magnitude : "−\(magnitude)"
+    }
+}
+
+/// The shareable summary, designed to be rendered to an image and posted. Uses
+/// explicit colours (not theme tokens) so it looks the same wherever it lands, and
+/// carries an honest "estimate, not a recommendation" footer so a screenshot can
+/// never be mistaken for advice.
+struct ShareCard: View {
+    let place: ScoredCounty
+    let outlook: MoveOutlook
+
+    private let ink = Color(red: 0.06, green: 0.08, blue: 0.13)
+    private let muted = Color(red: 0.35, green: 0.40, blue: 0.49)
+    private let green = Color(red: 0.09, green: 0.52, blue: 0.35)
+    private let accent = Color(red: 0.18, green: 0.38, blue: 0.94)
+
+    private func money(_ v: Double) -> String {
+        let r = (v / 50).rounded() * 50
+        return r.formatted(.currency(code: "USD").precision(.fractionLength(0)))
+    }
+    private func signed(_ v: Double) -> String {
+        let m = money(abs(v)); return v >= 0 ? "+\(m)" : "−\(m)"
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("WHERE MY MONEY GOES FURTHEST")
+                .font(.system(size: 13, weight: .bold)).kerning(1.2).foregroundStyle(accent)
+            Text(place.displayName)
+                .font(.system(size: 30, weight: .heavy, design: .rounded)).foregroundStyle(ink)
+                .padding(.top, 8).fixedSize(horizontal: false, vertical: true)
+
+            Text(signed(outlook.projectedLeft))
+                .font(.system(size: 56, weight: .black, design: .rounded))
+                .foregroundStyle(outlook.projectedLeft >= 0 ? green : Color(red: 0.75, green: 0.22, blue: 0.17))
+                .padding(.top, 18)
+            Text("left each month here")
+                .font(.system(size: 16, weight: .medium)).foregroundStyle(muted)
+
+            if let now = outlook.currentLeft {
+                HStack(spacing: 8) {
+                    Text("Where you are now").font(.system(size: 15)).foregroundStyle(muted)
+                    Spacer()
+                    Text("\(signed(now)) → \(signed(outlook.projectedLeft))")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(ink)
+                }
+                .padding(.top, 20)
+            }
+            HStack(spacing: 8) {
+                Text("Typical rent (utilities in)").font(.system(size: 15)).foregroundStyle(muted)
+                Spacer()
+                Text(money(outlook.typicalRent))
+                    .font(.system(size: 15, weight: .semibold, design: .rounded)).foregroundStyle(ink)
+            }
+            .padding(.top, 10)
+
+            Spacer(minLength: 22)
+            HStack(spacing: 7) {
+                Image(systemName: "location.north.circle.fill").foregroundStyle(accent)
+                Text("Headroom").font(.system(size: 17, weight: .heavy, design: .rounded)).foregroundStyle(ink)
+                Spacer()
+                Text("Estimate — not a moving recommendation")
+                    .font(.system(size: 11)).foregroundStyle(muted)
+                    .multilineTextAlignment(.trailing).frame(width: 150)
+            }
+        }
+        .padding(28)
+        .frame(width: 360, height: 440, alignment: .topLeading)
+        .background(Color.white)
     }
 }
 

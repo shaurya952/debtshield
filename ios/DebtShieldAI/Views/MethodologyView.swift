@@ -29,7 +29,7 @@ struct MethodologyView: View {
 
                 card("How the ranking works",
                      paras: [
-                        "For every county, it computes what your month would look like living there — your income (or a job's local pay) against that place's rent and energy plus your own food and debt — and sorts by money left over. A state's rank is its median county, so one unusually cheap county can't flatter it.",
+                        "For every county, it computes what your month would look like living there — your income (or a job's local pay) against that place's typical rent, plus your own food and debt — and sorts by money left over. The rent is Census gross rent, which already includes utilities, so it isn't double-counted. A state's rank is its median county, so one unusually cheap county can't flatter it.",
                         "Risk is a Monte Carlo simulation: 300 runs of the year ahead on the budget you'd have there, reading the odds of running short at some point — banded low, some, or higher. It's seeded, so a place's risk never changes between looks."
                      ])
 
@@ -37,6 +37,7 @@ struct MethodologyView: View {
                      paras: [
                         "These are typical figures, not a quote. A county's median rent isn't your exact apartment, and typical costs aren't a guarantee.",
                         "For a job's pay, the figure is that state's median wage shown as an estimated take-home (about 78% of gross, a rough blend of federal, FICA and typical state tax) — a ballpark to compare places, not your real paycheck.",
+                        "It doesn't yet include state income taxes, insurance, transport, childcare or healthcare, and it never includes the upfront cost of moving — a place that looks cheaper each month can still cost thousands to move to, and a job may or may not exist there. Weigh those separately.",
                         "A state where a job isn't reported is simply left out, never guessed. And none of this is advice to move — it's perspective on where your money stretches."
                      ])
             }
@@ -44,7 +45,7 @@ struct MethodologyView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Methods & sources")
         .navigationBarTitleDisplayMode(.inline)
     }

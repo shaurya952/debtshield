@@ -9,7 +9,7 @@ struct HowItWorksView: View {
                     Text("The whole idea")
                         .font(Theme.Typography.title)
                         .accessibilityAddTraits(.isHeader)
-                    Text("Money feels calmer when you can see it. You enter what comes in and what goes out each month, and DebtShield shows you — in plain dollars — how much room you have. No score out of 100, no grade, no judgment.")
+                    Text("Money feels calmer when you can see it. You enter what comes in and what goes out each month, and Headroom shows you — in plain dollars — how much room you have. No score out of 100, no grade, no judgment.")
                         .font(Theme.Typography.body)
                         .foregroundStyle(Theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
@@ -59,7 +59,7 @@ struct HowItWorksView: View {
 
                 Card {
                     SectionHeader(title: "What it can't do")
-                    Text("DebtShield isn't financial or legal advice, and it can't see your full situation. It's a clear, private picture of your month — a starting point, not a decision. For real help, dialling **211** in the United States connects you to local assistance, and HUD-approved counsellors offer free money and housing guidance.")
+                    Text("Headroom isn't financial or legal advice, and it can't see your full situation. It's a clear, private picture of your month — a starting point, not a decision. For real help, dialling **211** in the United States connects you to local assistance, and HUD-approved counsellors offer free money and housing guidance.")
                         .font(Theme.Typography.body)
                         .foregroundStyle(Theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)

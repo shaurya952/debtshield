@@ -35,7 +35,7 @@ struct PlaceDetailView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle(county.county)
         .navigationBarTitleDisplayMode(.large)
     }

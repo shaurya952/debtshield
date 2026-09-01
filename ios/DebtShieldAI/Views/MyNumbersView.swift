@@ -96,7 +96,7 @@ struct MyNumbersView: View {
                 } header: {
                     Text("Debt")
                 } footer: {
-                    Text("Add the total you still owe and its rate to unlock “the fastest way out” — where your debt could clear soonest.")
+                    Text("Add the total you still owe and its rate to unlock “where debt clears soonest” — the places your balance could be gone fastest.")
                 }
 
                 Section {

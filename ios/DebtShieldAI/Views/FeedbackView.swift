@@ -80,7 +80,7 @@ struct FeedbackView: View {
                 .buttonStyle(.borderedProminent)
                 .sensoryFeedback(.success, trigger: copied)
             } footer: {
-                Text("Copy this and paste it wherever you're sharing feedback (a message, an email, or an issue). A dedicated in-app send option will arrive with the DebtShield website.")
+                Text("Copy this and paste it wherever you're sharing feedback (a message, an email, or an issue). A dedicated in-app send option will arrive with the Headroom website.")
             }
         }
         .navigationTitle("Send feedback")

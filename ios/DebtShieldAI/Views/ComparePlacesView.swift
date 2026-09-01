@@ -50,7 +50,7 @@ struct ComparePlacesView: View {
             }
             .padding(Theme.Spacing.comfortable).frame(maxWidth: 560).frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Compare two places")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $picking) { slot in

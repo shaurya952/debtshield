@@ -26,13 +26,13 @@ struct TrustCenterView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Trust Center")
         .navigationBarTitleDisplayMode(.inline)
     }
 
     private var intro: some View {
-        Text("DebtShield only works if you can trust it. Here's exactly what it does, what it never does, how the numbers are worked out, and how your data is handled — in plain terms.")
+        Text("Headroom only works if you can trust it. Here's exactly what it does, what it never does, how the numbers are worked out, and how your data is handled — in plain terms.")
             .font(Theme.Typography.body)
             .foregroundStyle(Theme.secondaryText)
             .fixedSize(horizontal: false, vertical: true)
@@ -43,7 +43,7 @@ struct TrustCenterView: View {
 
     private var doesCard: some View {
         Card {
-            SectionHeader(title: "What DebtShield does")
+            SectionHeader(title: "What Headroom does")
             ForEach(Self.does, id: \.self) { markRow($0, "checkmark.circle.fill", Theme.statusColor(.okay)) }
         }
     }
@@ -170,7 +170,7 @@ struct TrustCenterView: View {
     private var accessibilityCard: some View {
         Card {
             SectionHeader(title: "Accessibility")
-            Text("DebtShield is built to work for everyone:")
+            Text("Headroom is built to work for everyone:")
                 .font(Theme.Typography.subheadline)
                 .foregroundStyle(Theme.secondaryText)
             ForEach(Self.a11y, id: \.self) { markRow($0, "checkmark.circle.fill", Theme.statusColor(.okay)) }
@@ -194,7 +194,7 @@ struct TrustCenterView: View {
         Card {
             SectionHeader(
                 title: "Free help",
-                subtitle: "DebtShield is not an emergency service. If you're in crisis, contact local emergency services."
+                subtitle: "Headroom is not an emergency service. If you're in crisis, contact local emergency services."
             )
             linkRow("Call or text 211", "Free, confidential help with rent, utilities, food, and more — anywhere in the U.S.", "phone.circle.fill", "tel:211")
             linkRow("211.org", "Find local assistance online.", "globe", "https://www.211.org")
@@ -256,7 +256,7 @@ struct TrustCenterView: View {
                         .font(Theme.Typography.subheadline)
                         .foregroundStyle(Theme.brand)
                 }
-                .accessibilityLabel("Email DebtShield support at debtshieldsupport@gmail.com")
+                .accessibilityLabel("Email Headroom support at debtshieldsupport@gmail.com")
             }
         }
     }

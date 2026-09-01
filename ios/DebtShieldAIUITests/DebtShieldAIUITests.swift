@@ -90,12 +90,19 @@ final class DebtShieldAIUITests: XCTestCase {
     // MARK: - Reachability (enforced)
 
     func testAllTabsOpen() throws {
-        for name in ["Home", "Places", "Ask", "About"] {
+        for name in ["Home", "Places", "Explain"] {
             openTab(name)
             XCTAssertTrue(tab(name).isSelected, "\(name) tab should become selected")
             _ = app.staticTexts.firstMatch.waitForExistence(timeout: 5)
             audit(name)
         }
+    }
+
+    /// About/privacy is no longer a tab — it opens from the Home logo button.
+    private func openAbout() {
+        openTab("Home")
+        let b = app.buttons["About Headroom, privacy and methodology"]
+        if b.waitForExistence(timeout: 8) { b.tap() }
     }
 
     // MARK: - Home detail screens (enforced: they open; audit recorded)
@@ -115,18 +122,18 @@ final class DebtShieldAIUITests: XCTestCase {
         }
     }
 
-    func testSaveAndEarnMoreOpens() throws {
+    func testFreeUpRoomOpens() throws {
         openTab("Home")
-        let tile = app.buttons["Save & earn more"]
+        let tile = app.buttons["Free up more room"]
         XCTAssertTrue(tile.waitForExistence(timeout: 10))
         tile.tap()
-        XCTAssertTrue(app.navigationBars["Save & earn more"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.navigationBars["Free up more room"].waitForExistence(timeout: 10))
         _ = app.staticTexts.firstMatch.waitForExistence(timeout: 5)
-        audit("Save & earn more")
+        audit("Free up more room")
     }
 
     func testTrustCenterOpens() throws {
-        openTab("About")
+        openAbout()
         let row = app.buttons.containing(
             NSPredicate(format: "label CONTAINS[c] 'Trust Center'")
         ).firstMatch

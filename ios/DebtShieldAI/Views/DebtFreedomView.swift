@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// "The fastest way out" — where your debt could clear soonest.
+/// "Where debt clears soonest" — the places your balance could be gone fastest.
 ///
 /// The capstone: it takes the debt you owe, the amount you could put toward it
 /// (your minimum plus whatever's left over), and re-runs it against every place —
@@ -41,6 +41,7 @@ struct DebtFreedomView: View {
                 } else if let balance {
                     intro
                     baselineCard(balance)
+                    movingCostNote
                     header
                     VStack(spacing: Theme.Spacing.regular) {
                         ForEach(Array(places.enumerated()), id: \.element.id) { i, place in
@@ -55,8 +56,8 @@ struct DebtFreedomView: View {
             }
             .padding(Theme.Spacing.comfortable).frame(maxWidth: 560).frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
-        .navigationTitle("The fastest way out")
+        .background { AppBackdrop() }
+        .navigationTitle("Where debt clears soonest")
         .navigationBarTitleDisplayMode(.inline)
         .task { await compute() }
     }
@@ -94,6 +95,25 @@ struct DebtFreedomView: View {
         Text("Every spare dollar clears debt faster — and a cheaper place, or a better-paying local job, frees up more of them. Here's where your debt could be gone soonest if you put everything spare toward it.")
             .font(Theme.Typography.body).foregroundStyle(Theme.secondaryText)
             .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// The most important caveat on this screen: a move isn't free, and for someone
+    /// carrying debt that upfront cost is exactly the constraint the ranking removes.
+    /// Named plainly so "clears soonest" never reads as "just move."
+    private var movingCostNote: some View {
+        Card {
+            HStack(alignment: .top, spacing: Theme.Spacing.regular) {
+                AppIconBadge(systemImage: "exclamationmark.triangle.fill",
+                             tint: Theme.statusColor(.tight), size: 30)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("A move isn't free")
+                        .font(Theme.Typography.body.weight(.semibold))
+                    Text("Moving usually costs a few thousand dollars up front — deposit, truck, time off — and needs a job waiting there. As an example, if a place saved you $300 a month, a $4,000 move would take over a year just to break even. These rankings don't include moving costs or whether the job exists locally, so treat them as perspective, not a plan.")
+                        .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
     }
 
     private func baselineCard(_ balance: Double) -> some View {

@@ -30,7 +30,7 @@ struct BuildRoomView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Theme.screenGradient)
-        .navigationTitle("Save & earn more")
+        .navigationTitle("Free up more room")
         .navigationBarTitleDisplayMode(.large)
         .onAppear { UserDefaults.standard.set(true, forKey: "debtshield.opened.saveEarn") }
     }
@@ -164,7 +164,7 @@ struct BuildRoomView: View {
     // MARK: - Footer
 
     private var footerNote: some View {
-        Text("DebtShield isn't affiliated with these organisations and earns nothing from these links. They're public, reputable, and free. This screen is a starting point, not financial or legal advice.")
+        Text("Headroom isn't affiliated with these organisations and earns nothing from these links. They're public, reputable, and free. This screen is a starting point, not financial or legal advice.")
             .font(Theme.Typography.caption)
             .foregroundStyle(Theme.secondaryText)
             .fixedSize(horizontal: false, vertical: true)

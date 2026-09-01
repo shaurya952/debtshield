@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Ask DebtShield, pointed at the person's own month.
+/// Ask Headroom, pointed at the person's own month.
 ///
 /// Answers come from `PersonalChatEngine`, which computes every figure from the
 /// `MoneyPlan` on this device. Nothing is networked; nothing is sent anywhere.
@@ -42,9 +42,10 @@ struct PersonalChatView: View {
             return last.followUps
         }
         var prompts = PersonalChatEngine.quickPrompts(for: plan)
-        // Once there's a couple of months tracked, lead with the differentiator.
+        // Once there's a couple of months tracked, lead with the trend question —
+        // phrased neutrally ("where is my month heading"), never a doom prompt.
         if store.history.count >= 2 {
-            prompts.insert("Am I heading toward debt?", at: 0)
+            prompts.insert("Where is my month heading?", at: 0)
         }
         return prompts
     }
@@ -52,12 +53,12 @@ struct PersonalChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             transcript
-            Divider()
+            Divider().opacity(0.5)
             suggestionBar
             inputBar
         }
-        .background(Theme.screenGradient)
-        .navigationTitle("Ask DebtShield")
+        .background(AppBackdrop())
+        .navigationTitle("Explain my month")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -82,6 +83,7 @@ struct PersonalChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Spacing.comfortable) {
+                    if messages.count <= 1 { welcomeHeader }
                     ForEach(messages) { message in
                         ChatBubble(message: message)
                             .id(message.id)
@@ -103,6 +105,31 @@ struct PersonalChatView: View {
                 }
             }
         }
+    }
+
+    /// A branded anchor so the first-open Explain screen feels intentional, not empty.
+    private var welcomeHeader: some View {
+        VStack(spacing: Theme.Spacing.regular) {
+            ZStack {
+                Circle()
+                    .fill(Theme.brand.opacity(0.14))
+                    .frame(width: 108, height: 108)
+                    .blur(radius: 22)
+                BrandMark(size: 58)
+                    .shadow(color: Theme.brand.opacity(0.28), radius: 12, x: 0, y: 6)
+            }
+            Text("Explain your month")
+                .font(Theme.Typography.title)
+                .multilineTextAlignment(.center)
+            Text("Answers come only from the numbers you entered — never made up.")
+                .font(Theme.Typography.subheadline)
+                .foregroundStyle(Theme.secondaryText)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, Theme.Spacing.comfortable)
+        .padding(.bottom, Theme.Spacing.tight)
     }
 
     private let disclaimerID = "disclaimer"
@@ -142,7 +169,7 @@ struct PersonalChatView: View {
             .padding(.horizontal, Theme.Spacing.comfortable)
             .padding(.vertical, Theme.Spacing.tight)
         }
-        .background(Theme.screenGradient)
+        .background(.clear)
         .accessibilityLabel("Suggested questions")
     }
 
@@ -212,7 +239,7 @@ struct PersonalChatView: View {
 /// One message.
 ///
 /// Role is carried three ways — alignment, background, and a visible "You" /
-/// "DebtShield" label — so it never depends on colour or position alone.
+/// "Headroom" label — so it never depends on colour or position alone.
 struct ChatBubble: View {
     let message: ChatMessage
 
@@ -222,7 +249,7 @@ struct ChatBubble: View {
         VStack(alignment: isUser ? .trailing : .leading, spacing: 4) {
             HStack(spacing: 5) {
                 if !isUser { BrandMark(size: 15) }
-                Text(isUser ? "You" : "DebtShield")
+                Text(isUser ? "You" : "Headroom")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(Theme.secondaryText)
             }
@@ -243,14 +270,28 @@ struct ChatBubble: View {
             }
             .padding(Theme.Spacing.regular)
             .background {
-                let shape = RoundedRectangle(cornerRadius: 20, style: .continuous)
+                // Asymmetric corners give each bubble a subtle "tail" toward its
+                // speaker — the classic chat read — while the rest stays soft.
+                let shape = UnevenRoundedRectangle(
+                    topLeadingRadius: 20,
+                    bottomLeadingRadius: isUser ? 20 : 6,
+                    bottomTrailingRadius: isUser ? 6 : 20,
+                    topTrailingRadius: 20,
+                    style: .continuous
+                )
                 if isUser {
                     shape.fill(Theme.brandGradient)
-                        .shadow(color: Theme.brand.opacity(0.28), radius: 8, x: 0, y: 4)
+                        .shadow(color: Theme.brand.opacity(0.30), radius: 10, x: 0, y: 5)
                 } else {
                     shape.fill(Theme.cardBackground)
-                        .overlay(shape.strokeBorder(Theme.separator.opacity(0.6), lineWidth: 1))
-                        .shadow(color: Theme.cardShadow, radius: 7, x: 0, y: 3)
+                        .overlay(
+                            shape.fill(
+                                LinearGradient(colors: [Theme.brand.opacity(0.06), .clear],
+                                               startPoint: .top, endPoint: .bottom)
+                            )
+                        )
+                        .overlay(shape.strokeBorder(Theme.separator.opacity(0.5), lineWidth: 1))
+                        .shadow(color: Theme.cardShadow, radius: 8, x: 0, y: 4)
                 }
             }
         }

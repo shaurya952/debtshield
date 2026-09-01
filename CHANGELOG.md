@@ -5,6 +5,139 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### 300 jobs, clearer pay labels, a livelier Explain
+- **Jobs 116 → 300+.** Expanded the occupation set to the ~300 most-common U.S. jobs
+  (real BLS OEWS 2023 state medians + employment), so far more people find their own.
+- **Clearer pay card.** The header now reads "RANKING BY YOUR OWN PAY" / "…A JOB'S PAY"
+  and the invite is "See where your job pays best — rank places by your job's local
+  pay · 300+ jobs" — plainly about jobs, no vague "pays furthest."
+- **Explain isn't boring.** The first-open screen now shows a "TRY ASKING" set of
+  tappable, icon-led starter cards (why it's tight, where money goes, rent vs area,
+  what frees up the most) instead of empty space.
+
+### Clearer captions + a visual pass on every page
+- **Tightened the wordy captions** across Places — the metros note, the ranking sources,
+  the job-pay subtitle and the "you now" figure are all shorter and plainer now.
+- **Home:** feature tiles get a richer tinted-gradient fill and crisper border.
+- **Places:** leaderboard-style **rank badges** — #1 is a filled gradient coin, the rest
+  soft tinted circles, so the ranking actually reads as ranked.
+- **Explain:** a branded welcome header (the Headroom mark + "Explain your month") so the
+  first-open screen feels intentional instead of empty.
+
+### Visual lift + pop-to-root navigation
+- **Every screen sits on a soft, brand-tinted ambient backdrop** now (a faint wash at
+  the top), with slightly richer card depth — a subtle, premium lift applied at the
+  design-system level so it reaches every page without over-designing the calm look.
+- **Re-tapping the active tab pops it back to its root** (per-tab navigation paths) —
+  the standard iOS way to never get stuck deep in a section. No separate "home" button
+  needed: the Home tab is home, and ‹ back steps up.
+
+### A real product tour + visual polish
+- **Rebuilt the onboarding as an animated product tour** with live-looking previews of
+  the actual screens — the Home card, the metro ranking, the job-pay re-rank, the move
+  plan, the privacy promise — each floating on a soft gradient with the app's own
+  colours and shapes. It looks premium (not "half nice") and it teaches navigation, so
+  new users don't get lost. Replayable from About; springs in, respects Reduce Motion.
+
+### New icon, 3 tabs, and Headroom Pro
+- **New app icon + in-app mark** — a white upward arrow rising into open space on an
+  indigo→violet tile. The old blue shield read like antivirus / debt-settlement
+  branding; this reads as "room, where your money goes further." Dropped the "AI"
+  wordmark too.
+- **About left the tab bar.** Three tabs now — Home, Places, Explain — with
+  About / privacy / methodology opening from the Headroom logo on Home. The
+  differentiator gets the nav real estate; the legal content is one tap away.
+- **Headroom Pro** — a single, one-time unlock (StoreKit 2, no subscription) for two
+  power features: compare places side by side, and an unlimited shortlist (free holds
+  five). The whole core — your month, every ranking, all 116 jobs, the move plan —
+  stays free, and nothing that touches distress is ever paywalled. Includes Restore,
+  a bundled `.storekit` config for testing, and an honest, non-nagging paywall.
+
+### Move Plan — a reason to come back
+- **Goal reminders (opt-in).** Setting a move goal offers a gentle monthly nudge to
+  log savings, and when an app update ships fresh cost data a saved goal gets a
+  one-off "figures refreshed" alert — a real trigger, never a fabricated "rent rose"
+  claim. All local, cancellable by clearing the goal.
+- Pinning a place as your **move goal** (from its detail) unlocks a moving-fund
+  tracker on Places: a progress bar toward a rough three-months'-rent fund, with
+  quick +/− buttons to log what you've set aside. Turns a one-time "where would my
+  money go furthest?" lookup into a trajectory — the honest retention hook,
+  on-device like everything else.
+
+### Metro areas — the keystone credibility fix
+- **Ranking is now by metro area, not county, by default.** Ranking ~3,000 counties
+  surfaced depopulating rural counties whose rent is low only because demand is (the
+  "Woodruff County" problem), with ACS margins wider than the gaps being ranked. The
+  new **Metros** tab ranks ~387 population-weighted Census CBSAs — real places people
+  actually move to (the cheapest are now Johnstown PA, Weirton-Steubenville WV-OH, not
+  ghost counties). States and Counties remain as tabs for the finer, less-certain view.
+- Metro rent/income are **population-weighted rollups** of the member counties' Census
+  figures, built from the official OMB county→CBSA delineation + Census population
+  estimates. Bundled as `metro_data.csv`; the place lookup and move engine treat a
+  metro exactly like a county, so the detail, cost card, and share card all work.
+
+### Credibility + UX pass (more AI-review fixes)
+- **BLS job-availability counts.** When you rank by a job, each state now shows about
+  how many people hold that job there ("About 1,900 nurse jobs here"), amber-flagged
+  when a state's high median rests on very few actual jobs — so a wage never implies
+  work that barely exists locally.
+- **Rounded money-left to the nearest $50** across the rankings, with a plain note
+  that places within ~$50 are effectively tied and tiny counties carry more
+  uncertainty — no more "+$3,373 vs +$3,370" false precision.
+- **Moving isn't free.** The debt screen now leads with a break-even caveat (a move
+  costs a few thousand up front and needs a job waiting), so "clears soonest" never
+  reads as "just move."
+- **Home decluttered:** cut the redundant verdict card (a quiet "what this means" link
+  replaces it), removed the ambiguous "0%" badge, and renamed the affiliate-looking
+  "Save & earn more" tile to "Free up more room."
+- **Safe Line bar** now carries a full legend, so every segment is named, not just the
+  wide ones.
+- **"Ask" → "Explain"** (honest about the deterministic engine), grouped the job picker
+  by category with a "Popular" shortlist and top search, and softened doom-y prompts.
+- **Shareable card:** any place's detail can now export a designed summary image
+  ("+$X left each month here", current-vs-there, honest "estimate, not a recommendation"
+  footer) — the tell-a-friend moment.
+
+### The hook is the front door
+- **Places is now the landing tab** for anyone who's already entered their numbers,
+  so the differentiator — where your money (or your job's local pay) goes furthest —
+  is the first thing you see, not a generic budget dashboard. A brand-new user with
+  no numbers still starts on Home, so the "how close am I?" first step is untouched.
+- **The job-pay ranking is no longer buried behind "Change."** When you're ranking by
+  your own pay, a prominent accented card — "See where your job pays furthest · rank
+  by your career's local pay, 116 jobs" — invites the one thing no other
+  cost-of-living tool does.
+
+### Renamed the product: DebtShield → Headroom
+- All four external reviews said the name works against the app — "DebtShield" + a
+  blue shield read like debt-settlement / credit-repair marketing, the exact industry
+  the app's ethics avoid, and it under-sells the cost-of-living pivot. Renamed the
+  user-facing product to **Headroom** (already the app's own word — "you've got room").
+- Changed the display name and every in-app string/label. **Bundle id, target, scheme
+  and all `debtshield.*` persistence keys are unchanged**, so existing installs keep
+  their data and the TestFlight/App Store Connect record stays intact.
+- Still to do (human/design): a new app icon (retire the shield) and the App Store
+  listing name. Website rename follows once the name is confirmed.
+
+### Data-honesty pass (from external review feedback)
+- **Fixed a utilities double-count.** The place projection used Census *gross* rent
+  (which already includes utilities) as housing **and** added a separate EIA energy
+  cost on top — inflating every "money left" figure and ranking. Utilities now live
+  inside the gross-rent figure and are never added again. "Max rent" / "income needed"
+  now account for all other essentials (transport, personal, upkeep), not just food+debt.
+- **Softened over-confident verdicts.** "You could afford to live here" → "Your basics
+  would fit here," with a standing note that transport, state taxes, insurance and the
+  cost of moving aren't included yet — perspective, not a full affordability check.
+- **Rounded estimates to the nearest $50** ("about $1,700") to stop implying dollar-exact
+  precision the typical-data model doesn't have.
+- **Renamed "The fastest way out" → "Where debt clears soonest"** (calmer, less like
+  debt-settlement marketing), and dropped the unprompted "What are my odds of going into
+  debt?" suggestion chip (the year-ahead odds are still there if asked).
+- **Cost cards** now show one "Rent — utilities included" row instead of rent + a
+  separate additive-looking utilities row, and say plainly which costs don't vary by place.
+- Methodology + sources copy updated to disclose the gross-rent/utilities relationship
+  and the excluded costs. Engine suite still 99 passing.
+
 ### State-level costs + faster "fastest way out" (polish round 3)
 - **State cost card.** Drilling into a state now opens with "Typical costs in
   [State]" — the state's median county rent and its utilities, each vs the U.S.

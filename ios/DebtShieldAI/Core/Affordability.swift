@@ -46,45 +46,52 @@ enum AffordabilityEngine {
         guard let rent = place.record.medianGrossRent, rent > 0,
               let income = incomeOverride ?? current.monthlyIncome, income > 0 else { return nil }
 
-        let energy = stateEnergy ?? current.energy
-        let food = current.food
-        let debt = current.debtPayments
-
+        // Census "median gross rent" already includes the renter's utilities
+        // (electricity, gas, water, sewer, fuels). So this one figure covers
+        // housing *and* utilities — adding a separate energy cost on top would
+        // double-count utilities in every money-left number. We therefore fold
+        // utilities into the rent and keep `stateEnergy` only as context (roughly
+        // how much of that rent is utilities), never as an added-on cost.
         var projected = current
         projected.monthlyIncome = income
         projected.housing = rent
-        projected.energy = energy
+        projected.energy = 0
 
-        let left = projected.moneyLeft ?? (income - projected.essentialsTotal)
-        let otherEssentials = (food ?? 0) + (energy ?? 0) + (debt ?? 0)
-        let maxAffordableRent = income * MoneyPlan.safeLineShare - otherEssentials
-        let incomeNeeded = (rent + otherEssentials) / MoneyPlan.safeLineShare
+        let left = income - projected.essentialsTotal
+        // Everything that isn't the housing+utilities figure we're solving for —
+        // food, transport, personal, upkeep and debt — so "max rent" and "income
+        // needed" account for the whole month, not just food and debt.
+        let nonHousing = projected.essentialsTotal - rent
+        let maxAffordableRent = income * MoneyPlan.safeLineShare - nonHousing
+        let incomeNeeded = (rent + nonHousing) / MoneyPlan.safeLineShare
 
         let tone: MoveOutlook.Tone
         let headline: String
         let detail: String
         let rentText = money(rent)
-        let energyText = energy.map { money($0) } ?? "a typical bill"
+        // The costs this estimate does *not* yet vary by place — named plainly so a
+        // green result never reads as a full affordability verdict.
+        let excluded = "Local costs like transport, state taxes and insurance aren't in this yet, so treat it as perspective, not a full affordability check."
 
         if left < 0 {
             tone = .over
-            headline = "This move would tip you into the red"
-            detail = "In \(place.county), typical rent is \(rentText) a month and energy runs about \(energyText). With your income and other costs, you'd be about \(money(-left)) short every month — this move would push you into debt."
+            headline = "This move would stretch you thin"
+            detail = "In \(place.county), typical rent — utilities included — runs about \(rentText) a month. With your income and other costs, you'd be about \(money(-left)) short each month here. \(excluded)"
         } else if projected.status == .tight {
             tone = .tight
-            headline = "You could live here, but it'd be tight"
-            detail = "You'd have about \(money(left)) left each month — covered, but not much room. To stay comfortably under your safe line, rent here would need to be under about \(money(max(0, maxAffordableRent)))."
+            headline = "It could work here, but it'd be tight"
+            detail = "You'd have about \(money(left)) left each month — covered, but not much room. \(excluded)"
         } else {
             tone = .good
-            headline = "You could afford to live here"
-            detail = "You'd have about \(money(left)) left each month — comfortable. You could go up to about \(money(max(0, maxAffordableRent))) in rent here and still stay under your safe line."
+            headline = "Your basics would fit here"
+            detail = "You'd have about \(money(left)) left each month — a comfortable cushion, counting rent (utilities included), your food and your debt. \(excluded)"
         }
 
         return MoveOutlook(
             placeName: place.county,
             placeState: place.state,
             typicalRent: rent,
-            typicalEnergy: energy,
+            typicalEnergy: stateEnergy ?? current.energy,
             projected: projected,
             projectedLeft: left,
             currentLeft: current.moneyLeft,

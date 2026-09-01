@@ -45,17 +45,23 @@ enum PlaceRankingEngine {
         var stateFilter: String?
         /// How many places to return, best first.
         var limit: Int
+        /// Rank metro areas (the population-weighted CBSAs) instead of individual
+        /// counties — the honest default for "best places", since it avoids ranking
+        /// tiny, statistically-noisy rural counties against each other.
+        var useMetros: Bool
 
         init(incomeOverride: Double? = nil,
              incomeByState: [String: Double]? = nil,
              minMonthlyLeft: Double? = nil,
              stateFilter: String? = nil,
-             limit: Int = 25) {
+             limit: Int = 25,
+             useMetros: Bool = false) {
             self.incomeOverride = incomeOverride
             self.incomeByState = incomeByState
             self.minMonthlyLeft = minMonthlyLeft
             self.stateFilter = stateFilter
             self.limit = limit
+            self.useMetros = useMetros
         }
     }
 
@@ -75,10 +81,11 @@ enum PlaceRankingEngine {
             || (options.incomeOverride ?? plan.monthlyIncome).map({ $0 > 0 }) == true
         guard hasIncome else { return [] }
 
+        let places = options.useMetros ? dataset.metros : dataset.counties
         var ranked: [RankedPlace] = []
-        ranked.reserveCapacity(dataset.counties.count)
+        ranked.reserveCapacity(places.count)
 
-        for county in dataset.counties {
+        for county in places {
             if let state = options.stateFilter, county.state != state { continue }
             // Per-state occupation pay wins; a state the job doesn't report is skipped.
             let income: Double?

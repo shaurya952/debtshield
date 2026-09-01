@@ -1,0 +1,30 @@
+{
+  "identifier" : "B1A5F42A",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "6.99",
+      "familyShareable" : false,
+      "internalID" : "HEADROOMPRO01",
+      "localizations" : [
+        {
+          "description" : "A one-time unlock: compare places side by side and save an unlimited shortlist. The whole core stays free.",
+          "displayName" : "Headroom Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.headroom.pro",
+      "referenceName" : "Headroom Pro",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "0",
+    "_developerTeamID" : "0"
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}
