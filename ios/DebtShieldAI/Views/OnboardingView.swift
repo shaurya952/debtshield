@@ -207,12 +207,9 @@ struct OnboardingView: View {
             Spacer(minLength: 0)
 
             VStack(spacing: Theme.Spacing.section) {
-                Image(systemName: step.symbol)
-                    .font(.system(size: 46, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 108, height: 108)
-                    .background(Circle().fill(step.tint))
-                    .shadow(color: step.tint.opacity(0.35), radius: 16, x: 0, y: 8)
+                TourPreview(step: tourIndex, tint: step.tint)
+                    .frame(height: 268)
+                    .frame(maxWidth: .infinity)
                     .accessibilityHidden(true)
 
                 VStack(spacing: Theme.Spacing.regular) {
@@ -229,7 +226,9 @@ struct OnboardingView: View {
                 .frame(maxWidth: .infinity)
             }
             .id(step.id)
-            .transition(reduceMotion ? .identity : .opacity)
+            .transition(reduceMotion ? .identity : .asymmetric(
+                insertion: .move(edge: .trailing).combined(with: .opacity),
+                removal: .move(edge: .leading).combined(with: .opacity)))
 
             Spacer(minLength: 0)
 
@@ -311,6 +310,153 @@ struct OnboardingView: View {
         savedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         focused = nil
         withAnimation(.easeInOut) { stage = .tour }
+    }
+}
+
+/// A small, polished mock of the real screen for each onboarding step — so the
+/// tour shows the app, not just an icon. This is where "half nice" becomes a
+/// proper product tour: real-looking cards, the app's own colours and shapes.
+private struct TourPreview: View {
+    let step: Int
+    let tint: Color
+    @State private var appeared = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(Theme.brandGradient)
+                .opacity(0.14)
+            card
+                .padding(22)
+                .scaleEffect(appeared || reduceMotion ? 1 : 0.94)
+                .opacity(appeared || reduceMotion ? 1 : 0)
+        }
+        .onAppear {
+            guard !reduceMotion else { appeared = true; return }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { appeared = true }
+        }
+    }
+
+    @ViewBuilder private var card: some View {
+        switch step {
+        case 0: homeCard
+        case 1: placesCard
+        case 2: jobCard
+        case 3: movePlanCard
+        default: privacyCard
+        }
+    }
+
+    private func shell<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) { content() }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Theme.cardBackground))
+            .shadow(color: .black.opacity(0.12), radius: 18, x: 0, y: 10)
+    }
+
+    // Step 0 — the month at a glance.
+    private var homeCard: some View {
+        shell {
+            Text("✓ On track").font(.caption.weight(.bold)).foregroundStyle(Theme.statusColor(.okay))
+                .padding(.horizontal, 10).padding(.vertical, 5)
+                .background(Capsule().fill(Theme.statusColor(.okay).opacity(0.15)))
+            Text("$2,450").font(.system(size: 44, weight: .heavy, design: .rounded))
+            Text("left this month").font(.subheadline).foregroundStyle(Theme.secondaryText)
+            GeometryReader { g in
+                HStack(spacing: 3) {
+                    seg(Theme.essentialColor(.housing), 0.42, g.size.width)
+                    seg(Theme.essentialColor(.food), 0.14, g.size.width)
+                    seg(Theme.essentialColor(.energy), 0.10, g.size.width)
+                    seg(Theme.statusColor(.okay).opacity(0.35), 0.34, g.size.width)
+                }
+            }
+            .frame(height: 20)
+        }
+    }
+    private func seg(_ c: Color, _ frac: CGFloat, _ total: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: 5, style: .continuous).fill(c)
+            .frame(width: max(2, total * frac - 3))
+    }
+
+    // Step 1 — the metro ranking.
+    private var placesCard: some View {
+        shell {
+            Text("Best metro areas").font(.headline)
+            rankRow("1", "Austin, TX", "+$3,350")
+            rankRow("2", "Raleigh, NC", "+$3,200")
+            rankRow("3", "Boise, ID", "+$3,050")
+        }
+    }
+    private func rankRow(_ n: String, _ name: String, _ amt: String) -> some View {
+        HStack(spacing: 12) {
+            Text(n).font(.callout.weight(.semibold).monospacedDigit()).foregroundStyle(Theme.secondaryText).frame(width: 18)
+            Text(name).font(.subheadline.weight(.semibold))
+            Spacer()
+            Text(amt).font(.subheadline.weight(.bold)).foregroundStyle(Theme.statusColor(.okay))
+        }
+        .padding(.vertical, 8).padding(.horizontal, 12)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.screenBackground))
+    }
+
+    // Step 2 — rank by a job's local pay.
+    private var jobCard: some View {
+        shell {
+            HStack(spacing: 8) {
+                Image(systemName: "briefcase.fill").foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Theme.brand))
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Ranking by").font(.caption2).foregroundStyle(Theme.secondaryText)
+                    Text("Registered Nurse").font(.subheadline.weight(.bold))
+                }
+                Spacer()
+                Text("116 jobs").font(.caption).foregroundStyle(Theme.brand)
+            }
+            rankRow("1", "California", "$8,700/mo")
+            rankRow("2", "Oregon", "$7,200/mo")
+        }
+    }
+
+    // Step 3 — the move plan.
+    private var movePlanCard: some View {
+        shell {
+            HStack(spacing: 8) {
+                Image(systemName: "flag.checkered").foregroundStyle(Theme.brand)
+                Text("Move goal · Austin, TX").font(.subheadline.weight(.bold))
+            }
+            ProgressView(value: 0.6).tint(Theme.brand)
+            HStack {
+                Text("$2,400 of $4,000 fund").font(.caption).foregroundStyle(Theme.secondaryText)
+                Spacer(); Text("60%").font(.caption.weight(.bold)).foregroundStyle(Theme.brand)
+            }
+            HStack(spacing: 8) {
+                ForEach(["+$100", "+$500"], id: \.self) { t in
+                    Text(t).font(.caption.weight(.semibold)).foregroundStyle(Theme.brand)
+                        .padding(.horizontal, 12).padding(.vertical, 6)
+                        .background(Capsule().stroke(Theme.brand.opacity(0.4)))
+                }
+            }
+        }
+    }
+
+    // Step 4 — private by design.
+    private var privacyCard: some View {
+        shell {
+            Image(systemName: "lock.fill").font(.system(size: 30, weight: .bold)).foregroundStyle(.white)
+                .frame(width: 56, height: 56)
+                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.statusColor(.okay)))
+            Text("On this iPhone only").font(.headline)
+            Text("No account · no server · nothing uploaded").font(.caption).foregroundStyle(Theme.secondaryText)
+            HStack(spacing: 6) {
+                ForEach(["Census", "EIA", "BLS"], id: \.self) { s in
+                    Text(s).font(.caption2.weight(.semibold)).foregroundStyle(Theme.secondaryText)
+                        .padding(.horizontal, 9).padding(.vertical, 4)
+                        .background(Capsule().fill(Theme.screenBackground))
+                }
+            }
+        }
     }
 }
 

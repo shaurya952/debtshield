@@ -5,6 +5,13 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### A real product tour + visual polish
+- **Rebuilt the onboarding as an animated product tour** with live-looking previews of
+  the actual screens — the Home card, the metro ranking, the job-pay re-rank, the move
+  plan, the privacy promise — each floating on a soft gradient with the app's own
+  colours and shapes. It looks premium (not "half nice") and it teaches navigation, so
+  new users don't get lost. Replayable from About; springs in, respects Reduce Motion.
+
 ### New icon, 3 tabs, and Headroom Pro
 - **New app icon + in-app mark** — a white upward arrow rising into open space on an
   indigo→violet tile. The old blue shield read like antivirus / debt-settlement
