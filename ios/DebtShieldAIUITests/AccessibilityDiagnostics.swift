@@ -43,8 +43,15 @@ final class AccessibilityDiagnostics: XCTestCase {
 
     private func back() { app.navigationBars.buttons.element(boundBy: 0).tap() }
 
+    /// About/privacy is no longer a tab — it opens from the Home logo button.
+    private func openAbout() {
+        openTab("Home")
+        let b = app.buttons["About Headroom, privacy and methodology"]
+        if b.waitForExistence(timeout: 8) { b.tap() }
+    }
+
     func testEnumerateAccessibilityIssuesAcrossTheApp() throws {
-        for name in ["Home", "Places", "Explain", "About"] {
+        for name in ["Home", "Places", "Explain"] {
             openTab(name)
             _ = app.staticTexts.firstMatch.waitForExistence(timeout: 5)
             audit(name)
@@ -53,7 +60,7 @@ final class AccessibilityDiagnostics: XCTestCase {
         openTab("Home")
         for (tile, title) in [("The year ahead", "The year ahead"),
                               ("Your spending", "Your spending"),
-                              ("Save & earn more", "Save & earn more")] {
+                              ("Free up more room", "Free up more room")] {
             let t = app.buttons[tile]
             if t.waitForExistence(timeout: 8) {
                 t.tap()
@@ -63,7 +70,7 @@ final class AccessibilityDiagnostics: XCTestCase {
             }
         }
 
-        openTab("About")
+        openAbout()
         if app.buttons["Trust Center"].waitForExistence(timeout: 8) {
             app.buttons["Trust Center"].tap()
             _ = app.navigationBars["Trust Center"].waitForExistence(timeout: 8)

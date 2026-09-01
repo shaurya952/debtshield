@@ -16,8 +16,10 @@ struct PlacesView: View {
     var onGoHome: () -> Void
 
     @Environment(MovePlanStore.self) private var movePlan: MovePlanStore?
+    @Environment(ProStore.self) private var pro: ProStore?
 
     @State private var planningIncome: Double?
+    @State private var showingPaywall = false
     /// nil = rank by the person's own pay; otherwise by this job's local pay.
     @State private var occupation: OccupationWages.Occupation?
     @State private var pickingOccupation = false
@@ -89,17 +91,33 @@ struct PlacesView: View {
         .toolbar {
             if baseIncome != nil {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        ComparePlacesView(store: store, dataStore: dataStore,
-                                          benchmarks: benchmarks, context: context)
-                    } label: {
-                        Image(systemName: "arrow.left.arrow.right")
+                    if pro?.isPro == true {
+                        NavigationLink {
+                            ComparePlacesView(store: store, dataStore: dataStore,
+                                              benchmarks: benchmarks, context: context)
+                        } label: {
+                            Image(systemName: "arrow.left.arrow.right")
+                        }
+                        .accessibilityLabel("Compare two places")
+                    } else {
+                        Button { showingPaywall = true } label: {
+                            Image(systemName: "arrow.left.arrow.right")
+                                .overlay(alignment: .topTrailing) {
+                                    Image(systemName: "lock.fill")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .foregroundStyle(Theme.brand)
+                                        .offset(x: 7, y: -6)
+                                }
+                        }
+                        .accessibilityLabel("Compare two places (Headroom Pro)")
                     }
-                    .accessibilityLabel("Compare two places")
                 }
             }
         }
         .onAppear { if planningIncome == nil { planningIncome = store.plan.monthlyIncome } }
+        .sheet(isPresented: $showingPaywall) {
+            if let pro { PaywallView(pro: pro) }
+        }
         .sheet(isPresented: $pickingOccupation) {
             OccupationPickerSheet(occupations: wages.occupations, selected: occupation) { picked in
                 occupation = picked

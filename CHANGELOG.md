@@ -5,6 +5,20 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### New icon, 3 tabs, and Headroom Pro
+- **New app icon + in-app mark** — a white upward arrow rising into open space on an
+  indigo→violet tile. The old blue shield read like antivirus / debt-settlement
+  branding; this reads as "room, where your money goes further." Dropped the "AI"
+  wordmark too.
+- **About left the tab bar.** Three tabs now — Home, Places, Explain — with
+  About / privacy / methodology opening from the Headroom logo on Home. The
+  differentiator gets the nav real estate; the legal content is one tap away.
+- **Headroom Pro** — a single, one-time unlock (StoreKit 2, no subscription) for two
+  power features: compare places side by side, and an unlimited shortlist (free holds
+  five). The whole core — your month, every ranking, all 116 jobs, the move plan —
+  stays free, and nothing that touches distress is ever paywalled. Includes Restore,
+  a bundled `.storekit` config for testing, and an honest, non-nagging paywall.
+
 ### Move Plan — a reason to come back
 - Pinning a place as your **move goal** (from its detail) unlocks a moving-fund
   tracker on Places: a progress bar toward a rough three-months'-rent fund, with

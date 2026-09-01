@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var wages = OccupationWagesLoader.load()
     @State private var saved = SavedPlacesStore()
     @State private var movePlan = MovePlanStore()
+    @State private var pro = ProStore()
     @State private var selectedTab: AppTab = .safeLine
     /// Land returning users on Places — the differentiator — rather than the monthly
     /// budget. A brand-new user (no income yet) still starts on Home so they enter
@@ -23,6 +24,9 @@ struct ContentView: View {
     /// first launch only.
     @AppStorage("debtshield.hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var isShowingOnboarding = false
+    /// About/settings is no longer a primary tab — it opens from a Home button, so
+    /// the tab bar belongs to the three things people actually do.
+    @State private var isShowingAbout = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -38,6 +42,7 @@ struct ContentView: View {
         }
         .tint(Theme.brand)
         .environment(movePlan)
+        .environment(pro)
         .task {
             // Loads the county data used by the comparison layer. The home
             // screen never waits on this — it renders and works regardless.
@@ -70,6 +75,19 @@ struct ContentView: View {
             }
             .interactiveDismissDisabled()
         }
+        .sheet(isPresented: $isShowingAbout) {
+            NavigationStack {
+                AboutView(store: moneyStore) {
+                    isShowingAbout = false
+                    isShowingOnboarding = true
+                }
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Done") { isShowingAbout = false }
+                    }
+                }
+            }
+        }
         .onAppear {
             if !hasSeenOnboarding { isShowingOnboarding = true }
         }
@@ -81,8 +99,9 @@ struct ContentView: View {
         case .safeLine:
             // The person's own numbers — never waits on the county data. The
             // county data + benchmarks power the "afford a move?" feature and
-            // are optional-by-nature.
-            SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
+            // are optional-by-nature. About/settings opens from its toolbar.
+            SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks,
+                         onShowAbout: { isShowingAbout = true })
         case .places:
             // The relocation hero — ranks where the person's numbers would leave
             // the most breathing room, across every county in the bundled data.
@@ -91,14 +110,9 @@ struct ContentView: View {
                 selectedTab = .safeLine
             }
         case .ask:
-            // The AI, in its own section — with the comparison data wired in so
-            // it can answer "how does my rent compare".
+            // The deterministic assistant, in its own section — with the comparison
+            // data wired in so it can answer "how does my rent compare".
             PersonalChatView(store: moneyStore, dataStore: store, benchmarks: benchmarks)
-        case .about:
-            // About is static — it doesn't depend on the county data.
-            AboutView(store: moneyStore) {
-                isShowingOnboarding = true
-            }
         }
     }
 }
@@ -108,12 +122,12 @@ struct ContentView: View {
 /// - **Home** — the Safe Line: your month in plain dollars
 /// - **Places** — where your money would stretch furthest, across the U.S.
 /// - **Explain** — plain-language, deterministic answers about your own numbers
-/// - **About** — how it works, privacy, and the disclaimer
+///
+/// (About/privacy/methodology opens from a button on Home, not a primary tab.)
 enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case safeLine
     case places
     case ask
-    case about
 
     var id: String { rawValue }
 
@@ -122,7 +136,6 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         case .safeLine: return "Home"
         case .places: return "Places"
         case .ask: return "Explain"
-        case .about: return "About"
         }
     }
 
@@ -131,7 +144,6 @@ enum AppTab: String, CaseIterable, Identifiable, Hashable {
         case .safeLine: return "house.fill"
         case .places: return "map.fill"
         case .ask: return "bubble.left.and.text.bubble.right.fill"
-        case .about: return "info.circle"
         }
     }
 }

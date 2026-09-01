@@ -15,6 +15,8 @@ struct SafeLineView: View {
     /// renders (without that tile) if the county data hasn't loaded.
     var dataStore: DataStore? = nil
     var benchmarks: Benchmarks? = nil
+    /// Opens the About / privacy / methodology screen (no longer a primary tab).
+    var onShowAbout: () -> Void = {}
 
     @AppStorage("debtshield.userName") private var userName = ""
     @State private var isEditing = false
@@ -62,8 +64,10 @@ struct SafeLineView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                BrandMark(size: 28)
-                    .accessibilityLabel("Headroom")
+                Button(action: onShowAbout) {
+                    BrandMark(size: 28)
+                }
+                .accessibilityLabel("About Headroom, privacy and methodology")
             }
             if plan.isComplete {
                 ToolbarItem(placement: .topBarTrailing) {

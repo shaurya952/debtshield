@@ -20,7 +20,12 @@ struct MoveView: View {
     var saved: SavedPlacesStore? = nil
 
     @Environment(MovePlanStore.self) private var movePlan: MovePlanStore?
+    @Environment(ProStore.self) private var pro: ProStore?
 
+    /// Free shortlist size; beyond this, saving needs Pro (a named heuristic).
+    private let freeSavedLimit = 5
+
+    @State private var showingPaywall = false
     @State private var selectedFIPS: String?
     @State private var isPicking = false
     @State private var incomeOverride: Double?
@@ -81,7 +86,14 @@ struct MoveView: View {
             if let saved, let place {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        saved.toggle(place.record.fips)
+                        let isSaved = saved.isSaved(place.record.fips)
+                        // Free shortlist holds a handful; beyond that, Pro. Removing
+                        // and re-saving existing places is always free.
+                        if !isSaved, saved.fips.count >= freeSavedLimit, pro?.isPro != true {
+                            showingPaywall = true
+                        } else {
+                            saved.toggle(place.record.fips)
+                        }
                     } label: {
                         Image(systemName: saved.isSaved(place.record.fips) ? "star.fill" : "star")
                     }
@@ -95,6 +107,9 @@ struct MoveView: View {
                     selectedFIPS = county.record.fips
                 }
             }
+        }
+        .sheet(isPresented: $showingPaywall) {
+            if let pro { PaywallView(pro: pro) }
         }
         .onAppear {
             if selectedFIPS == nil { selectedFIPS = initialFIPS }
