@@ -19,6 +19,9 @@ struct SafeLineView: View {
     var onShowAbout: () -> Void = {}
 
     @AppStorage("debtshield.userName") private var userName = ""
+    /// A one-time nudge pointing at the logo, so people who missed something in the
+    /// tour know where to find it again. Dismisses for good on the first tap.
+    @AppStorage("debtshield.seenHelpHint") private var seenHelpHint = false
     @State private var isEditing = false
     /// Cached Monte Carlo result and sensitivity — recomputed only when the
     /// numbers change, off the main thread, so the simulation never touches a
@@ -46,6 +49,7 @@ struct SafeLineView: View {
                 }
 
                 if plan.isComplete {
+                    helpHint
                     heroCard
                     situationLink
                     whatChangedCard
@@ -93,6 +97,32 @@ struct SafeLineView: View {
             }.value
             outlook = computed.0
             sensitivity = computed.1
+        }
+    }
+
+    /// One-time coach hint pointing back up at the Headroom logo (the way into the
+    /// tour + how-it-works). An arrow.up.left aims at the top-left logo; the ✕ ends it.
+    @ViewBuilder
+    private var helpHint: some View {
+        if !seenHelpHint {
+            HStack(spacing: Theme.Spacing.tight) {
+                Image(systemName: "arrow.up.left")
+                    .font(.footnote.weight(.bold)).foregroundStyle(Theme.brand)
+                Text("Tap the ↑ logo anytime for a quick tour and how it works.")
+                    .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                Button { withAnimation { seenHelpHint = true } } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(Theme.secondaryText.opacity(0.5))
+                }
+                .buttonStyle(.plain).accessibilityLabel("Dismiss hint")
+            }
+            .padding(Theme.Spacing.regular)
+            .background {
+                RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                    .fill(Theme.brand.opacity(0.08))
+            }
         }
     }
 
