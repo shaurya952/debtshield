@@ -174,19 +174,19 @@ struct OnboardingView: View {
         [
             TourStep(id: 0, symbol: "house.fill", tint: Theme.brand,
                      title: "Your month, in plain dollars",
-                     body: "Your income is the bar. Rent, food, energy and debt fill it up — and whatever's left is your room this month. A safe line marks where the basics are best kept under."),
-            TourStep(id: 1, symbol: "chart.line.uptrend.xyaxis", tint: Theme.statusColor(.tight),
-                     title: "See the year ahead",
-                     body: "We play your numbers out across hundreds of possible months to show your chance of slipping into the red — and the one change that would help the most."),
-            TourStep(id: 2, symbol: "chart.bar.xaxis", tint: Theme.essentialColor(.food),
-                     title: "Compare to your area",
-                     body: "See how your rent, food and energy stack up against your county and the whole U.S., using real public data — a guide, never a target."),
-            TourStep(id: 3, symbol: "bubble.left.and.text.bubble.right.fill", tint: Theme.essentialColor(.debt),
-                     title: "Ask about your numbers",
-                     body: "\u{201C}Why am I short?\u{201D} \u{201C}How does my rent compare?\u{201D} Ask in plain words. It answers only from the figures you entered — it never makes anything up."),
+                     body: "Start on Home: your income is the bar, your costs fill it up, and whatever's left is your room this month. No score, no judgment — just your real numbers."),
+            TourStep(id: 1, symbol: "map.fill", tint: Theme.statusColor(.okay),
+                     title: "Where your money goes furthest",
+                     body: "Open the Places tab to rank U.S. metro areas by how much you'd have left living there — your own numbers against each place's real rent. Perspective, never a nudge to move."),
+            TourStep(id: 2, symbol: "briefcase.fill", tint: Theme.brand,
+                     title: "Rank by your job's local pay",
+                     body: "The same career pays very differently across the country. On Places, tap \u{201C}See where your job pays furthest\u{201D}, pick from 116 jobs, and the whole list re-ranks by that job's local pay."),
+            TourStep(id: 3, symbol: "flag.checkered", tint: Theme.essentialColor(.debt),
+                     title: "Plan a move, at your pace",
+                     body: "Found somewhere worth it? Make it your move goal and track a moving fund. Carrying debt? \u{201C}Where debt clears soonest\u{201D} shows where your balance could be gone fastest."),
             TourStep(id: 4, symbol: "lock.shield.fill", tint: Theme.statusColor(.okay),
                      title: "Yours, and private",
-                     body: "Ways to save and earn more, whether you could afford a move, the basics of growing money — it's all here. And every number stays on this phone.")
+                     body: "Every number stays on this phone — no account, no server, nothing uploaded. And the \u{201C}Explain\u{201D} tab answers questions about your month from your own figures, never made up.")
         ]
     }
 
