@@ -80,7 +80,7 @@ struct SituationDetailView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Where you stand")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -167,7 +167,7 @@ struct OutlookDetailView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("The year ahead")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { UserDefaults.standard.set(true, forKey: "debtshield.opened.yearAhead") }
@@ -247,7 +247,7 @@ struct BreakdownDetailView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Your spending")
         .navigationBarTitleDisplayMode(.inline)
     }

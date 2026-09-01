@@ -30,11 +30,29 @@ struct ContentView: View {
     /// About/settings is no longer a primary tab — it opens from a Home button, so
     /// the tab bar belongs to the three things people actually do.
     @State private var isShowingAbout = false
+    /// One navigation path per tab, so re-tapping the active tab can pop it back to
+    /// its root — the standard iOS way to never get stuck deep in a section.
+    @State private var paths: [AppTab: NavigationPath] = [:]
+
+    /// Selection binding that pops the active tab to its root when it's re-tapped.
+    private var tabSelection: Binding<AppTab> {
+        Binding(
+            get: { selectedTab },
+            set: { newTab in
+                if newTab == selectedTab { paths[newTab] = NavigationPath() }
+                selectedTab = newTab
+            }
+        )
+    }
+
+    private func path(for tab: AppTab) -> Binding<NavigationPath> {
+        Binding(get: { paths[tab] ?? NavigationPath() }, set: { paths[tab] = $0 })
+    }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: tabSelection) {
             ForEach(AppTab.allCases) { tab in
-                NavigationStack {
+                NavigationStack(path: path(for: tab)) {
                     content(for: tab)
                 }
                 .tabItem {

@@ -474,6 +474,6 @@ struct ErrorStateView: View {
             .frame(maxWidth: 520)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
     }
 }

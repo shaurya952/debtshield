@@ -26,7 +26,7 @@ struct TrustCenterView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Trust Center")
         .navigationBarTitleDisplayMode(.inline)
     }

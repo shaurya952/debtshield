@@ -39,7 +39,7 @@ struct CompareView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("How you compare")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { UserDefaults.standard.set(true, forKey: "debtshield.opened.comparison") }

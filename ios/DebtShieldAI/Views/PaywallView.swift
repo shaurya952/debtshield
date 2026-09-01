@@ -31,7 +31,7 @@ struct PaywallView: View {
                 }
                 .padding(Theme.Spacing.comfortable).frame(maxWidth: 520).frame(maxWidth: .infinity)
             }
-            .background(Theme.screenBackground)
+            .background { AppBackdrop() }
             .navigationTitle("Headroom Pro")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Not now") { dismiss() } } }

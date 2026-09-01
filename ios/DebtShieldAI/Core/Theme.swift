@@ -44,7 +44,7 @@ enum Theme {
 
     /// A little more lift than `cardShadow`, for the one hero card that should
     /// sit above the rest.
-    static let heroShadow = Color.black.opacity(0.10)
+    static let heroShadow = Color.black.opacity(0.13)
 
     /// Colour for one essential segment of the Safe Line bar.
     ///
@@ -89,7 +89,7 @@ enum Theme {
     )
 
     /// Soft shadow that gives cards a little lift without looking heavy.
-    static let cardShadow = Color.black.opacity(0.06)
+    static let cardShadow = Color.black.opacity(0.09)
 
     /// Tinted well behind an icon, so cards have a focal point.
     static func iconWell(_ tint: Color) -> LinearGradient {
@@ -151,6 +151,26 @@ enum Theme {
         static let subheadline = Font.subheadline
         static let footnote = Font.footnote
         static let caption = Font.caption
+    }
+}
+
+/// The app's screen background with a soft, brand-tinted ambient wash at the top —
+/// a subtle premium lift used on every main screen so surfaces feel lit, not flat.
+/// Colour is never the only signal, so this stays faint and text contrast holds.
+struct AppBackdrop: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Theme.screenBackground
+            LinearGradient(
+                colors: [Theme.brand.opacity(0.08), Theme.brand.opacity(0.0)],
+                startPoint: .top, endPoint: .bottom
+            )
+            .frame(height: 460)
+            .frame(maxWidth: .infinity)
+            .blur(radius: 0.5)
+            .allowsHitTesting(false)
+        }
+        .ignoresSafeArea()
     }
 }
 

@@ -70,7 +70,7 @@ struct MoveView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Could you afford a move?")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

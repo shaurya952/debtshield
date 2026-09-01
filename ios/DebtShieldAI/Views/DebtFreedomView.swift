@@ -56,7 +56,7 @@ struct DebtFreedomView: View {
             }
             .padding(Theme.Spacing.comfortable).frame(maxWidth: 560).frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Where debt clears soonest")
         .navigationBarTitleDisplayMode(.inline)
         .task { await compute() }

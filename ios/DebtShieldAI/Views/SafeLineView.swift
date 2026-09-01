@@ -59,7 +59,7 @@ struct SafeLineView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Your month")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

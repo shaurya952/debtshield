@@ -5,6 +5,14 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Visual lift + pop-to-root navigation
+- **Every screen sits on a soft, brand-tinted ambient backdrop** now (a faint wash at
+  the top), with slightly richer card depth — a subtle, premium lift applied at the
+  design-system level so it reaches every page without over-designing the calm look.
+- **Re-tapping the active tab pops it back to its root** (per-tab navigation paths) —
+  the standard iOS way to never get stuck deep in a section. No separate "home" button
+  needed: the Home tab is home, and ‹ back steps up.
+
 ### A real product tour + visual polish
 - **Rebuilt the onboarding as an animated product tour** with live-looking previews of
   the actual screens — the Home card, the metro ranking, the job-pay re-rank, the move

@@ -85,7 +85,7 @@ struct PlacesView: View {
             .frame(maxWidth: 560)
             .frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle("Where you'd have room")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -595,7 +595,7 @@ struct StateCountiesView: View {
             }
             .padding(Theme.Spacing.comfortable).frame(maxWidth: 560).frame(maxWidth: .infinity)
         }
-        .background(Theme.screenBackground)
+        .background { AppBackdrop() }
         .navigationTitle(state)
         .navigationBarTitleDisplayMode(.inline)
     }
