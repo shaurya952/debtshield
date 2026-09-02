@@ -60,6 +60,8 @@ struct PlacesView: View {
                     emptyState
                 } else {
                     intro
+                    OneTimeHint("headroom.hint.places",
+                                text: "New here? Use the tabs to switch Metros, States, or Counties — or tap “See where your job pays best” to rank by a job's local pay.")
                     movePlanCard
                     debtFreedomLink
                     payCard
@@ -89,8 +91,8 @@ struct PlacesView: View {
         .navigationTitle("Where you'd have room")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if baseIncome != nil {
-                ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                if baseIncome != nil {
                     if pro?.isPro == true {
                         NavigationLink {
                             ComparePlacesView(store: store, dataStore: dataStore,
@@ -106,6 +108,7 @@ struct PlacesView: View {
                         .accessibilityLabel("Compare two places side by side (Headroom Pro)")
                     }
                 }
+                HelpButton(guide: placesGuide)
             }
         }
         .onAppear { if planningIncome == nil { planningIncome = store.plan.monthlyIncome } }
@@ -117,6 +120,20 @@ struct PlacesView: View {
                 occupation = picked
             }
         }
+    }
+
+    /// The always-available "how this screen works" card for Places.
+    private var placesGuide: ScreenGuide {
+        ScreenGuide(
+            title: "Where you'd have room",
+            tagline: "See where your money would stretch furthest across the U.S. — for perspective, never a nudge to move.",
+            steps: [
+                GuideStep(symbol: "list.number", text: "The list ranks places by how much you'd have left each month living there, using your own numbers."),
+                GuideStep(symbol: "rectangle.3.group.fill", text: "Switch between Metros, States, Counties, and Saved with the tabs."),
+                GuideStep(symbol: "briefcase.fill", text: "Tap “See where your job pays best” to re-rank by a job's local pay — pick from 300+ jobs."),
+                GuideStep(symbol: "bookmark.fill", text: "Tap any place for the full breakdown, or save it to compare later.")
+            ],
+            footnote: "Rents and incomes come from public U.S. Census and BLS data. Nothing you enter leaves your phone.")
     }
 
     /// The Compare toolbar button — a clear labelled control (the word "Compare" is

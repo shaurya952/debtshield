@@ -61,15 +61,29 @@ struct PersonalChatView: View {
         .navigationTitle("Explain my month")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
                 Button("Clear") { clear() }
                     .disabled(messages.isEmpty)
                     .accessibilityHint("Removes every message in this conversation")
+                HelpButton(guide: explainGuide)
             }
         }
         .onAppear {
             if conversationNotStarted { messages = [openingMessage] }
         }
+    }
+
+    /// The always-available "how this screen works" card for Explain.
+    private var explainGuide: ScreenGuide {
+        ScreenGuide(
+            title: "Explain your month",
+            tagline: "Ask plain questions about your own numbers. Every answer is worked out from what you entered — never made up.",
+            steps: [
+                GuideStep(symbol: "hand.tap.fill", text: "Tap a suggested question below to get started."),
+                GuideStep(symbol: "text.bubble.fill", text: "Or type your own, like “Why is it tight?” or “How does my rent compare?”"),
+                GuideStep(symbol: "checkmark.seal.fill", text: "Answers use only your figures and public comparison data — no guessing.")
+            ],
+            footnote: "It isn't financial or legal advice, and nothing you type leaves your phone.")
     }
 
     private var openingMessage: ChatMessage {

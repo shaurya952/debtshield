@@ -73,8 +73,8 @@ struct SafeLineView: View {
                 }
                 .accessibilityLabel("About Headroom, privacy and methodology")
             }
-            if plan.isComplete {
-                ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                if plan.isComplete {
                     Button {
                         isEditing = true
                     } label: {
@@ -83,6 +83,7 @@ struct SafeLineView: View {
                     .fontWeight(.semibold)
                     .accessibilityLabel("Edit your numbers")
                 }
+                HelpButton(guide: homeGuide)
             }
         }
         .sheet(isPresented: $isEditing) {
@@ -98,6 +99,19 @@ struct SafeLineView: View {
             outlook = computed.0
             sensitivity = computed.1
         }
+    }
+
+    /// The always-available "how this screen works" card for Home.
+    private var homeGuide: ScreenGuide {
+        ScreenGuide(
+            title: "Your month",
+            tagline: "Your income and costs, in plain dollars — so you can see how much room you have this month.",
+            steps: [
+                GuideStep(symbol: "square.and.pencil", text: "Tap “Add your numbers” (or Edit, top right) to enter your income and monthly costs."),
+                GuideStep(symbol: "dollarsign.circle.fill", text: "The big number is what's left after your costs. Green means room to spare; red means you're short."),
+                GuideStep(symbol: "square.grid.2x2.fill", text: "The tiles below open the rest of the app — where your money goes furthest, and answers about your month.")
+            ],
+            footnote: "No score, no judgment. Everything you enter stays on this phone.")
     }
 
     /// One-time coach hint pointing back up at the Headroom logo (the way into the
