@@ -329,7 +329,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Headroom;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "DebtShield uses Face ID to lock your financial numbers on this device.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Headroom uses Face ID to lock your financial numbers on this device.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Headroom uses the camera only to scan a bill you point it at, so it can read the amount. The photo is processed on your phone and never uploaded.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -360,7 +361,8 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Headroom;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
-				INFOPLIST_KEY_NSFaceIDUsageDescription = "DebtShield uses Face ID to lock your financial numbers on this device.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Headroom uses Face ID to lock your financial numbers on this device.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Headroom uses the camera only to scan a bill you point it at, so it can read the amount. The photo is processed on your phone and never uploaded.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 /// The sheet where a person enters their monthly numbers.
 ///
@@ -22,6 +23,13 @@ struct MyNumbersView: View {
 
     @State private var savedTrigger = 0
     @State private var showClearConfirm = false
+
+    // Scan-a-bill flow (all on-device). See BillScanFlow.swift.
+    @State private var showCamera = false
+    @State private var photoItem: PhotosPickerItem?
+    @State private var scannedAmounts: [Decimal] = []
+    @State private var showScannedAmounts = false
+    @State private var isReadingScan = false
 
     init(store: MoneyPlanStore) {
         self.store = store
@@ -50,6 +58,31 @@ struct MyNumbersView: View {
                     InfoTipRow()
                 }
                 .listRowBackground(Theme.brand.opacity(0.07))
+
+                Section {
+                    if DocumentScannerView.isCameraScanSupported {
+                        Button {
+                            showCamera = true
+                        } label: {
+                            Label("Scan a bill with the camera", systemImage: "doc.viewfinder")
+                        }
+                    }
+                    PhotosPicker(selection: $photoItem, matching: .images) {
+                        Label("Use a photo of a bill", systemImage: "photo")
+                    }
+                    if isReadingScan {
+                        HStack(spacing: Theme.Spacing.tight) {
+                            ProgressView()
+                            Text("Reading the bill…")
+                                .font(Theme.Typography.subheadline)
+                                .foregroundStyle(Theme.secondaryText)
+                        }
+                    }
+                } header: {
+                    Text("Add faster")
+                } footer: {
+                    Text("Scan a bill and Headroom reads the amount for you — right here on your phone, nothing uploaded. You pick which field it fills.")
+                }
 
                 Section {
                     CurrencyField(title: "Money coming in", value: $income)
@@ -152,6 +185,60 @@ struct MyNumbersView: View {
             } message: {
                 Text("This removes your income, essentials, and saved area from this phone. It can't be undone.")
             }
+            .fullScreenCover(isPresented: $showCamera) {
+                DocumentScannerView(
+                    onScan: { images in
+                        showCamera = false
+                        readAmounts(from: images)
+                    },
+                    onCancel: { showCamera = false }
+                )
+                .ignoresSafeArea()
+            }
+            .onChange(of: photoItem) { _, item in
+                guard let item else { return }
+                Task {
+                    if let data = try? await item.loadTransferable(type: Data.self),
+                       let image = UIImage(data: data) {
+                        readAmounts(from: [image])
+                    }
+                    photoItem = nil
+                }
+            }
+            .sheet(isPresented: $showScannedAmounts) {
+                ScannedAmountsSheet(amounts: scannedAmounts) { field, value in
+                    apply(field, value)
+                }
+            }
+        }
+    }
+
+    /// Reads the images on-device, then shows what was found for the person to
+    /// place. Never fills a field on its own.
+    private func readAmounts(from images: [UIImage]) {
+        isReadingScan = true
+        Task {
+            let text = await BillOCR.text(from: images)
+            scannedAmounts = BillScanner.amounts(in: text)
+            isReadingScan = false
+            showScannedAmounts = true
+        }
+    }
+
+    /// Drops a scanned amount into the field the person chose. Whole dollars, to
+    /// match how the form is entered elsewhere.
+    private func apply(_ field: ScanField, _ value: Double) {
+        let dollars = value.rounded()
+        switch field {
+        case .income:         income = dollars
+        case .housing:        housing = dollars
+        case .homeUpkeep:     homeUpkeep = dollars
+        case .food:           food = dollars
+        case .energy:         energy = dollars
+        case .transportation: transportation = dollars
+        case .personal:       personal = dollars
+        case .debt:           debt = dollars
+        case .debtBalance:    debtBalance = dollars
         }
     }
 }
@@ -243,6 +330,15 @@ struct CurrencyField: View {
         .onChange(of: text) { _, newValue in
             let cleaned = newValue.filter { $0.isNumber || $0 == "." }
             value = cleaned.isEmpty ? nil : Double(cleaned)
+        }
+        // Reflect a value set from outside the field — e.g. a scanned bill amount
+        // dropped in here — without fighting the user's own typing (only refreshes
+        // when the bound value and the shown text actually disagree).
+        .onChange(of: value) { _, newValue in
+            let shown = Double(text.filter { $0.isNumber || $0 == "." })
+            if newValue != shown {
+                text = newValue.map { $0.formatted(.number.precision(.fractionLength(0)).grouping(.never)) } ?? ""
+            }
         }
     }
 }
