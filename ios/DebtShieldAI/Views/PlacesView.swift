@@ -363,7 +363,7 @@ struct PlacesView: View {
                 }
                 .padding(Theme.Spacing.comfortable).frame(maxWidth: .infinity)
                 .frame(minHeight: Theme.minimumTapTarget)
-                .background { RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous).fill(Theme.brand.opacity(0.10)) }
+                .background { RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous).fill(Theme.brand.opacity(0.07)) }
             }
             .buttonStyle(PressableCardStyle())
             .accessibilityHint("Ranks where your debt would clear soonest")
@@ -440,7 +440,7 @@ struct PlacesView: View {
             .frame(maxWidth: .infinity)
             .background {
                 RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
-                    .fill(Theme.brand.opacity(0.10))
+                    .fill(Theme.brand.opacity(0.07))
             }
         }
         .buttonStyle(PressableCardStyle())
@@ -511,9 +511,10 @@ struct RankBadge: View {
             .foregroundStyle(rank == 1 ? .white : Theme.brand)
             .frame(width: 28, height: 28)
             .background {
-                Circle().fill(rank == 1 ? AnyShapeStyle(Theme.brandGradient)
+                Circle().fill(rank == 1 ? AnyShapeStyle(Theme.goldGradient)
                                         : AnyShapeStyle(Theme.brand.opacity(0.12)))
             }
+            .shadow(color: rank == 1 ? Theme.accentWarm.opacity(0.45) : .clear, radius: 5, x: 0, y: 2)
             .accessibilityHidden(true)
     }
 }

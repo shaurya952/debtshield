@@ -125,12 +125,18 @@ struct PersonalChatView: View {
     private var welcomeHeader: some View {
         VStack(spacing: Theme.Spacing.regular) {
             ZStack {
+                // Layered halo — a soft outer glow and a brighter inner ring — so
+                // the mark feels lit, the way a hero logo does.
                 Circle()
-                    .fill(Theme.brand.opacity(0.14))
-                    .frame(width: 108, height: 108)
-                    .blur(radius: 22)
+                    .fill(Theme.markGlow.opacity(0.18))
+                    .frame(width: 150, height: 150)
+                    .blur(radius: 34)
+                Circle()
+                    .fill(Theme.markGlow.opacity(0.30))
+                    .frame(width: 96, height: 96)
+                    .blur(radius: 20)
                 BrandMark(size: 58)
-                    .shadow(color: Theme.brand.opacity(0.28), radius: 12, x: 0, y: 6)
+                    .shadow(color: Theme.markGlow.opacity(0.38), radius: 14, x: 0, y: 7)
             }
             Text("Explain your month")
                 .font(Theme.Typography.title)
