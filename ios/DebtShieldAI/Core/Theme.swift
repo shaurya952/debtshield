@@ -11,7 +11,24 @@ enum Theme {
 
     // MARK: - Colour
 
-    static let brand = Color.adaptive(light: 0x1D4ED8, dark: 0x93C5FD)
+    // The brand accent — a deep, considered teal so the app and its teal logo read
+    // as one identity. Kept deep (not a bright candy teal) and paired with a warm
+    // gold accent below, so the UI feels premium rather than "all green."
+    static let brand = Color.adaptive(light: 0x095A50, dark: 0x63E7D0)
+
+    /// The teal "Homeline" logo tile — green reads as money. Used only by the
+    /// brand mark, so green stays an identity cue, not a wash over the whole UI.
+    static let markGradient = LinearGradient(
+        colors: [
+            .adaptive(light: 0x0C3A40, dark: 0x0A2E33),
+            .adaptive(light: 0x12857F, dark: 0x11635E)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    /// The green glow/shadow behind the logo mark (its halo).
+    static let markGlow = Color.adaptive(light: 0x12857F, dark: 0x5EEAD4)
 
     // MARK: - Personal status colour
     //
@@ -65,14 +82,26 @@ enum Theme {
         }
     }
 
-    /// The gold from the app icon's bars. Used sparingly, as an accent.
+    /// The warm gold secondary accent. Used sparingly — a #1 rank, a highlight —
+    /// so teal + gold reads premium (money/heritage) rather than mono-green.
     static let accentWarm = Color.adaptive(light: 0xE0A32E, dark: 0xFBD24D)
 
-    /// Brand gradient for headers and the hero. Deep blue, matching the icon.
+    /// Gold gradient for the one-of-a-kind moment (the #1 rank coin).
+    static let goldGradient = LinearGradient(
+        colors: [
+            .adaptive(light: 0xE8B24A, dark: 0xF6C85A),
+            .adaptive(light: 0xC4841A, dark: 0xD79A2A)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    /// Brand gradient for headers and the hero — deep teal→emerald, matching the
+    /// app icon so the hero card and the logo feel like one piece.
     static let brandGradient = LinearGradient(
         colors: [
-            .adaptive(light: 0x1B3F8F, dark: 0x14294F),
-            .adaptive(light: 0x2563EB, dark: 0x1E3A6B)
+            .adaptive(light: 0x0B3A34, dark: 0x08302B),
+            .adaptive(light: 0x11897B, dark: 0x0F6E62)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -89,7 +118,7 @@ enum Theme {
     )
 
     /// Soft shadow that gives cards a little lift without looking heavy.
-    static let cardShadow = Color.black.opacity(0.09)
+    static let cardShadow = Color.black.opacity(0.12)
 
     /// Tinted well behind an icon, so cards have a focal point.
     static func iconWell(_ tint: Color) -> LinearGradient {
