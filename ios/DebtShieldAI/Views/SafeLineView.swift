@@ -17,6 +17,9 @@ struct SafeLineView: View {
     var benchmarks: Benchmarks? = nil
     /// Opens the About / privacy / methodology screen (no longer a primary tab).
     var onShowAbout: () -> Void = {}
+    /// "Just exploring?" — jump to Places to try the ranking with example numbers,
+    /// before entering anything personal.
+    var onExplore: () -> Void = {}
 
     @AppStorage("debtshield.userName") private var userName = ""
     /// A one-time nudge pointing at the logo, so people who missed something in the
@@ -433,6 +436,17 @@ struct SafeLineView: View {
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, Theme.Spacing.tight)
+
+            Button {
+                onExplore()
+            } label: {
+                Text("Just exploring? See where money goes furthest")
+                    .font(Theme.Typography.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.brand)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+            }
+            .accessibilityHint("Opens Places with example numbers — no personal details needed")
         }
         .padding(Theme.Spacing.section)
         .frame(maxWidth: .infinity)

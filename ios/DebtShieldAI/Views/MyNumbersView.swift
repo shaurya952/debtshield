@@ -24,6 +24,13 @@ struct MyNumbersView: View {
     @State private var savedTrigger = 0
     @State private var showClearConfirm = false
 
+    // A one-time, gentle nudge to turn on the app lock right after the first save —
+    // the moment sensitive numbers first land on the device. Reuses the existing
+    // opt-in lock setting; shown once, never nags.
+    @AppStorage("debtshield.appLockEnabled") private var appLockEnabled = false
+    @AppStorage("headroom.offeredAppLock") private var offeredAppLock = false
+    @State private var showLockNudge = false
+
     // Scan-a-bill flow (all on-device). See BillScanFlow.swift.
     @State private var showCamera = false
     @State private var photoItem: PhotosPickerItem?
@@ -54,6 +61,20 @@ struct MyNumbersView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    HStack(spacing: Theme.Spacing.regular) {
+                        Image(systemName: "lock.fill")
+                            .foregroundStyle(Theme.statusColor(.okay))
+                            .accessibilityHidden(true)
+                        Text("These stay on your phone — no account, never uploaded.")
+                            .font(Theme.Typography.subheadline.weight(.medium))
+                            .foregroundStyle(Theme.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+                .listRowBackground(Theme.statusFill(.okay))
+
                 Section {
                     InfoTipRow()
                 }
@@ -170,12 +191,24 @@ struct MyNumbersView: View {
                             debtAPR: debtAPR
                         ))
                         savedTrigger += 1
-                        dismiss()
+                        // First time real numbers land: offer the app lock once.
+                        if !appLockEnabled && !offeredAppLock {
+                            offeredAppLock = true
+                            showLockNudge = true
+                        } else {
+                            dismiss()
+                        }
                     }
                     .fontWeight(.semibold)
                 }
             }
             .sensoryFeedback(.success, trigger: savedTrigger)
+            .alert("Lock the app?", isPresented: $showLockNudge) {
+                Button("Turn on Face ID lock") { appLockEnabled = true; dismiss() }
+                Button("Not now", role: .cancel) { dismiss() }
+            } message: {
+                Text("Your numbers already stay on this phone. For extra privacy, you can require Face ID, Touch ID, or your passcode to open Headroom. Change it anytime in About.")
+            }
             .confirmationDialog("Clear all your numbers?", isPresented: $showClearConfirm, titleVisibility: .visible) {
                 Button("Clear everything", role: .destructive) {
                     store.clear()

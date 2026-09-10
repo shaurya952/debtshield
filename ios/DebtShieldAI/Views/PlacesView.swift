@@ -24,10 +24,19 @@ struct PlacesView: View {
     @State private var occupation: OccupationWages.Occupation?
     @State private var pickingOccupation = false
     @State private var scope: Scope = .metros
+    /// Presents "Your numbers" so an explorer can turn example numbers into theirs.
+    @State private var showingNumbers = false
 
     enum Scope: String, CaseIterable, Identifiable { case metros = "Metros", states = "States", counties = "Counties", saved = "Saved"; var id: String { rawValue } }
 
+    /// A neutral, on-device-only example take-home so a brand-new person can explore
+    /// the ranking without disclosing anything. Never saved to their plan.
+    private static let exampleIncome: Double = 4000
+
     private var baseIncome: Double? { store.plan.monthlyIncome }
+    /// True once the person has actually entered their own income (vs. exploring
+    /// with the example figure).
+    private var hasRealIncome: Bool { store.plan.monthlyIncome != nil }
 
     /// The income model to rank with — either a flat figure or a per-state map.
     private var context: RankContext {
@@ -56,31 +65,28 @@ struct PlacesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.Spacing.section) {
-                if baseIncome == nil {
-                    emptyState
-                } else {
-                    intro
-                    OneTimeHint("headroom.hint.places",
-                                text: "New here? Use the tabs to switch Metros, States, or Counties — or tap “See where your job pays best” to rank by a job's local pay.")
-                    movePlanCard
-                    debtFreedomLink
-                    payCard
-                    Picker("View", selection: $scope) {
-                        ForEach(Scope.allCases) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
+                intro
+                exampleBanner
+                OneTimeHint("headroom.hint.places",
+                            text: "New here? Use the tabs to switch Metros, States, or Counties — or tap “See where your job pays best” to rank by a job's local pay.")
+                movePlanCard
+                debtFreedomLink
+                payCard
+                Picker("View", selection: $scope) {
+                    ForEach(Scope.allCases) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.segmented)
 
-                    if dataStore.isLoading && rankedStates.isEmpty {
-                        loadingCard
-                    } else {
-                        switch scope {
-                        case .metros:   metrosList
-                        case .states:   statesList
-                        case .counties: countiesList
-                        case .saved:    savedList
-                        }
-                        if scope != .saved { sources }
+                if dataStore.isLoading && rankedStates.isEmpty {
+                    loadingCard
+                } else {
+                    switch scope {
+                    case .metros:   metrosList
+                    case .states:   statesList
+                    case .counties: countiesList
+                    case .saved:    savedList
                     }
+                    if scope != .saved { sources }
                 }
             }
             .padding(Theme.Spacing.comfortable)
@@ -92,26 +98,31 @@ struct PlacesView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                if baseIncome != nil {
-                    if pro?.isPro == true {
-                        NavigationLink {
-                            ComparePlacesView(store: store, dataStore: dataStore,
-                                              benchmarks: benchmarks, context: context)
-                        } label: {
-                            compareLabel(locked: false)
-                        }
-                        .accessibilityLabel("Compare two places side by side")
-                    } else {
-                        Button { showingPaywall = true } label: {
-                            compareLabel(locked: true)
-                        }
-                        .accessibilityLabel("Compare two places side by side (Headroom Pro)")
+                if pro?.isPro == true {
+                    NavigationLink {
+                        ComparePlacesView(store: store, dataStore: dataStore,
+                                          benchmarks: benchmarks, context: context)
+                    } label: {
+                        compareLabel(locked: false)
                     }
+                    .accessibilityLabel("Compare two places side by side")
+                } else {
+                    Button { showingPaywall = true } label: {
+                        compareLabel(locked: true)
+                    }
+                    .accessibilityLabel("Compare two places side by side (Headroom Pro)")
                 }
                 HelpButton(guide: placesGuide)
             }
         }
-        .onAppear { if planningIncome == nil { planningIncome = store.plan.monthlyIncome } }
+        // Seed the ranking with the person's own income, or a neutral example so a
+        // brand-new user can explore without entering anything. If they later save
+        // real income, sync to it.
+        .onAppear { if planningIncome == nil { planningIncome = store.plan.monthlyIncome ?? Self.exampleIncome } }
+        .onChange(of: store.plan.monthlyIncome) { _, newValue in
+            if let newValue { planningIncome = newValue }
+        }
+        .sheet(isPresented: $showingNumbers) { MyNumbersView(store: store) }
         .sheet(isPresented: $showingPaywall) {
             if let pro { PaywallView(pro: pro) }
         }
@@ -467,19 +478,34 @@ struct PlacesView: View {
             : base + " Pay is this job's typical state wage (BLS 2023), after an estimated tax cut."
     }
 
-    private var emptyState: some View {
-        VStack(spacing: Theme.Spacing.comfortable) {
-            AppIconBadge(systemImage: "map.fill", size: 84)
-            Text("Add your numbers first").font(Theme.Typography.title).multilineTextAlignment(.center)
-            Text("Once you've entered what comes in and goes out on the Home tab, this ranks where in the U.S. your money would leave you the most room.")
-                .font(Theme.Typography.body).foregroundStyle(Theme.secondaryText).multilineTextAlignment(.center)
-            Button { onGoHome() } label: {
-                Text("Go to Home").font(Theme.Typography.body.weight(.semibold))
-                    .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+    /// Shown while someone is exploring on the neutral example figure (no saved
+    /// income and no job picked). Makes it honest that these aren't their numbers,
+    /// and one tap turns example into personal. Warm-gold tint, not more green.
+    @ViewBuilder
+    private var exampleBanner: some View {
+        if !hasRealIncome && occupation == nil {
+            HStack(spacing: Theme.Spacing.regular) {
+                AppIconBadge(systemImage: "wand.and.stars", tint: Theme.accentWarm, size: 34)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Using example numbers")
+                        .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary)
+                    Text("Explore freely — add your own pay anytime for a personal ranking. Nothing you enter leaves your phone.")
+                        .font(.caption).foregroundStyle(Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: Theme.Spacing.tight)
+                Button("Add yours") { showingNumbers = true }
+                    .font(.subheadline.weight(.semibold))
+                    .buttonStyle(.borderedProminent)
             }
-            .buttonStyle(.borderedProminent).padding(.top, Theme.Spacing.tight)
+            .padding(Theme.Spacing.comfortable).frame(maxWidth: .infinity)
+            .background {
+                RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                    .fill(Theme.accentWarm.opacity(0.13))
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Using example numbers. Add yours for a personal ranking.")
         }
-        .padding(Theme.Spacing.section).frame(maxWidth: .infinity).padding(.top, Theme.Spacing.section)
     }
 }
 
