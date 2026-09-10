@@ -131,7 +131,8 @@ struct ContentView: View {
             // county data + benchmarks power the "afford a move?" feature and
             // are optional-by-nature. About/settings opens from its toolbar.
             SafeLineView(store: moneyStore, dataStore: store, benchmarks: benchmarks,
-                         onShowAbout: { isShowingAbout = true })
+                         onShowAbout: { isShowingAbout = true },
+                         onExplore: { selectedTab = .places })
         case .places:
             // The relocation hero — ranks where the person's numbers would leave
             // the most breathing room, across every county in the bundled data.
