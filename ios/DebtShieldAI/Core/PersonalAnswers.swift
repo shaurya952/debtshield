@@ -40,6 +40,12 @@ enum PersonalChatEngine {
         // Advice territory is turned away before anything else.
         if let redirect = adviceRedirect(q) { return redirect }
 
+        // Common non-money questions people actually type — what is this, is it
+        // private, how do you work, hello/thanks. Answered plainly so the app never
+        // feels broken, and checked before the money buckets so a "how does this
+        // work" doesn't get mistaken for a money question.
+        if let meta = metaAnswer(q, plan: plan) { return meta }
+
         // "What are the odds I go into debt" — the Monte Carlo simulation.
         if let odds = oddsAnswer(q, plan: plan, months: months) { return odds }
 
@@ -83,19 +89,24 @@ enum PersonalChatEngine {
         if has(q, ["why", "how come", "reason"]) {
             return whyExplanation(plan)
         }
-        if has(q, ["fastest", "quickest", "fix", "cut", "reduce", "trim", "lower",
-                   "free up", "save", "what can i do", "what should i do",
-                   "where do i start", "help me", "get ahead", "room"]) {
+        // Keep these tied to money words. Generic phrases like "what should I do"
+        // or a bare "goes"/"doing" are deliberately NOT triggers — they'd answer a
+        // money question to something that isn't one. Unknowns fall through to the
+        // honest fallback instead of a confident wrong answer.
+        if has(q, ["fastest", "quickest", "fastest fix", "cut", "reduce", "trim", "lower",
+                   "free up", "save money", "spend less", "cut back", "get ahead",
+                   "more room", "free up money", "where do i start with my money"]) {
             return fastestFix(plan)
         }
         if has(q, ["biggest", "largest", "most expensive", "highest", "what costs",
                    "where does my money", "where is my money", "wheres my money",
-                   "spending most", "where it goes", "goes"]) {
+                   "spending most", "where it goes", "where my money goes"]) {
             return biggestCost(plan)
         }
-        if has(q, ["how much", "left", "how am i", "am i okay", "am i ok",
-                   "am i alright", "doing", "this month", "summary", "overview",
-                   "status", "hows my", "how's my", "afford"]) {
+        if has(q, ["how much do i have", "how much is left", "money left", "how am i doing",
+                   "am i okay", "am i ok", "am i alright", "how's this month",
+                   "hows this month", "my month", "summary", "overview", "how am i",
+                   "status", "hows my", "how's my", "can i afford", "how am i doing this month"]) {
             return statusSummary(plan)
         }
 
@@ -192,6 +203,67 @@ enum PersonalChatEngine {
             text: text,
             provenance: "Your numbers + U.S. Census rents",
             followUps: ["How does my rent compare?", "What's my fastest fix?", "Where does my money go?"])
+    }
+
+    // MARK: - Common questions (meta / FAQ)
+
+    /// Plain answers to the non-money questions people naturally try — so the app
+    /// feels responsive and trustworthy instead of only ever saying "I didn't
+    /// catch that." All static and honest; none invent a figure.
+    private static func metaAnswer(_ q: String, plan: MoneyPlan) -> ChatAnswer? {
+        // Greetings — exact match (trailing punctuation stripped) so "hi" can't
+        // match the "hi" inside words like "this".
+        let g = q.trimmingCharacters(in: CharacterSet(charactersIn: " !.?,"))
+        let greetings: Set<String> = ["hi", "hello", "hey", "yo", "sup", "hiya",
+                                      "hi there", "hey there", "hello there",
+                                      "good morning", "good afternoon", "good evening"]
+        if greetings.contains(g) {
+            return ChatAnswer(text: "Hi! Ask me anything about your month — here are a few to start:",
+                              followUps: quickPrompts(for: plan))
+        }
+        if has(q, ["thank", "appreciate it", "cheers"]) {
+            return ChatAnswer(text: "Anytime. Want to look at anything else?",
+                              followUps: quickPrompts(for: plan))
+        }
+
+        // What can you do / help.
+        if has(q, ["what can you do", "what can this do", "what can this tell me",
+                   "what can you tell me", "what can i ask", "what do you do",
+                   "how can you help", "what questions can", "what should i ask", "help"]) {
+            return ChatAnswer(
+                text: "I explain your month from the numbers you enter — nothing made up. Try asking where your money goes, why it's tight, what would free up the most, how your rent compares to your area, your odds for the year ahead, or where your money would stretch furthest across the U.S.",
+                provenance: "Your numbers, on this device",
+                followUps: quickPrompts(for: plan))
+        }
+        // What is this / the app.
+        if has(q, ["what is headroom", "what's headroom", "what is this app", "whats this app",
+                   "what is this", "whats this", "what does this app", "what does headroom",
+                   "what's this app"]) {
+            return ChatAnswer(
+                text: "Headroom shows how your money stands each month in plain dollars, then ranks where in the U.S. your money would go furthest — on your own pay, or by a job's local pay. Everything stays on your phone.",
+                followUps: quickPrompts(for: plan))
+        }
+        // Privacy.
+        if has(q, ["is my data safe", "is this private", "is it private", "privacy",
+                   "do you store", "do you save my", "does it leave", "leave my phone",
+                   "upload", "sell my", "share my data", "who sees my", "is it secure",
+                   "is my info safe", "keep my data private"]) {
+            return ChatAnswer(
+                text: "Your numbers stay on this phone. There's no account and no server — nothing you enter is ever uploaded, sold, or shared, and this chat runs entirely on your device. You can also lock the app with Face ID in About.",
+                provenance: "On this device",
+                followUps: quickPrompts(for: plan))
+        }
+        // How does it work / are you AI.
+        if has(q, ["how does this work", "how do you work", "how does it work",
+                   "how do you know", "where do your numbers", "are you ai", "is this ai",
+                   "do you use ai", "are you chatgpt", "chatgpt", "do you make things up",
+                   "are you real", "how are you so"]) {
+            return ChatAnswer(
+                text: "I don't guess — I answer by computing from the numbers you entered and public data bundled in the app (U.S. Census, BLS, EIA). The same question gives the same answer every time. That's why I'll tell you I don't know something rather than make it up.",
+                provenance: "On this device",
+                followUps: quickPrompts(for: plan))
+        }
+        return nil
     }
 
     // MARK: - Quick prompts
