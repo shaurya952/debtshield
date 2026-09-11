@@ -28,15 +28,25 @@ struct AppIconBadge: View {
     var size: CGFloat = 38
 
     var body: some View {
-        Image(systemName: systemImage)
+        let shape = RoundedRectangle(cornerRadius: size * 0.29, style: .continuous)
+        return Image(systemName: systemImage)
             .font(.system(size: size * 0.46, weight: .semibold))
             .foregroundStyle(.white)
             .frame(width: size, height: size)
             .background(
                 LinearGradient(colors: [tint, tint.opacity(0.78)],
                                startPoint: .topLeading, endPoint: .bottomTrailing),
-                in: RoundedRectangle(cornerRadius: size * 0.29, style: .continuous)
+                in: shape
             )
+            // A faint top-down sheen — the small highlight that makes the tile read
+            // like the polished app icon rather than a flat swatch.
+            .overlay(
+                shape.fill(
+                    LinearGradient(colors: [.white.opacity(0.22), .clear],
+                                   startPoint: .top, endPoint: .center)
+                )
+            )
+            .overlay(shape.strokeBorder(.white.opacity(0.12), lineWidth: 0.5))
             .shadow(color: tint.opacity(0.32), radius: 5, x: 0, y: 3)
             .accessibilityHidden(true)
     }
