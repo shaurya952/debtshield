@@ -59,6 +59,47 @@ final class PersonalChatEngineTests: XCTestCase {
         XCTAssertFalse(a.text.contains("$")) // a decline never invents a number
     }
 
+    // MARK: - Places (relocation) answers
+
+    /// A tiny world with two metros so the place answer has something to rank.
+    private func placesWorld() -> (Dataset, Benchmarks) {
+        func metro(_ fips: String, _ state: String, _ name: String, rent: Double) -> ScoredCounty {
+            ScoredCounty(record: CountyRecord(fips: fips, state: state, county: name,
+                                              medianHouseholdIncome: 60000, medianGrossRent: rent,
+                                              displayOverride: name))
+        }
+        let dataset = Dataset(counties: [], metros: [
+            metro("M1", "Alpha", "Cheapville, AL", rent: 700),   // most room
+            metro("M2", "Beta",  "Priceyburg, CA", rent: 2600)   // least room
+        ])
+        let bm = Benchmarks(
+            energy: EnergyBenchmark(byState: ["Alpha": 150, "Beta": 150]),
+            food: FoodBenchmark(bands: [.init(low: 0, high: nil, annual: 6000)]),
+            nationalRent: 1300, nationalEnergy: 150, nationalFood: 500,
+            nationalTransportation: 800, nationalPersonal: 300,
+            nationalUtilitiesAddon: 100, nationalHomeUpkeep: 200)
+        return (dataset, bm)
+    }
+
+    func testWhereMoneyGoesFurthestRanksRealPlaces() {
+        let (data, bm) = placesWorld()
+        let plan = MoneyPlan(monthlyIncome: 5000, food: 400, energy: 150)
+        let a = PersonalChatEngine.respond(to: "where would my money go furthest?",
+                                           plan: plan, benchmarks: bm, dataset: data)
+        XCTAssertFalse(a.isDecline)
+        XCTAssertTrue(a.text.contains("Cheapville, AL"), "should name the top metro")
+        XCTAssertTrue(a.text.lowercased().contains("perspective"), "must stay perspective, not a nudge")
+        XCTAssertFalse(a.followUps.isEmpty)
+    }
+
+    func testMoveQuestionWithoutDataPointsToPlacesTab() {
+        // Relocation intent but no dataset wired → point to Places, don't guess.
+        let a = PersonalChatEngine.respond(to: "should I move somewhere cheaper?", plan: .sampleOkay)
+        XCTAssertTrue(a.isDecline)
+        XCTAssertTrue(a.text.contains("Places"))
+        XCTAssertFalse(a.text.contains("$")) // a decline never invents a figure
+    }
+
     // MARK: - Boundaries preserved
 
     func testDeclinesAdviceAndPointsTo211() {

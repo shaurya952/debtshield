@@ -31,7 +31,8 @@ enum PersonalChatEngine {
         plan: MoneyPlan,
         county: ScoredCounty? = nil,
         benchmarks: Benchmarks? = nil,
-        months: [MonthRecord] = []
+        months: [MonthRecord] = [],
+        dataset: Dataset? = nil
     ) -> ChatAnswer {
         let q = normalise(question)
         guard !q.isEmpty else { return opening(for: plan) }
@@ -53,6 +54,13 @@ enum PersonalChatEngine {
         // The safe line can be explained even before numbers are entered.
         if has(q, ["safe line", "safeline", "the line", "55", "fifty five", "fifty-five"]) {
             return safeLineExplanation(plan)
+        }
+
+        // "Where would my money go furthest / where should I move" — ranks real
+        // metro areas from the person's numbers + public rent data. Checked before
+        // the comparison bucket so "where…" reads as relocation, not "how do I compare".
+        if let places = placesAnswer(q, plan: plan, dataset: dataset, benchmarks: benchmarks) {
+            return places
         }
 
         // "How does my rent compare / is my energy high" — uses the county and
@@ -125,11 +133,65 @@ enum PersonalChatEngine {
     /// decline, so it carries no figures.
     private static func gracefulFallback(_ plan: MoneyPlan) -> ChatAnswer {
         ChatAnswer(
-            text: "I answer only from the numbers you've entered, and I didn't quite catch that one. I can tell you where your month stands, why it's tight, where your money goes, what would free up the most, your odds for the year ahead, and how your costs compare to your area and the U.S. — try one of these:",
+            text: "I answer only from the numbers you've entered, and I didn't quite catch that one. I can tell you where your month stands, why it's tight, where your money goes, what would free up the most, your odds for the year ahead, how your costs compare to your area, and where your money would stretch furthest across the U.S. — try one of these:",
             provenance: "Your numbers, on this device",
             followUps: quickPrompts(for: plan),
             isDecline: true
         )
+    }
+
+    // MARK: - Places (where your money would go furthest)
+
+    /// "Where would my money go furthest / where should I move / cheaper place" —
+    /// ranks real metro areas by how much would be left living there, from the
+    /// person's own numbers and public Census rents. Perspective, never a nudge to
+    /// move — and honest about what it leaves out (taxes, insurance, moving costs).
+    private static func placesAnswer(_ q: String,
+                                     plan: MoneyPlan,
+                                     dataset: Dataset?,
+                                     benchmarks: Benchmarks?) -> ChatAnswer? {
+        let placeWords = ["move", "moving", "relocat", "where should i live",
+                          "where to live", "where would i live", "somewhere else",
+                          "another city", "another state", "different city", "different state",
+                          "cheaper place", "cheaper city", "cheaper state", "cheaper area",
+                          "better place", "go furthest", "goes furthest", "stretch furthest",
+                          "stretch further", "best place", "best places", "best city",
+                          "best cities", "best state", "best states", "where would my money",
+                          "afford to live", "live cheaper", "leave my city", "get out of"]
+        guard has(q, placeWords) else { return nil }
+
+        guard let dataset, let benchmarks else {
+            return ChatAnswer(
+                text: "The place rankings live on the Places tab — open it to see where your money would stretch furthest, on your own pay or by a job's local pay.",
+                provenance: "Places tab",
+                isDecline: true)
+        }
+        guard plan.isComplete else {
+            return ChatAnswer(
+                text: "Add your numbers and I can point to where your money would go furthest — or open the Places tab to explore it with example numbers, no personal info needed.",
+                provenance: "Your numbers",
+                isDecline: true)
+        }
+
+        let top = PlaceRankingEngine.rank(
+            plan: plan, in: dataset, energy: benchmarks.energy,
+            options: .init(limit: 3, useMetros: true))
+        guard !top.isEmpty else { return nil }
+
+        let ranked = top.enumerated().map { i, place in
+            "\(i + 1). \(place.county.displayName) — about \(signedLeft(place.monthlyLeft)) left/mo"
+        }.joined(separator: "\n")
+
+        var text = "On your current numbers, your money would leave you the most room in these metro areas:\n\(ranked)"
+        if let now = plan.moneyLeft {
+            text += "\n\nWhere you are now: about \(signedLeft(now)) left/mo."
+        }
+        text += "\n\nThis is for perspective, not a nudge to move. It ranks by money left after rent (U.S. Census) and doesn't count state taxes, insurance, or the cost of moving. The Places tab has the full list — and you can re-rank by a job's local pay."
+
+        return ChatAnswer(
+            text: text,
+            provenance: "Your numbers + U.S. Census rents",
+            followUps: ["How does my rent compare?", "What's my fastest fix?", "Where does my money go?"])
     }
 
     // MARK: - Quick prompts
@@ -148,6 +210,7 @@ enum PersonalChatEngine {
         if let debt = plan.debtPayments, debt > 0 {
             prompts.append("How much goes to debt?")
         }
+        prompts.append("Where would my money go furthest?")
         if let biggest = biggestSegment(plan) {
             prompts.append("What if \(biggest.label.lowercased()) dropped $100?")
         }
@@ -158,7 +221,7 @@ enum PersonalChatEngine {
     static func opening(for plan: MoneyPlan) -> ChatAnswer {
         if plan.isComplete {
             return ChatAnswer(
-                text: "Ask me about your month. I'll explain it from the numbers you entered — why things are tight, where your money goes, what would free up the most, and how your costs compare to your area and the rest of the U.S.",
+                text: "Ask me about your month. I'll explain it from the numbers you entered — why things are tight, where your money goes, what would free up the most, how your costs compare to your area, and where your money would stretch furthest across the U.S.",
                 followUps: quickPrompts(for: plan)
             )
         }

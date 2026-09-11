@@ -239,7 +239,7 @@ struct PersonalChatView: View {
         draft = ""
         messages.append(ChatMessage(role: .user, text: question))
 
-        let answer = PersonalChatEngine.respond(to: question, plan: plan, county: homeCounty, benchmarks: benchmarks, months: months)
+        let answer = PersonalChatEngine.respond(to: question, plan: plan, county: homeCounty, benchmarks: benchmarks, months: months, dataset: dataStore?.dataset)
         messages.append(ChatMessage(
             role: .assistant,
             text: answer.text,
