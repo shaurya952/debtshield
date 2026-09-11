@@ -100,6 +100,50 @@ final class PersonalChatEngineTests: XCTestCase {
         XCTAssertFalse(a.text.contains("$")) // a decline never invents a figure
     }
 
+    // MARK: - Robustness: no confident wrong answers; common questions handled
+
+    func testOffTopicButMoneyish_wordsStillDecline() {
+        // "what should I do" used to trigger the money "fastest fix" answer — a
+        // confident wrong reply. Now an off-topic ask declines instead of guessing.
+        let a = answer("what should I do this weekend?", .sampleOkay)
+        XCTAssertTrue(a.isDecline)
+        XCTAssertFalse(a.text.contains("$")) // never invents a figure
+        XCTAssertFalse(a.followUps.isEmpty) // still offers what it can do
+    }
+
+    func testWhatCanYouDoListsCapabilities() {
+        let a = answer("what can you do?", .sampleOkay)
+        XCTAssertFalse(a.isDecline)
+        XCTAssertTrue(a.text.lowercased().contains("where your money"))
+        XCTAssertFalse(a.followUps.isEmpty)
+    }
+
+    func testPrivacyQuestionAnswered() {
+        let a = answer("is my data safe?", .sampleOkay)
+        XCTAssertFalse(a.isDecline)
+        XCTAssertTrue(a.text.lowercased().contains("phone"))
+        XCTAssertTrue(a.text.lowercased().contains("uploaded") || a.text.lowercased().contains("server"))
+    }
+
+    func testHowItWorksMentionsDeterministicSources() {
+        let a = answer("how does this work?", .sampleOkay)
+        XCTAssertFalse(a.isDecline)
+        XCTAssertTrue(a.text.lowercased().contains("census") || a.text.lowercased().contains("compute") || a.text.lowercased().contains("bundled"))
+    }
+
+    func testGreetingIsFriendlyNotAMoneyAnswer() {
+        let a = answer("hi", .sampleOkay)
+        XCTAssertFalse(a.isDecline)
+        XCTAssertFalse(a.text.contains("$"))
+        XCTAssertFalse(a.followUps.isEmpty)
+    }
+
+    func testWordContainingHiDoesNotTriggerGreeting() {
+        // "this month" contains the letters "hi" — must NOT be treated as "hi".
+        let a = answer("how's this month?", .sampleOkay)
+        XCTAssertFalse(a.text.hasPrefix("Hi!"))
+    }
+
     // MARK: - Boundaries preserved
 
     func testDeclinesAdviceAndPointsTo211() {
