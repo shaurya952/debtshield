@@ -125,7 +125,7 @@ struct SafeLineView: View {
             HStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: "arrow.up.left")
                     .font(.footnote.weight(.bold)).foregroundStyle(Theme.brand)
-                Text("Tap the ↑ logo anytime for a quick tour and how it works.")
+                Text("Tap the logo, top-left, anytime for a quick tour and how it works.")
                     .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
