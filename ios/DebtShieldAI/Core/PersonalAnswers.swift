@@ -161,14 +161,20 @@ enum PersonalChatEngine {
                                      plan: MoneyPlan,
                                      dataset: Dataset?,
                                      benchmarks: Benchmarks?) -> ChatAnswer? {
+        // "state(s)" and "county/counties" are included so a scope-specific ask
+        // ("which states should I move to?") routes here instead of falling through
+        // to a money answer. Bare "city"/"cities" are left out on purpose — "city"
+        // is a substring of "electricity" and would hijack utilities questions.
         let placeWords = ["move", "moving", "relocat", "where should i live",
-                          "where to live", "where would i live", "somewhere else",
-                          "another city", "another state", "different city", "different state",
-                          "cheaper place", "cheaper city", "cheaper state", "cheaper area",
-                          "better place", "go furthest", "goes furthest", "stretch furthest",
-                          "stretch further", "best place", "best places", "best city",
-                          "best cities", "best state", "best states", "where would my money",
-                          "afford to live", "live cheaper", "leave my city", "get out of"]
+                          "where to live", "where would i live", "where do i live",
+                          "somewhere else", "another city", "another state", "different city",
+                          "different state", "cheaper place", "cheaper city", "cheaper state",
+                          "cheaper area", "better place", "go furthest", "goes furthest",
+                          "stretch furthest", "stretch further", "best place", "best places",
+                          "best city", "best cities", "best state", "best states",
+                          "where would my money", "afford to live", "live cheaper",
+                          "leave my city", "place to live", "places to live",
+                          "where can i afford", "state", "states", "county", "counties"]
         guard has(q, placeWords) else { return nil }
 
         guard let dataset, let benchmarks else {
@@ -184,16 +190,36 @@ enum PersonalChatEngine {
                 isDecline: true)
         }
 
-        let top = PlaceRankingEngine.rank(
-            plan: plan, in: dataset, energy: benchmarks.energy,
-            options: .init(limit: 3, useMetros: true))
-        guard !top.isEmpty else { return nil }
+        // Answer at the level the person asked for — states, counties, or (the
+        // honest default) metro areas — so "which states?" gets states, not metros.
+        let scopeLabel: String
+        let ranked: String
+        if has(q, ["county", "counties"]) {
+            let tops = PlaceRankingEngine.rank(plan: plan, in: dataset, energy: benchmarks.energy,
+                                               options: .init(limit: 3, useMetros: false))
+            guard !tops.isEmpty else { return nil }
+            scopeLabel = "counties"
+            ranked = tops.enumerated().map { i, p in
+                "\(i + 1). \(p.county.displayName) — about \(signedLeft(p.monthlyLeft)) left/mo"
+            }.joined(separator: "\n")
+        } else if has(q, ["state", "states"]) {
+            let tops = Array(StateRankingEngine.rank(plan: plan, in: dataset, energy: benchmarks.energy).prefix(3))
+            guard !tops.isEmpty else { return nil }
+            scopeLabel = "states"
+            ranked = tops.enumerated().map { i, s in
+                "\(i + 1). \(s.state) — about \(signedLeft(s.medianMonthlyLeft)) left/mo (typical county)"
+            }.joined(separator: "\n")
+        } else {
+            let tops = PlaceRankingEngine.rank(plan: plan, in: dataset, energy: benchmarks.energy,
+                                               options: .init(limit: 3, useMetros: true))
+            guard !tops.isEmpty else { return nil }
+            scopeLabel = "metro areas"
+            ranked = tops.enumerated().map { i, p in
+                "\(i + 1). \(p.county.displayName) — about \(signedLeft(p.monthlyLeft)) left/mo"
+            }.joined(separator: "\n")
+        }
 
-        let ranked = top.enumerated().map { i, place in
-            "\(i + 1). \(place.county.displayName) — about \(signedLeft(place.monthlyLeft)) left/mo"
-        }.joined(separator: "\n")
-
-        var text = "On your current numbers, your money would leave you the most room in these metro areas:\n\(ranked)"
+        var text = "On your current numbers, your money would leave you the most room in these \(scopeLabel):\n\(ranked)"
         if let now = plan.moneyLeft {
             text += "\n\nWhere you are now: about \(signedLeft(now)) left/mo."
         }

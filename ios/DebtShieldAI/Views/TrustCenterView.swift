@@ -250,13 +250,13 @@ struct TrustCenterView: View {
                                     systemImage: "bubble.left.and.text.bubble.right")
             }
             .buttonStyle(.plain)
-            if let mail = URL(string: "mailto:debtshieldsupport@gmail.com") {
+            if let mail = URL(string: "mailto:getheadroom@gmail.com") {
                 Link(destination: mail) {
-                    Text("Or email debtshieldsupport@gmail.com")
+                    Text("Or email getheadroom@gmail.com")
                         .font(Theme.Typography.subheadline)
                         .foregroundStyle(Theme.brand)
                 }
-                .accessibilityLabel("Email Headroom support at debtshieldsupport@gmail.com")
+                .accessibilityLabel("Email Headroom support at getheadroom@gmail.com")
             }
         }
     }

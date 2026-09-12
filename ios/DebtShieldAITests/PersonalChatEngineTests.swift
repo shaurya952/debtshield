@@ -63,17 +63,23 @@ final class PersonalChatEngineTests: XCTestCase {
 
     /// A tiny world with two metros so the place answer has something to rank.
     private func placesWorld() -> (Dataset, Benchmarks) {
-        func metro(_ fips: String, _ state: String, _ name: String, rent: Double) -> ScoredCounty {
+        func place(_ fips: String, _ state: String, _ name: String, rent: Double) -> ScoredCounty {
             ScoredCounty(record: CountyRecord(fips: fips, state: state, county: name,
                                               medianHouseholdIncome: 60000, medianGrossRent: rent,
                                               displayOverride: name))
         }
-        let dataset = Dataset(counties: [], metros: [
-            metro("M1", "Alpha", "Cheapville, AL", rent: 700),   // most room
-            metro("M2", "Beta",  "Priceyburg, CA", rent: 2600)   // least room
-        ])
+        let dataset = Dataset(
+            counties: [
+                place("01", "Lowland", "Aville", rent: 700),   // cheapest → Lowland ranks best
+                place("02", "Lowland", "Bville", rent: 900),
+                place("10", "Highland", "Cville", rent: 2400)
+            ],
+            metros: [
+                place("M1", "Lowland",  "Cheapville, AL", rent: 700),   // most room
+                place("M2", "Highland", "Priceyburg, CA", rent: 2600)   // least room
+            ])
         let bm = Benchmarks(
-            energy: EnergyBenchmark(byState: ["Alpha": 150, "Beta": 150]),
+            energy: EnergyBenchmark(byState: ["Lowland": 150, "Highland": 150]),
             food: FoodBenchmark(bands: [.init(low: 0, high: nil, annual: 6000)]),
             nationalRent: 1300, nationalEnergy: 150, nationalFood: 500,
             nationalTransportation: 800, nationalPersonal: 300,
@@ -90,6 +96,35 @@ final class PersonalChatEngineTests: XCTestCase {
         XCTAssertTrue(a.text.contains("Cheapville, AL"), "should name the top metro")
         XCTAssertTrue(a.text.lowercased().contains("perspective"), "must stay perspective, not a nudge")
         XCTAssertFalse(a.followUps.isEmpty)
+    }
+
+    func testAskingForStatesRanksStatesNotFinancials() {
+        let (data, bm) = placesWorld()
+        let plan = MoneyPlan(monthlyIncome: 5000, food: 400, energy: 150)
+        let a = PersonalChatEngine.respond(to: "which states should I move to?",
+                                           plan: plan, benchmarks: bm, dataset: data)
+        XCTAssertFalse(a.isDecline)
+        XCTAssertTrue(a.text.contains("states"), "should answer at the STATE level")
+        XCTAssertTrue(a.text.contains("Lowland"), "names the best state")
+        XCTAssertFalse(a.text.contains("Cheapville"), "shouldn't fall back to metros")
+    }
+
+    func testAskingForCountiesRanksCounties() {
+        let (data, bm) = placesWorld()
+        let plan = MoneyPlan(monthlyIncome: 5000, food: 400, energy: 150)
+        let a = PersonalChatEngine.respond(to: "best counties for my money?",
+                                           plan: plan, benchmarks: bm, dataset: data)
+        XCTAssertFalse(a.isDecline)
+        XCTAssertTrue(a.text.contains("counties"))
+        XCTAssertTrue(a.text.contains("Aville"), "names the cheapest county")
+    }
+
+    func testElectricityQuestionNotHijackedByPlaces() {
+        // "electricity" contains the substring "city" — must NOT trigger a place
+        // answer. It should stay a money answer, never the relocation ranking.
+        let plan = MoneyPlan(monthlyIncome: 5000, housing: 1200, energy: 220)
+        let a = answer("how much do I spend on electricity?", plan)
+        XCTAssertFalse(a.text.contains("would leave you the most room"))
     }
 
     func testMoveQuestionWithoutDataPointsToPlacesTab() {
