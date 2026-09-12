@@ -23,6 +23,14 @@ final class ProStore {
     private(set) var isPro = false
     private(set) var purchasing = false
 
+    /// Whether the person may use the Pro-gated extras. True when they own Pro —
+    /// or when Pro isn't purchasable yet (`product == nil`, e.g. the App Store
+    /// product isn't live during TestFlight). "Fail open": never lock a nicety
+    /// behind a purchase that can't be made, so beta testers get the whole app and
+    /// never hit a dead paywall. Gating resumes automatically once the product
+    /// exists in App Store Connect.
+    var hasProAccess: Bool { isPro || product == nil }
+
     init() {
         // Reflect any entitlement already on the device, and keep listening for
         // transactions (a purchase on another device, a restore, a refund). The

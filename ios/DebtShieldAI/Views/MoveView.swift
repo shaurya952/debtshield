@@ -89,7 +89,7 @@ struct MoveView: View {
                         let isSaved = saved.isSaved(place.record.fips)
                         // Free shortlist holds a handful; beyond that, Pro. Removing
                         // and re-saving existing places is always free.
-                        if !isSaved, saved.fips.count >= freeSavedLimit, pro?.isPro != true {
+                        if !isSaved, saved.fips.count >= freeSavedLimit, pro?.hasProAccess != true {
                             showingPaywall = true
                         } else {
                             saved.toggle(place.record.fips)

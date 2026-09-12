@@ -98,7 +98,7 @@ struct PlacesView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                if pro?.isPro == true {
+                if pro?.hasProAccess ?? true {
                     NavigationLink {
                         ComparePlacesView(store: store, dataStore: dataStore,
                                           benchmarks: benchmarks, context: context)
