@@ -7,7 +7,7 @@ export const pages = [
 
   { slug: "how-it-works", nav: true, navLabel: "How it works",
     title: "How it works",
-    description: "The Safe Line, the monthly verdict, the year-ahead simulation, spending comparisons, and the deterministic Ask feature — in plain terms." },
+    description: "The Safe Line, the monthly verdict, the year-ahead simulation, spending comparisons, and the deterministic Explain feature — in plain terms." },
 
   { slug: "methodology", nav: true, navLabel: "Methodology",
     title: "Methodology",
