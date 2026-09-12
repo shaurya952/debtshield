@@ -18,7 +18,7 @@ const outDir = join(root, "dist");
 // Base URL. Defaults to the live Cloudflare Pages URL so canonical/OG/sitemap
 // links are correct out of the box; override with the SITE_URL env var when a
 // custom domain is set (documented in README).
-const SITE_URL = (process.env.SITE_URL || "https://debtshield-web.pages.dev").replace(/\/$/, "");
+const SITE_URL = (process.env.SITE_URL || "https://headroom.pages.dev").replace(/\/$/, "");
 
 // Form endpoint (Formspree). Defaults to the live form so the waitlist/pilot/
 // reviewer forms work out of the box; override with the FORM_ENDPOINT env var to
