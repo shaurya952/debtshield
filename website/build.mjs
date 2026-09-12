@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Zero-dependency static site generator for the DebtShield website.
+// Zero-dependency static site generator for the Headroom website.
 // Reads src/layout.html + src/pages/<slug>.html, injects shared metadata/nav,
 // and writes static HTML to dist/. Also copies styles/public and emits
 // sitemap.xml + robots.txt. No third-party dependencies (Node stdlib only).
