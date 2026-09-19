@@ -37,6 +37,10 @@ export const pages = [
     title: "For professional reviewers",
     description: "Financial educators, counselors, accessibility and privacy experts: help review Headroom's methodology, claims, and accessibility." },
 
+  { slug: "feedback", nav: false, navLabel: "Feedback",
+    title: "Beta feedback",
+    description: "Tell us what you honestly think of Headroom — what made sense, what didn't, and what would make you use it. Two sentences is enough." },
+
   { slug: "404", nav: false, navLabel: "Not found",
     title: "Page not found",
     description: "That page doesn't exist. Head back to the Headroom home." },
