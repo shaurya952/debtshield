@@ -1,0 +1,81 @@
+    <div class="wrap">
+      <section class="hero">
+        <p class="eyebrow">Beta feedback</p>
+        <h1>Tell us what you really think.</h1>
+        <p class="lead">Blunt is fine. Two sentences is fine. We read every reply, and this is the fastest way to change what Headroom does next.</p>
+        <p class="field-note">Haven't tried it yet? The free iPhone beta is on <a href="https://testflight.apple.com/join/NRhNQHrS" rel="noopener">TestFlight</a>. You can still answer below just from the website.</p>
+      </section>
+
+      <section aria-labelledby="form">
+        <h2 id="form" style="margin-bottom:20px">Quick feedback</h2>
+        <div class="form-card">
+          {{formNotice}}
+          <form action="{{formAction}}" method="{{formMethod}}" novalidate>
+            <input type="hidden" name="form" value="beta-feedback">
+            <input type="hidden" name="_subject" value="Headroom beta feedback">
+            <div class="hp" aria-hidden="true"><label>Leave this empty<input type="text" name="company_website" tabindex="-1" autocomplete="off"></label></div>
+
+            <div class="form-grid">
+              <div>
+                <label for="source">Where did you find Headroom?</label>
+                <select id="source" name="source">
+                  <option>Reddit</option>
+                  <option>Quora</option>
+                  <option>TestFlight</option>
+                  <option>A friend</option>
+                  <option>Somewhere else</option>
+                </select>
+              </div>
+              <div>
+                <label for="tried">Have you tried the app?</label>
+                <select id="tried" name="tried_app">
+                  <option>Yes, on TestFlight</option>
+                  <option>Not yet, just the website</option>
+                  <option>I tried to install it and got stuck</option>
+                </select>
+              </div>
+
+              <div class="full">
+                <label for="impression">What's your honest first impression? <span class="req" aria-hidden="true">*</span></label>
+                <textarea id="impression" name="first_impression" required placeholder="What made sense, what didn't, what you'd tell a friend"></textarea>
+              </div>
+
+              <div class="full">
+                <label for="confusing">Was anything confusing, wrong, or off-putting?</label>
+                <textarea id="confusing" name="confusing" placeholder="A screen, a number, a word, a bug — anything"></textarea>
+              </div>
+
+              <div class="full">
+                <label for="missing">What would make you actually use this every month?</label>
+                <textarea id="missing" name="missing" placeholder="A feature, a change, or 'nothing — here's why'"></textarea>
+              </div>
+
+              <div class="full">
+                <label for="would-use">Would you keep using it?</label>
+                <select id="would-use" name="would_use">
+                  <option>Yes</option>
+                  <option>Maybe, if it changed</option>
+                  <option>No</option>
+                </select>
+              </div>
+
+              <div class="full">
+                <label for="email">Email (optional, only if you'd like a reply)</label>
+                <input id="email" name="email" type="email" autocomplete="email">
+              </div>
+            </div>
+
+            <div class="consent">
+              <input id="consent" name="consent" type="checkbox" required>
+              <label for="consent">I understand this form sends only what I typed above, and I've read the <a href="/privacy-policy.html">privacy policy</a>. <span class="req" aria-hidden="true">*</span></label>
+            </div>
+
+            <div class="form-foot">
+              <button class="btn" type="submit" {{formDisabled}}>Send feedback</button>
+            </div>
+          </form>
+        </div>
+
+        <p class="field-note" style="margin-top:16px">Please don't include your income, rent, or debt numbers here — this form goes to a regular inbox. The app keeps those on your phone. Feedback may shape the product; it will never be quoted publicly or used as a testimonial without your explicit permission.</p>
+      </section>
+    </div>
