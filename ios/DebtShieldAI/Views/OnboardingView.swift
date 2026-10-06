@@ -116,14 +116,14 @@ struct OnboardingView: View {
                     Text("Let's set up your space")
                         .font(.largeTitle.weight(.bold))
                         .accessibilityAddTraits(.isHeader)
-                    Text("Just a name to make it yours. This is on your phone only.")
+                    Text("A name just makes it yours — optional, and kept on this phone only.")
                         .font(Theme.Typography.body)
                         .foregroundStyle(Theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 VStack(spacing: Theme.Spacing.regular) {
-                    field(title: "Your name", text: $name, field: .name)
+                    field(title: "Your name (optional)", text: $name, field: .name)
                         .textContentType(.givenName)
                         .submitLabel(.next)
                         .onSubmit { focused = .email }
@@ -141,12 +141,11 @@ struct OnboardingView: View {
                 Button {
                     finish()
                 } label: {
-                    Text("Continue")
+                    Text(trimmedName.isEmpty ? "Skip for now" : "Continue")
                         .font(Theme.Typography.body.weight(.semibold))
                         .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(trimmedName.isEmpty)
 
                 Button("Back") {
                     withAnimation(.easeInOut) { stage = .landing }
@@ -180,7 +179,7 @@ struct OnboardingView: View {
                      body: "Open the Places tab to rank U.S. metro areas by how much you'd have left living there — your own numbers against each place's real rent. Perspective, never a nudge to move."),
             TourStep(id: 2, symbol: "briefcase.fill", tint: Theme.brand,
                      title: "Rank by your job's local pay",
-                     body: "The same career pays very differently across the country. On Places, tap \u{201C}See where your job pays furthest\u{201D}, pick from 300+ jobs, and the whole list re-ranks by that job's local pay."),
+                     body: "The same career pays very differently across the country. On Places, tap \u{201C}See where your job pays best\u{201D}, pick from 300+ jobs, and the whole list re-ranks by that job's local pay."),
             TourStep(id: 3, symbol: "flag.checkered", tint: Theme.essentialColor(.debt),
                      title: "Plan a move, at your pace",
                      body: "Found somewhere worth it? Make it your move goal and track a moving fund. Carrying debt? \u{201C}Where debt clears soonest\u{201D} shows where your balance could be gone fastest."),
@@ -193,72 +192,78 @@ struct OnboardingView: View {
     private var tour: some View {
         let step = tourSteps[tourIndex]
         let isLast = tourIndex == tourSteps.count - 1
-        return VStack(spacing: Theme.Spacing.section) {
-            HStack {
-                Spacer()
-                Button("Skip") { onContinue() }
-                    .font(Theme.Typography.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.secondaryText)
-                    .opacity(isLast ? 0 : 1)
-                    .disabled(isLast)
-                    .accessibilityHidden(isLast)
-            }
-
-            Spacer(minLength: 0)
-
+        // Scrolls, like the landing and sign-up stages: at large Dynamic Type
+        // sizes the preview, copy and both buttons do not fit a single screen,
+        // and the person must always be able to reach "Start using Headroom".
+        return ScrollView {
             VStack(spacing: Theme.Spacing.section) {
-                TourPreview(step: tourIndex, tint: step.tint)
-                    .frame(height: 268)
-                    .frame(maxWidth: .infinity)
-                    .accessibilityHidden(true)
-
-                VStack(spacing: Theme.Spacing.regular) {
-                    Text(step.title)
-                        .font(.title.weight(.bold))
-                        .multilineTextAlignment(.center)
-                        .accessibilityAddTraits(.isHeader)
-                    Text(step.body)
-                        .font(Theme.Typography.body)
+                HStack {
+                    Spacer()
+                    Button("Skip") { onContinue() }
+                        .font(Theme.Typography.subheadline.weight(.semibold))
                         .foregroundStyle(Theme.secondaryText)
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .opacity(isLast ? 0 : 1)
+                        .disabled(isLast)
+                        .accessibilityHidden(isLast)
                 }
+
+                Spacer(minLength: 0)
+
+                VStack(spacing: Theme.Spacing.section) {
+                    TourPreview(step: tourIndex, tint: step.tint)
+                        .frame(height: 268)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityHidden(true)
+
+                    VStack(spacing: Theme.Spacing.regular) {
+                        Text(step.title)
+                            .font(.title.weight(.bold))
+                            .multilineTextAlignment(.center)
+                            .accessibilityAddTraits(.isHeader)
+                        Text(step.body)
+                            .font(Theme.Typography.body)
+                            .foregroundStyle(Theme.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .id(step.id)
+                .transition(reduceMotion ? .identity : .asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal: .move(edge: .leading).combined(with: .opacity)))
+
+                Spacer(minLength: 0)
+
+                dots
+
+                Button {
+                    if isLast {
+                        onContinue()
+                    } else {
+                        withAnimation(.easeInOut) { tourIndex += 1 }
+                    }
+                } label: {
+                    Text(isLast ? "Start using Headroom" : "Next")
+                        .font(Theme.Typography.body.weight(.semibold))
+                        .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button("Back") {
+                    withAnimation(.easeInOut) {
+                        if tourIndex == 0 { stage = .signUp } else { tourIndex -= 1 }
+                    }
+                }
+                .font(Theme.Typography.subheadline)
                 .frame(maxWidth: .infinity)
             }
-            .id(step.id)
-            .transition(reduceMotion ? .identity : .asymmetric(
-                insertion: .move(edge: .trailing).combined(with: .opacity),
-                removal: .move(edge: .leading).combined(with: .opacity)))
-
-            Spacer(minLength: 0)
-
-            dots
-
-            Button {
-                if isLast {
-                    onContinue()
-                } else {
-                    withAnimation(.easeInOut) { tourIndex += 1 }
-                }
-            } label: {
-                Text(isLast ? "Start using Headroom" : "Next")
-                    .font(Theme.Typography.body.weight(.semibold))
-                    .frame(maxWidth: .infinity, minHeight: Theme.minimumTapTarget)
-            }
-            .buttonStyle(.borderedProminent)
-
-            Button("Back") {
-                withAnimation(.easeInOut) {
-                    if tourIndex == 0 { stage = .signUp } else { tourIndex -= 1 }
-                }
-            }
-            .font(Theme.Typography.subheadline)
+            .padding(Theme.Spacing.section)
+            .frame(maxWidth: 480)
             .frame(maxWidth: .infinity)
+            .frame(minHeight: 620)
         }
-        .padding(Theme.Spacing.section)
-        .frame(maxWidth: 480)
-        .frame(maxWidth: .infinity)
-        .frame(maxHeight: .infinity)
+        .scrollBounceBehavior(.basedOnSize)
     }
 
     private var dots: some View {
@@ -305,7 +310,8 @@ struct OnboardingView: View {
     }
 
     private func finish() {
-        guard !trimmedName.isEmpty else { focused = .name; return }
+        // Both fields are optional: nothing here is required to use the app, so
+        // the front door never blocks on personal information.
         savedName = trimmedName
         savedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         focused = nil

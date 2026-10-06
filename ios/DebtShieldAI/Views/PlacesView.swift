@@ -68,7 +68,7 @@ struct PlacesView: View {
                 intro
                 exampleBanner
                 OneTimeHint("headroom.hint.places",
-                            text: "New here? Use the tabs to switch Metros, States, or Counties — or tap “See where your job pays best” to rank by a job's local pay.")
+                            text: "New here? Use the tabs to switch Metros, States, Counties, or Saved — or tap “See where your job pays best” to rank by a job's local pay.")
                 movePlanCard
                 debtFreedomLink
                 payCard

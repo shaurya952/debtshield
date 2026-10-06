@@ -97,6 +97,8 @@ struct ContentView: View {
                 }
                 seenCostDataVersion = CostData.version
             }
+            // First run: show the front door.
+            if !hasSeenOnboarding { isShowingOnboarding = true }
         }
         .fullScreenCover(isPresented: $isShowingOnboarding) {
             OnboardingView {
@@ -117,9 +119,6 @@ struct ContentView: View {
                     }
                 }
             }
-        }
-        .onAppear {
-            if !hasSeenOnboarding { isShowingOnboarding = true }
         }
     }
 
