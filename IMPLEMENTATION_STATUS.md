@@ -5,8 +5,10 @@ session with no conversation history, **this file plus `CLAUDE.md` is your
 briefing.** Read both, then the "Files most important to understand" list, before
 touching code. Update this file as work lands._
 
-_Last verified: 2026-08-07 on branch `main` @ commit `9ac2991` (working tree
-clean). Engine tests: **61 passing, 0 failures**. Xcode 26.6, iOS 17 SDK._
+_Last verified: 2026-10-10 on branch `polish/pre-submit` @ commit `91de1d3`
+(working tree clean). Engine tests: **115 passing, 0 failures**; UI tests:
+**7 passing, 0 failures**. Debug + Release both build clean. Xcode 26.6, iOS 17
+SDK. **Build 14 uploaded to TestFlight** as the App Store review candidate._
 
 ---
 

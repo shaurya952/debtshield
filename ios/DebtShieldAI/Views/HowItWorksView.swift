@@ -67,7 +67,7 @@ struct HowItWorksView: View {
             }
             .padding(Theme.Spacing.comfortable)
         }
-        .background(Theme.screenGradient)
+        .background { AppBackdrop() }
         .navigationTitle("How it works")
         .navigationBarTitleDisplayMode(.inline)
     }

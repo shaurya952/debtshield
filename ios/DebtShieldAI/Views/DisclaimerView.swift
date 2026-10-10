@@ -54,7 +54,7 @@ struct DisclaimerView: View {
             }
             .padding(Theme.Spacing.comfortable)
         }
-        .background(Theme.screenGradient)
+        .background { AppBackdrop() }
         .navigationTitle("The fine print")
         .navigationBarTitleDisplayMode(.large)
     }

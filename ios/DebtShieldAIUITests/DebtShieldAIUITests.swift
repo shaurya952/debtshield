@@ -16,7 +16,10 @@ import XCTest
 ///
 /// Launched with onboarding already seen and a seeded plan (a DEBUG-only
 /// `uitest-seed` launch argument), so audits cover the populated home, verdict,
-/// and tiles — not just an empty state.
+/// and tiles — not just an empty state. Because that seeded plan has income,
+/// the app opens on **Places** (the hero feature is the front door for anyone
+/// with numbers already entered), so each test opens the tab it needs rather
+/// than assuming Home is frontmost.
 final class DebtShieldAIUITests: XCTestCase {
 
     var app: XCUIApplication!
@@ -31,7 +34,8 @@ final class DebtShieldAIUITests: XCTestCase {
             "uitest-seed",
         ]
         app.launch()
-        XCTAssertTrue(waitForHome(), "Home should appear (onboarding skipped)")
+        XCTAssertTrue(app.tabBars.buttons["Home"].waitForExistence(timeout: 20),
+                      "The tab bar should appear after launch")
     }
 
     override func tearDownWithError() throws {
@@ -46,20 +50,32 @@ final class DebtShieldAIUITests: XCTestCase {
 
     // MARK: - Helpers
 
-    private func waitForHome() -> Bool {
-        app.staticTexts["Hi, Sam"].waitForExistence(timeout: 15)
-            || app.buttons["The year ahead"].waitForExistence(timeout: 5)
-    }
-
     private func tab(_ name: String) -> XCUIElement { app.tabBars.buttons[name] }
 
     private func openTab(_ name: String) {
         let button = tab(name)
         XCTAssertTrue(button.waitForExistence(timeout: 10), "\(name) tab should exist")
         button.tap()
+        if name == "Home" {
+            XCTAssertTrue(app.staticTexts["Hi, Sam"].waitForExistence(timeout: 15),
+                          "Home should show the greeting once selected")
+        }
     }
 
     private func back() { app.navigationBars.buttons.element(boundBy: 0).tap() }
+
+    /// Scrolls until `element` exists. The home tiles live in a `LazyVGrid`, so
+    /// anything below the fold isn't built — and so isn't queryable — until it
+    /// scrolls into view.
+    @discardableResult
+    private func scrollToExistence(_ element: XCUIElement, swipes: Int = 4) -> Bool {
+        if element.waitForExistence(timeout: 5) { return true }
+        for _ in 0..<swipes {
+            app.swipeUp()
+            if element.waitForExistence(timeout: 2) { return true }
+        }
+        return element.exists
+    }
 
     /// The visible, unobstructed area. `app.frame` includes the space behind the
     /// translucent nav/tab bars; content scrolled under them is still "in frame"
@@ -112,7 +128,7 @@ final class DebtShieldAIUITests: XCTestCase {
         for (tileLabel, title) in [("The year ahead", "The year ahead"),
                                    ("Your spending", "Your spending")] {
             let tile = app.buttons[tileLabel]
-            XCTAssertTrue(tile.waitForExistence(timeout: 10), "\(tileLabel) tile should exist")
+            XCTAssertTrue(scrollToExistence(tile), "\(tileLabel) tile should exist")
             tile.tap()
             XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: 10),
                           "\(title) screen should open")
@@ -125,7 +141,8 @@ final class DebtShieldAIUITests: XCTestCase {
     func testFreeUpRoomOpens() throws {
         openTab("Home")
         let tile = app.buttons["Free up more room"]
-        XCTAssertTrue(tile.waitForExistence(timeout: 10))
+        XCTAssertTrue(scrollToExistence(tile),
+                      "The 'Free up more room' tile should be reachable by scrolling Home")
         tile.tap()
         XCTAssertTrue(app.navigationBars["Free up more room"].waitForExistence(timeout: 10))
         _ = app.staticTexts.firstMatch.waitForExistence(timeout: 5)

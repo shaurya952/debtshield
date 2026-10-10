@@ -176,6 +176,13 @@ struct MyNumbersView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
+                // The decimal pad has no return key of its own, so give every
+                // number field an explicit way to put the keyboard away.
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { dismissKeyboard() }
+                        .fontWeight(.semibold)
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         store.save(MoneyPlan(
@@ -258,6 +265,11 @@ struct MyNumbersView: View {
         }
     }
 
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                        to: nil, from: nil, for: nil)
+    }
+
     /// Drops a scanned amount into the field the person chose. Whole dollars, to
     /// match how the form is entered elsewhere.
     private func apply(_ field: ScanField, _ value: Double) {
@@ -318,9 +330,23 @@ struct CurrencyField: View {
     @State private var text: String = ""
     @State private var showInfo = false
 
+    /// Digits plus at most one decimal point — everything else is dropped.
+    private static func digitsAndOneDot(in input: String) -> String {
+        var out = ""
+        var seenDot = false
+        for character in input where character.isNumber || character == "." {
+            if character == "." {
+                if seenDot { continue }
+                seenDot = true
+            }
+            out.append(character)
+        }
+        return out
+    }
+
     var body: some View {
         HStack {
-            HStack(spacing: 6) {
+            HStack(spacing: 0) {
                 Text(title)
                     .font(Theme.Typography.body)
                 if let info {
@@ -330,6 +356,8 @@ struct CurrencyField: View {
                         Image(systemName: "info.circle")
                             .font(.footnote)
                             .foregroundStyle(Theme.brand)
+                            .frame(width: Theme.minimumTapTarget, height: Theme.minimumTapTarget)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("What counts as \(title)")
@@ -361,7 +389,10 @@ struct CurrencyField: View {
             text = value.map { $0.formatted(.number.precision(.fractionLength(0)).grouping(.never)) } ?? ""
         }
         .onChange(of: text) { _, newValue in
-            let cleaned = newValue.filter { $0.isNumber || $0 == "." }
+            let cleaned = Self.digitsAndOneDot(in: newValue)
+            // Reflect the cleaned string back, so a stray second "." can't leave
+            // the field showing a figure that didn't parse (and so wasn't saved).
+            if cleaned != newValue { text = cleaned }
             value = cleaned.isEmpty ? nil : Double(cleaned)
         }
         // Reflect a value set from outside the field — e.g. a scanned bill amount
