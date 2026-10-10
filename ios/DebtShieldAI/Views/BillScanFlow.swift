@@ -162,6 +162,12 @@ struct ScannedAmountsSheet: View {
         }
     }
 
+    /// The amount as money, so VoiceOver says "one thousand two hundred dollars"
+    /// rather than reading the raw decimal.
+    private func spoken(_ amount: Decimal) -> String {
+        amount.formatted(.currency(code: "USD").precision(.fractionLength(amount.hasCents ? 2 : 0)))
+    }
+
     private func row(for amount: Decimal) -> some View {
         HStack {
             Text(amount, format: .currency(code: "USD").precision(.fractionLength(amount.hasCents ? 2 : 0)))
@@ -183,7 +189,7 @@ struct ScannedAmountsSheet: View {
                 Label("Add to…", systemImage: "plus.circle.fill")
                     .font(Theme.Typography.subheadline.weight(.semibold))
             }
-            .accessibilityLabel("Add \(amount) to a field")
+            .accessibilityLabel("Add \(spoken(amount)) to a field")
         }
         .frame(minHeight: Theme.minimumTapTarget)
     }

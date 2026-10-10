@@ -26,6 +26,8 @@ struct PlacesView: View {
     @State private var scope: Scope = .metros
     /// Presents "Your numbers" so an explorer can turn example numbers into theirs.
     @State private var showingNumbers = false
+    /// Clearing a move goal also throws away the tracked moving fund, so it asks first.
+    @State private var confirmingClearGoal = false
 
     enum Scope: String, CaseIterable, Identifiable { case metros = "Metros", states = "States", counties = "Counties", saved = "Saved"; var id: String { rawValue } }
 
@@ -125,6 +127,14 @@ struct PlacesView: View {
         .sheet(isPresented: $showingNumbers) { MyNumbersView(store: store) }
         .sheet(isPresented: $showingPaywall) {
             if let pro { PaywallView(pro: pro) }
+        }
+        .confirmationDialog("Clear your move goal?",
+                            isPresented: $confirmingClearGoal,
+                            titleVisibility: .visible) {
+            Button("Clear goal", role: .destructive) { movePlan?.clear() }
+            Button("Keep it", role: .cancel) {}
+        } message: {
+            Text("This also clears the moving fund you've tracked towards it. It can't be undone.")
         }
         .sheet(isPresented: $pickingOccupation) {
             OccupationPickerSheet(occupations: wages.occupations, selected: occupation) { picked in
@@ -315,10 +325,10 @@ struct PlacesView: View {
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Your move goal").font(.caption).foregroundStyle(Theme.secondaryText)
                         Text(plan.targetName)
-                            .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary).lineLimit(1)
+                            .font(Theme.Typography.body.weight(.semibold)).foregroundStyle(.primary).lineLimit(2)
                     }
                     Spacer(minLength: Theme.Spacing.tight)
-                    Button { movePlan.clear() } label: {
+                    Button { confirmingClearGoal = true } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(Theme.secondaryText.opacity(0.5))
                     }
@@ -534,7 +544,7 @@ struct RankBadge: View {
     var body: some View {
         Text("\(rank)")
             .font(.footnote.weight(.bold).monospacedDigit())
-            .foregroundStyle(rank == 1 ? .white : Theme.brand)
+            .foregroundStyle(rank == 1 ? Theme.onGold : Theme.brand)
             .frame(width: 28, height: 28)
             .background {
                 Circle().fill(rank == 1 ? AnyShapeStyle(Theme.goldGradient)

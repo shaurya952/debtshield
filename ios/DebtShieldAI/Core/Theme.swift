@@ -96,6 +96,11 @@ enum Theme {
         endPoint: .bottomTrailing
     )
 
+    /// Ink for text sitting on `goldGradient`. White on light gold is about 2:1 —
+    /// a WCAG-AA failure — so the one gold surface in the app gets a dark warm
+    /// ink instead, which clears AA against both ends of the gradient.
+    static let onGold = Color.adaptive(light: 0x2E1F05, dark: 0x241904)
+
     /// Brand gradient for headers and the hero — deep teal→emerald, matching the
     /// app icon so the hero card and the logo feel like one piece.
     static let brandGradient = LinearGradient(

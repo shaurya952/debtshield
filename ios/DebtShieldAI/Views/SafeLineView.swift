@@ -125,6 +125,7 @@ struct SafeLineView: View {
             HStack(spacing: Theme.Spacing.tight) {
                 Image(systemName: "arrow.up.left")
                     .font(.footnote.weight(.bold)).foregroundStyle(Theme.brand)
+                    .accessibilityHidden(true)
                 Text("Tap the logo, top-left, anytime for a quick tour and how it works.")
                     .font(Theme.Typography.caption).foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
@@ -132,6 +133,8 @@ struct SafeLineView: View {
                 Button { withAnimation { seenHelpHint = true } } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(Theme.secondaryText.opacity(0.5))
+                        .frame(width: Theme.minimumTapTarget, height: Theme.minimumTapTarget)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain).accessibilityLabel("Dismiss hint")
             }
@@ -226,6 +229,7 @@ struct SafeLineView: View {
                 .foregroundStyle(Theme.brand)
                 .padding(.horizontal, Theme.Spacing.comfortable)
                 .frame(minHeight: Theme.minimumTapTarget)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityHint("Opens the full read of where you stand")

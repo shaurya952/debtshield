@@ -19,7 +19,7 @@ struct PrivacyView: View {
             }
             .padding(Theme.Spacing.comfortable)
         }
-        .background(Theme.screenGradient)
+        .background { AppBackdrop() }
         .navigationTitle("Privacy")
         .navigationBarTitleDisplayMode(.large)
     }

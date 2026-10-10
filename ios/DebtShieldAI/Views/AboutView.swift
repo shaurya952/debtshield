@@ -27,7 +27,7 @@ struct AboutView: View {
             }
             .padding(Theme.Spacing.comfortable)
         }
-        .background(Theme.screenGradient)
+        .background { AppBackdrop() }
         .navigationTitle("About")
         .navigationBarTitleDisplayMode(.large)
     }
