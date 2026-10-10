@@ -5,6 +5,37 @@ phase/commit references; see Git history for exact timing.
 
 ## Startup-hardening program
 
+### Build 14 — pre-submission polish (App Store review candidate)
+- **The front door no longer demands a name.** Both sign-up fields are optional and
+  the button reads "Skip for now" when empty. The name only ever greeted you on Home,
+  and requiring personal information that isn't core to the app is an App Review
+  5.1.1(v) problem on the very first screen.
+- **The feature tour scrolls.** It was a fixed-height stack holding a 268pt preview
+  plus copy, dots and two buttons, so at large Dynamic Type sizes "Start using
+  Headroom" sat off-screen with no way to reach it.
+- **Tap targets.** The Home hint's dismiss ✕ was 17×17 and the "what this means" row
+  was 18pt tall to the touch — `.buttonStyle(.plain)` makes the hit area the drawn
+  content, so their 44pt frames did nothing without a `contentShape`. The ⓘ buttons
+  on the numbers form were ~13pt. All 44pt now.
+- **Contrast.** The gold #1 rank coin drew white on light gold (~2:1). New
+  `Theme.onGold` ink clears AA against both ends of the gradient.
+- **VoiceOver.** The Home hint announced the raw symbol name "arrow.up.left";
+  scanned amounts were read as raw decimals rather than money.
+- **A currency field could silently drop your figure.** A second decimal point
+  ("1.2.3") failed to parse, so the field showed a number that was never saved.
+- **The number pads can be dismissed** — the decimal pad has no return key, so there
+  was no way out but scrolling.
+- **Clearing a move goal asks first.** It also discards the tracked moving fund, and
+  was one stray tap on a small ✕ with no undo.
+- **Consistent backgrounds.** Five screens pushed inside navigation used the flat
+  sheet background while their siblings used the ambient backdrop — two rows in the
+  same About card led to screens that didn't match.
+- **Long place names wrap** on the move-goal card instead of truncating.
+- **iPhone is portrait-only**; iPad keeps all four orientations.
+- **Fixed a stale UI-test assertion** that expected the app to open on Home. It opens
+  on Places for anyone with income already entered, so the suite had been failing on
+  `main` independently of these changes.
+
 ### 300 jobs, clearer pay labels, a livelier Explain
 - **Jobs 116 → 300+.** Expanded the occupation set to the ~300 most-common U.S. jobs
   (real BLS OEWS 2023 state medians + employment), so far more people find their own.
