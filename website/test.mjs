@@ -85,6 +85,22 @@ async function run() {
     }
   }
 
+  // The App Store listing is the site's primary call to action now that the app
+  // has shipped. A silent revert to the beta waitlist would cost real downloads,
+  // so assert the link is actually on the page. (Mirror build.mjs's default.)
+  {
+    const appStoreUrl = process.env.APP_STORE_URL || "https://apps.apple.com/app/id6802477457";
+    const home = await readFile(join(outDir, "index.html"), "utf8");
+    if (!home.includes(`href="${appStoreUrl}"`))
+      err(`[index.html] missing the App Store link (${appStoreUrl})`);
+    // Scope this to the hero's own button row. Checking the whole page would
+    // pass on the footer link alone, which is not the call to action.
+    const heroButtons = home.match(/<div class="btn-row">([\s\S]*?)<\/div>/);
+    if (!heroButtons) err("[index.html] hero button row not found");
+    else if (!heroButtons[1].includes(appStoreUrl))
+      err("[index.html] the hero's primary button should link to the App Store");
+  }
+
   // Security headers — a regression here silently weakens the deployed site.
   // dist/_headers (Netlify/Cloudflare) is generated from the same build; its CSP
   // adapts to FORM_ENDPOINT, so we assert accordingly. vercel.json must keep the
