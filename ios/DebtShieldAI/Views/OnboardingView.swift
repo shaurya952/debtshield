@@ -52,6 +52,10 @@ struct OnboardingView: View {
             }
         }
         .background(Theme.screenGradient)
+        // ContentView tints the TabView, but a fullScreenCover sits outside it,
+        // so onboarding's prominent buttons were rendering in the iOS default
+        // blue — on the first screens anyone sees.
+        .tint(Theme.brand)
     }
 
     // MARK: - Landing
