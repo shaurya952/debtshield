@@ -3,7 +3,7 @@
 export const pages = [
   { slug: "index", nav: false, navLabel: "Home",
     title: "See where your money goes furthest",
-    description: "Headroom is a private, on-device iPhone app that shows how your month stands — then ranks every U.S. state and county by how far your money would go there, on your pay or a job's local pay. Nothing leaves your phone." },
+    description: "Headroom is a free, private, on-device iPhone app that shows how your month stands — then ranks every U.S. state and county by how far your money would go there, on your pay or a job's local pay. Nothing leaves your phone." },
 
   { slug: "how-it-works", nav: true, navLabel: "How it works",
     title: "How it works",
@@ -27,7 +27,7 @@ export const pages = [
 
   { slug: "waitlist", nav: false, navLabel: "Join the beta",
     title: "Join the beta",
-    description: "Get notified when the Headroom TestFlight beta opens. Email and an optional first name — no financial details, ever." },
+    description: "Headroom is free on the App Store. Join the TestFlight beta to try new features first — email and an optional first name, no financial details, ever." },
 
   { slug: "for-organizations", nav: true, navLabel: "For organizations",
     title: "For organizations",

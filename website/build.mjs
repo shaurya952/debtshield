@@ -29,6 +29,10 @@ const FORM_NOTICE = FORM_CONFIGURED
   ? ""
   : `<div class="callout"><p style="margin:0"><strong>This form isn't connected yet.</strong> Submissions activate once a form endpoint is configured at deploy time — see the website README. Your details are never sent anywhere until then.</p></div>`;
 
+// The live App Store listing. A code default so the site is correct out of the
+// box; override with the APP_STORE_URL env var if the listing ever moves.
+const APP_STORE_URL = process.env.APP_STORE_URL || "https://apps.apple.com/app/id6802477457";
+
 const canonicalFor = (slug) => (slug === "index" ? "" : `${slug}.html`);
 const fileFor = (slug) => `${slug}.html`;
 
@@ -53,6 +57,7 @@ function render(layout, page, content, stylesHref) {
     .replaceAll("{{description}}", page.description)
     .replaceAll("{{canonical}}", canonicalFor(page.slug))
     .replaceAll("{{siteUrl}}", SITE_URL)
+    .replaceAll("{{appStoreUrl}}", APP_STORE_URL)
     .replaceAll("{{year}}", String(new Date().getFullYear()))
     .replaceAll("{{nav}}", navHtml(page.slug))
     .replaceAll("{{formAction}}", FORM_CONFIGURED ? FORM_ENDPOINT : "#")
