@@ -30,6 +30,10 @@ enum MonteCarloEngine {
 
     static let defaultRuns = 500
 
+    /// How far ahead the simulation runs. A year: long enough to show a drift
+    /// that a single month hides, short enough that the assumptions still hold.
+    static let horizonMonths = 12
+
     // MARK: - National-default variability (used when history is thin)
     //
     // Coefficient of variation (CV) = standard deviation ÷ mean, per category.
@@ -98,13 +102,18 @@ enum MonteCarloEngine {
         var ending12: [Double] = []
         ending6.reserveCapacity(runs)
         ending12.reserveCapacity(runs)
+        // Every run's balance at the end of each month, so the result can
+        // describe the *path* and not only where it lands. Needed to draw the
+        // year ahead as a line rather than a single number.
+        var balancesByMonth = Array(repeating: [Double](), count: horizonMonths)
+        for i in balancesByMonth.indices { balancesByMonth[i].reserveCapacity(runs) }
 
         for _ in 0..<runs {
             var balance = startingBalance
             var dippedBy6 = false
             var dippedBy12 = false
 
-            for month in 1...12 {
+            for month in 1...horizonMonths {
                 let drawnIncome = max(0, gaussian(incomeDist, &rng))
                 let h = housingDist.map { max(0, gaussian($0, &rng)) }
                 let hu = homeUpkeepDist.map { max(0, gaussian($0, &rng)) }
@@ -129,6 +138,7 @@ enum MonteCarloEngine {
                     if month <= 6 { dippedBy6 = true }
                     dippedBy12 = true
                 }
+                balancesByMonth[month - 1].append(balance)
                 if month == 6 { ending6.append(balance) }
                 if month == 12 { ending12.append(balance) }
             }
@@ -158,10 +168,21 @@ enum MonteCarloEngine {
             surpriseMean: surpriseMean
         )
 
+        // A median line with a quarter-to-three-quarters band around it. The
+        // band matters: a single line would read as a prediction, and this is a
+        // range of outcomes.
+        for i in balancesByMonth.indices { balancesByMonth[i].sort() }
+        let medianPath = balancesByMonth.map { MonteCarloResult.percentile($0, 50) }
+        let lowPath = balancesByMonth.map { MonteCarloResult.percentile($0, 25) }
+        let highPath = balancesByMonth.map { MonteCarloResult.percentile($0, 75) }
+
         return MonteCarloResult(
             mode: mode,
             runs: runs,
             assumptions: assumptions,
+            medianPath: medianPath,
+            lowPath: lowPath,
+            highPath: highPath,
             probNegativeWithin6mo: Double(wentNegative6) / Double(runs),
             probNegativeWithin12mo: Double(wentNegative12) / Double(runs),
             endingBalances6mo: ending6.sorted(),
@@ -336,6 +357,14 @@ struct MonteCarloResult: Sendable, Equatable {
     /// How the numbers were reached — for a "show your working" disclosure.
     let assumptions: MonteCarloAssumptions
 
+    /// The running balance at the end of each month, month 1 … 12.
+    /// `medianPath` is the middle outcome; `lowPath` and `highPath` are the
+    /// 25th and 75th percentiles, so the shape reads as a range rather than a
+    /// prediction. All three are empty only when the simulation did not run.
+    let medianPath: [Double]
+    let lowPath: [Double]
+    let highPath: [Double]
+
     /// Share of runs (0…1) where the running balance went negative at any point
     /// within the first 6 / 12 months.
     let probNegativeWithin6mo: Double
@@ -376,7 +405,8 @@ struct MonteCarloResult: Sendable, Equatable {
     }
 
     /// Linear-interpolated percentile of a sorted array.
-    private static func percentile(_ sorted: [Double], _ p: Double) -> Double {
+    // fileprivate so MonteCarloEngine can reuse it when building the paths.
+    fileprivate static func percentile(_ sorted: [Double], _ p: Double) -> Double {
         guard let first = sorted.first else { return 0 }
         guard sorted.count > 1 else { return first }
         let rank = (max(0, min(100, p)) / 100) * Double(sorted.count - 1)
