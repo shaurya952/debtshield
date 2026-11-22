@@ -32,6 +32,10 @@ struct MoveView: View {
     /// A rendered, shareable summary image — the "tell a friend" moment. Rebuilt
     /// whenever the place or pay changes.
     @State private var shareImage: Image?
+    /// The year ahead in both places, so the chart can draw them together.
+    /// Recomputed off the main thread whenever the place or the pay changes.
+    @State private var hereOutlook: MonteCarloResult?
+    @State private var thereOutlook: MonteCarloResult?
 
     private var place: ScoredCounty? {
         guard let fips = selectedFIPS, let dataset = dataStore.dataset else { return nil }
@@ -58,6 +62,7 @@ struct MoveView: View {
                     incomeCard
                     resultCard(outlook)
                     if let place { costOfLivingCard(place) }
+                    yearAheadCard(outlook)
                     thresholdsCard(outlook)
                     if let place { moveGoalButton(place) }
                 } else if place != nil {
@@ -117,7 +122,53 @@ struct MoveView: View {
         }
         .task(id: "\(selectedFIPS ?? "")#\(Int(incomeOverride ?? 0))") {
             shareImage = renderShareCard()
+            await refreshOutlooks()
         }
+    }
+
+    // MARK: - The year ahead, here versus there
+
+    /// Two twelve-month simulations drawn on one chart: staying put, and the
+    /// same numbers with this place's rent substituted in. Seeing the two lines
+    /// diverge says more than two figures a paragraph apart.
+    @ViewBuilder
+    private func yearAheadCard(_ outlook: MoveOutlook) -> some View {
+        if let hereOutlook, let thereOutlook,
+           !hereOutlook.medianPath.isEmpty, !thereOutlook.medianPath.isEmpty {
+            Card {
+                SectionHeader(title: "The year ahead, either way",
+                              subtitle: "What a year looks like here, and in \(outlook.placeName)")
+                OutlookChartView(
+                    here: .init(median: hereOutlook.medianPath,
+                                low: hereOutlook.lowPath,
+                                high: hereOutlook.highPath,
+                                label: "Staying put"),
+                    there: .init(median: thereOutlook.medianPath, label: outlook.placeName)
+                )
+                .padding(.top, Theme.Spacing.tight)
+                OutlookChartLegend(hereLabel: "Staying put", thereLabel: outlook.placeName)
+                Text("Both lines use your own figures; the \(outlook.placeName) line swaps in that area's typical rent. A range of outcomes, not a prediction — and it doesn't yet vary transport, taxes or insurance by place.")
+                    .font(Theme.Typography.caption)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// Both simulations, off the main thread so the screen never stalls.
+    private func refreshOutlooks() async {
+        guard let outlook else {
+            hereOutlook = nil; thereOutlook = nil; return
+        }
+        let current = store.plan
+        let moved = outlook.projected
+        let history = store.history
+        let computed = await Task.detached(priority: .userInitiated) {
+            (MonteCarloEngine.simulate(plan: current, history: history, seed: 42),
+             MonteCarloEngine.simulate(plan: moved, history: history, seed: 42))
+        }.value
+        hereOutlook = computed.0
+        thereOutlook = computed.1
     }
 
     /// Render the shareable card to an image on the main actor. `nil` until a place
