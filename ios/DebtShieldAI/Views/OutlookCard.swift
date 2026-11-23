@@ -327,6 +327,9 @@ private struct RangeBar: View {
                                    categories: [.init(name: "Income", mean: 5000, sd: 350),
                                                 .init(name: "Food", mean: 400, sd: 60)],
                                    surpriseApplied: true, surpriseChancePerMonth: 0.15, surpriseMean: 300),
+                medianPath: (1...12).map { Double($0) * 2900 },
+                lowPath: (1...12).map { Double($0) * 2400 },
+                highPath: (1...12).map { Double($0) * 3400 },
                 probNegativeWithin6mo: 0.02, probNegativeWithin12mo: 0.03,
                 endingBalances6mo: [15000], endingBalances12mo: [33000, 34000, 35000, 36000, 37000]))
             OutlookCard(
@@ -336,6 +339,9 @@ private struct RangeBar: View {
                                        categories: [.init(name: "Income", mean: 3000, sd: 210),
                                                     .init(name: "Energy", mean: 300, sd: 66)],
                                        surpriseApplied: true, surpriseChancePerMonth: 0.15, surpriseMean: 300),
+                    medianPath: (1...12).map { 2200 - Double($0) * 260 },
+                    lowPath: (1...12).map { 2000 - Double($0) * 330 },
+                    highPath: (1...12).map { 2500 - Double($0) * 190 },
                     probNegativeWithin6mo: 0.49, probNegativeWithin12mo: 0.51,
                     endingBalances6mo: [0], endingBalances12mo: [-500, 100, 1300, 2000, 2500]),
                 topLever: SensitivityLever(input: .essential(.energy), label: "Cut energy $100",

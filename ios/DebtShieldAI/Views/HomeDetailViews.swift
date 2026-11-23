@@ -147,6 +147,23 @@ struct OutlookDetailView: View {
                 if let result {
                     OutlookCard(result: result, topLever: topLever, tightThisMonth: tightThisMonth)
 
+                    if !result.medianPath.isEmpty {
+                        Card {
+                            SectionHeader(title: "The shape of the year",
+                                          subtitle: "The middle outcome, with the range around it")
+                            OutlookChartView(here: .init(median: result.medianPath,
+                                                         low: result.lowPath,
+                                                         high: result.highPath,
+                                                         label: "If this keeps up"))
+                                .padding(.top, Theme.Spacing.tight)
+                            OutlookChartLegend(hereLabel: "If this keeps up")
+                            Text("A range of outcomes from \(result.runs) simulated years — not a prediction. The band covers the middle half of them.")
+                                .font(Theme.Typography.caption)
+                                .foregroundStyle(Theme.secondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+
                     if months.count >= 2 {
                         Card {
                             SectionHeader(title: "Your months",
